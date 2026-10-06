@@ -1,0 +1,221 @@
+{
+  "main": {
+    "id": "28f46557f2f0f709",
+    "type": "split",
+    "children": [
+      {
+        "id": "6ae747a046993725",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "cd137f2191806d15",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Visualização em gráfico"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "113ab43e26c3d5bb",
+    "type": "split",
+    "children": [
+      {
+        "id": "31f5516204bb9702",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "8e8611c841ff9ace",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de arquivos"
+            }
+          },
+          {
+            "id": "9bbadb67766ec6b8",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Procurar"
+            }
+          },
+          {
+            "id": "2b1a27694be24365",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "29b50793fcf2ac5a",
+    "type": "split",
+    "children": [
+      {
+        "id": "afab2f35995d1efb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6d497fa1a2307036",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Links inversos"
+            }
+          },
+          {
+            "id": "f725221b5b8e0b02",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Links de saída"
+            }
+          },
+          {
+            "id": "cba099c61038e1b9",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "36d2243313ca5ac5",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas as propriedades"
+            }
+          },
+          {
+            "id": "016756357a76cb12",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Sumário"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir a troca rápida": false,
+      "graph:Abrir visualização em gráfico": false,
+      "canvas:Criar novo canvas": false,
+      "daily-notes:Abrir a nota de hoje": false,
+      "templates:Inserir modelo": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Criar nova base": false
+    }
+  },
+  "active": "cd137f2191806d15",
+  "lastOpenFiles": [
+    "Home.md.tmp.30436.dce9d38ef0e9",
+    "04-Design-e-Identidade-Visual/_Indice-04-Design-e-Identidade-Visual.md",
+    "04-Design-e-Identidade-Visual/18-Prototipos-e-Telas.md",
+    "04-Design-e-Identidade-Visual/17-Design-System-UI.md",
+    "04-Design-e-Identidade-Visual/16-Identidade-Visual.md",
+    "04-Design-e-Identidade-Visual",
+    "Design MVP de delivery.zip",
+    "Sem título.canvas",
+    "Sem título.md",
+    "Home.md",
+    "02-Tecnologia/_Indice-02-Tecnologia.md",
+    "99-Anexos",
+    "01-Produto-e-Experiencia/04-Experiencia-do-Cliente.md",
+    "03-Entrega-e-Operacao/_Indice-03-Entrega-e-Operacao.md",
+    "01-Produto-e-Experiencia/_Indice-01-Produto-e-Experiencia.md",
+    "00-Visao-e-Gestao/_Indice-00-Visao-e-Gestao.md",
+    "03-Entrega-e-Operacao/15-Operacao-e-Manutencao.md",
+    "03-Entrega-e-Operacao/14-Epicos-de-Desenvolvimento.md",
+    "03-Entrega-e-Operacao/13-Roadmap.md",
+    "03-Entrega-e-Operacao/11-Agentes-de-IA.md",
+    "03-Entrega-e-Operacao/12-Seguranca-e-Qualidade.md",
+    "03-Entrega-e-Operacao/10-Git-e-Fluxo-de-Entrega.md",
+    "03-Entrega-e-Operacao/09-Ambientes-e-Deploy.md",
+    "03-Entrega-e-Operacao",
+    "02-Tecnologia/08-Imagens-e-Storage.md",
+    "02-Tecnologia/07-Modelo-de-Dados-Supabase.md",
+    "02-Tecnologia/06-Arquitetura-e-Stack.md",
+    "02-Tecnologia",
+    "01-Produto-e-Experiencia/05-Painel-Administrativo.md",
+    "01-Produto-e-Experiencia",
+    "00-Visao-e-Gestao/03-Decisoes-do-Projeto.md",
+    "00-Visao-e-Gestao/01-Visao-Geral.md",
+    "00-Visao-e-Gestao/02-Escopo-Atual.md",
+    "00-Visao-e-Gestao"
+  ]
+}
