@@ -10,7 +10,7 @@ export function Input({ id, label, error, className = '', ...props }: InputProps
         {label}
       </label>
       <input
-        className={`min-h-11 w-full rounded-xl border border-border bg-surface-inner px-3.5 py-3 text-sm text-ink placeholder:text-placeholder focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10 ${className}`}
+        className={`min-h-11 w-full rounded-xl border border-border bg-surface-inner px-3.5 py-3 text-sm text-ink placeholder:text-placeholder focus:border-brand focus:outline-hidden focus:ring-4 focus:ring-brand/10 ${className}`}
         id={inputId}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${inputId}-error` : undefined}
