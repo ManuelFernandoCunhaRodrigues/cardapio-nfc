@@ -53,6 +53,15 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Impacto:** coluna `video_path` em `products` ([[07-Modelo-de-Dados-Supabase]]), política de vídeo em [[08-Imagens-e-Storage]], player no detalhe ([[04-Experiencia-do-Cliente]]), upload no painel ([[05-Painel-Administrativo]]) e entrega no Épico 4 ([[14-Epicos-de-Desenvolvimento]]).
 - **Revisão:** após medir o consumo de Storage e tráfego em homologação.
 
+### Layout da home do cardápio
+
+- **Data:** 2026-10-08
+- **Contexto:** foi escolhida uma referência visual de app de lanchonete para o layout, os cards e a tipografia da home.
+- **Decisão:** seguir [[19-Referencia-Layout-Cardapio]], com banner principal em degradê laranja Salgaê, título do banner em **Anton**, badges de produto (`MAIS PEDIDO`, `NOVO`, `QUENTINHO`) sem preço promocional e barra inferior Início · Cardápio · Busca · Info. Carrinho, favoritos, avaliações e notificações da referência ficam de fora.
+- **Por quê:** padrão moderno e familiar para o cliente, sem sair do escopo de consulta no local.
+- **Impacto:** campo `badge` em `products` ([[07-Modelo-de-Dados-Supabase]]), fonte Anton no design system e Épico 2 ([[14-Epicos-de-Desenvolvimento]]).
+- **Revisão:** após testes com clientes no local.
+
 ## Modelo de registro para próximas decisões
 
 ### Título da decisão
@@ -70,6 +79,6 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - Onde hospedar os vídeos: Supabase Storage (padrão proposto) ou serviço de vídeo dedicado, conforme o consumo de tráfego no plano Free.
 - Limites finais de vídeo (duração, tamanho e resolução) e se destaques também poderão ter vídeo.
 - Política visual: identidade, cores, fotos, tamanhos e textos.
-- Detalhes da home do cardápio: cor escura dos banners, fonte condensada do título, badges de produto, barra inferior e fotos de categoria (lista em [[19-Referencia-Layout-Cardapio]]).
+- Fotos das categorias na home: foto própria por categoria ou emoji como fallback ([[19-Referencia-Layout-Cardapio]]).
 - Papéis de acesso do painel.
 - Se haverá métricas anônimas desde a primeira versão.

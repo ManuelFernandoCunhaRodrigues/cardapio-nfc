@@ -36,7 +36,7 @@ O estilo da referência se resolve com as fontes que já estão no [[17-Design-S
 
 | Uso | Fonte | Peso / tamanho |
 | --- | --- | --- |
-| Título do banner principal | **Condensada pesada em caixa alta** (proposta: *Anton* ou *Bebas Neue*) | 32–40 px, entrelinha apertada (~0,95) |
+| Título do banner principal | **Anton** (condensada pesada, caixa alta) | 32–40 px, entrelinha apertada (~0,95) |
 | Nome do produto, títulos de seção, preço | Poppins | 600–800; nome 13–14 px, seção 18 px, preço 16–18 px |
 | Descrição, saudação, botões | Nunito Sans | 400–600; 11–14 px |
 | Badges e rótulos pequenos ("EXCLUSIVE OFFER", "BESTSELLER") | Poppins ou JetBrains Mono em caixa alta | 9–10 px, `letter-spacing` 0,08–0,12em |
@@ -47,16 +47,16 @@ O cardápio é **somente consulta no local** ([[02-Escopo-Atual]]). Tudo que a r
 
 | Na referência | Na Salgaê |
 | --- | --- |
-| Vermelho como cor principal | Laranja de ação `#E65F2A` (marca `#FC4C0B`). Banner escuro em tinta `#17110D` ou verde da marca `#02432D` (ver divergência em [[16-Identidade-Visual]]). |
+| Vermelho como cor principal | Laranja de ação `#E65F2A` (marca `#FC4C0B`); banner principal em degradê laranja-escuro da marca. |
 | Logo e slogan da outra marca | Logo Salgaê + assinatura `SALGADOS QUENTES`; saudação no tom da casa (ex.: *"Olá! Bem-vindo à Salgaê 👋"*). |
 | Sino de notificações e sacola com contador | **Remover.** No lugar, um único botão de informações (horário, endereço, contato). |
 | Botão "Order Now" no banner | Trocar por *"Ver produto"* / *"Conferir"*, levando ao detalhe ou à categoria. |
 | Botão `+` (adicionar ao carrinho) no card | Trocar por seta `→` que abre o detalhe do produto (mesmo padrão do protótipo local). |
 | Coração de favoritos | **Remover** (não há conta de cliente). |
 | Estrelas e número de avaliações | **Remover.** Não há sistema de avaliação; exibir nota inventada seria enganoso. |
-| Badges "BESTSELLER", "POPULAR", "SAVE 15%" | Badges da casa: `MAIS PEDIDO`, `NOVO`, `QUENTINHO`, `PROMO`, além de `INDISPONÍVEL`. Exigem campo próprio no produto (ver pendências). |
+| Badges "BESTSELLER", "POPULAR", "SAVE 15%" | Badges da casa: `MAIS PEDIDO`, `NOVO`, `QUENTINHO`, além de `INDISPONÍVEL`. Campo `badge` no produto; sem preço promocional. |
 | Banner "Up to 30% OFF" | Vem da tabela `highlights` (destaques configuráveis pelo painel). |
-| Aba central "Orders" e aba "Profile" | **Remover.** Barra inferior proposta: Início · Cardápio · Busca · Info, sem botão central de pedido. |
+| Aba central "Orders" e aba "Profile" | **Remover.** Barra inferior: Início · Cardápio · Busca · Info, sem botão central. |
 | Botão de filtro ao lado da busca | Fora do MVP; manter só a busca. |
 
 Regras que continuam valendo nesta tela:
@@ -65,12 +65,15 @@ Regras que continuam valendo nesta tela:
 - foto ausente usa o componente de *fallback* listrado do [[17-Design-System-UI]];
 - o **vídeo** do produto aparece só no detalhe, nunca nos cards da home ([[08-Imagens-e-Storage]]).
 
-## Pendências para decidir
+## Decisões tomadas (2026-10-08)
 
-Registrar as respostas em [[03-Decisoes-do-Projeto]]:
+Registradas em [[03-Decisoes-do-Projeto]]:
 
-1. Cor escura dos banners: tinta `#17110D` ou verde da marca `#02432D`.
-2. Fonte condensada do título do banner: *Anton*, *Bebas Neue* ou outra.
-3. Badges de produto: criar campo `badge` em `products` (e, se houver `PROMO`, um preço promocional) — muda o [[07-Modelo-de-Dados-Supabase]].
-4. Barra inferior: confirmar as abas Início · Cardápio · Busca · Info, ou não ter barra.
-5. Fotos das categorias: usar uma foto própria por categoria (campo `image_path` já existe em `categories`) ou emoji, como no protótipo.
+1. **Banner principal em laranja Salgaê:** degradê laranja-escuro da marca (de `#FC4C0B`/`#E65F2A` para um tom queimado), ocupando o papel do vermelho da referência. Texto e botão em branco/creme.
+2. **Título do banner em Anton:** caixa alta, 32–40 px, entrelinha ~0,95. Carregar via `next/font` só onde for usada.
+3. **Badges de produto, sem preço promocional:** novo campo `badge` em `products`, com os valores `MAIS PEDIDO`, `NOVO` e `QUENTINHO` (ou vazio), editado no painel. `INDISPONÍVEL` continua vindo de `is_available`. Não haverá preço riscado por enquanto. Muda o [[07-Modelo-de-Dados-Supabase]].
+4. **Barra inferior com 4 abas:** Início · Cardápio · Busca · Info, sem botão central elevado. Info mostra horário, endereço e contato.
+
+## Pendência
+
+- Fotos das categorias: usar uma foto própria por categoria (campo `image_path` já existe em `categories`), com emoji como fallback enquanto não houver foto.

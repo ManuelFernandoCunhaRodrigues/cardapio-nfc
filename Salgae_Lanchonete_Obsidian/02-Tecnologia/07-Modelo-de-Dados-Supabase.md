@@ -15,7 +15,7 @@ Voltar: [[00-Comece-Aqui]] · Segurança: [[12-Seguranca-e-Qualidade]]
 | Entidade | Campos essenciais | Observações |
 | --- | --- | --- |
 | `categories` | `id`, `name`, `slug`, `sort_order`, `is_active` | Organiza a leitura do cardápio. |
-| `products` | `id`, `category_id`, `name`, `description`, `price`, `image_path`, `video_path`, `sort_order`, `is_active`, `is_available` | Um produto deve referenciar uma categoria válida. `video_path` é opcional. |
+| `products` | `id`, `category_id`, `name`, `description`, `price`, `image_path`, `video_path`, `badge`, `sort_order`, `is_active`, `is_available` | Um produto deve referenciar uma categoria válida. `video_path` é opcional. `badge` é opcional: `MAIS PEDIDO`, `NOVO` ou `QUENTINHO` ([[19-Referencia-Layout-Cardapio]]). |
 | `highlights` | `id`, `title`, `description`, `image_path`, `target`, `sort_order`, `is_active` | Controla conteúdo promocional no topo. |
 | `profiles` | `id`, `name`, `role`, `is_active` | Complementa a identidade do Supabase Auth. |
 | `audit_logs` (recomendado) | `id`, `actor_id`, `action`, `entity`, `entity_id`, `metadata`, `created_at` | Permite rastrear alterações administrativas relevantes. |
