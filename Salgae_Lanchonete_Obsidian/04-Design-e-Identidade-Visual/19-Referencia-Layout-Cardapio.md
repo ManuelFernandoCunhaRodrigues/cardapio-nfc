@@ -72,7 +72,7 @@ Registradas em [[03-Decisoes-do-Projeto]]:
 1. **Banner principal em laranja Salgaê:** degradê laranja-escuro da marca (de `#FC4C0B`/`#E65F2A` para um tom queimado), ocupando o papel do vermelho da referência. Texto e botão em branco/creme.
 2. **Título do banner em Anton:** caixa alta, 32–40 px, entrelinha ~0,95. Carregar via `next/font` só onde for usada.
 3. **Badges de produto, sem preço promocional:** novo campo `badge` em `products`, com os valores `MAIS PEDIDO`, `NOVO` e `QUENTINHO` (ou vazio), editado no painel. `INDISPONÍVEL` continua vindo de `is_available`. Não haverá preço riscado por enquanto. Muda o [[07-Modelo-de-Dados-Supabase]].
-4. **Barra inferior com 4 abas:** Início · Cardápio · Busca · Info, sem botão central elevado. Info mostra horário, endereço e contato.
+4. **Barra inferior com 4 abas:** Início · Cardápio · Busca · Info, sem botão central elevado. Info mostra horário, endereço e contato, lidos de `store_settings` ([[07-Modelo-de-Dados-Supabase]]), com o status aberta/fechada calculado no fuso de São Paulo.
 
 ## Pendência
 

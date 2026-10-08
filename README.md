@@ -48,6 +48,8 @@ npx supabase db push
 
 Para dados de exemplo, use `supabase/seed.sql` somente em ambiente local ou de homologação. Não execute o seed em produção.
 
+Os dados únicos da loja são criados pela migration `20261008232020_store_settings.sql`. Administradores ativos podem editá-los em `/admin/loja`; visitantes apenas os leem para a futura aba Info e para o status aberto/fechado.
+
 ### Promover o primeiro administrador
 
 1. Crie o usuário em **Authentication > Users** no Supabase.
