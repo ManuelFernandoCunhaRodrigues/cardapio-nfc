@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-09-26
+atualizado: 2026-10-08
 ---
 # Decisões do projeto
 
@@ -21,6 +21,26 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 | Definida | Serão dois projetos Vercel, não apenas previews. | Cada ambiente terá vínculo explícito com sua branch e seu Supabase. |
 | Definida | O projeto começa dedicado à Salgaê. | Evita complexidade prematura de multi-tenant. |
 | Definida | Claude Code orquestra; Codex executa trabalho técnico pesado. | Reduz contexto repetido e dá um fluxo de execução rastreável. Ver [[11-Agentes-de-IA]]. |
+| Definida | Projetos Supabase criados na região `sa-east-1` (São Paulo). | Menor latência para clientes no Brasil. Refs registrados em [[09-Ambientes-e-Deploy]]. |
+| Definida | Frontend em Next.js + TypeScript, Tailwind CSS e Zod. | Confirma a base recomendada em [[06-Arquitetura-e-Stack]]: área pública, painel, rotas protegidas e deploy no mesmo projeto. |
+
+### Ambientes Supabase em São Paulo
+
+- **Data:** 2026-10-08
+- **Contexto:** era preciso criar o par homologação/produção previsto em [[09-Ambientes-e-Deploy]]; só existia um projeto com nome automático, pausado e em `us-east-1`.
+- **Decisão:** criar `SALGAE-STAGING` e `SALGAE-PRODUCTION` em `sa-east-1`, no plano Free.
+- **Por quê:** proximidade com os clientes e custo zero durante o desenvolvimento.
+- **Impacto:** variáveis de ambiente de cada projeto Vercel apontam para o Supabase correspondente; o projeto antigo fica fora do fluxo.
+- **Revisão:** antes do lançamento, avaliar plano Pro para produção (evita pausa automática).
+
+### Stack do frontend
+
+- **Data:** 2026-10-08
+- **Contexto:** o Épico 1 depende da escolha do framework, que estava pendente.
+- **Decisão:** Next.js (App Router) com TypeScript, Tailwind CSS e Zod.
+- **Por quê:** é a base já recomendada; concentra cardápio público, painel e validação em um único deploy Vercel.
+- **Impacto:** inicia o Épico 1 em [[14-Epicos-de-Desenvolvimento]].
+- **Revisão:** somente se surgir requisito que o Next.js não atenda bem.
 
 ## Modelo de registro para próximas decisões
 
@@ -35,7 +55,6 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 
 ## Decisões pendentes relevantes
 
-- Framework final do frontend (a base recomendada está em [[06-Arquitetura-e-Stack]]).
 - Forma de contato do cliente com a equipe durante a visita.
 - Política visual: identidade, cores, fotos, tamanhos e textos.
 - Papéis de acesso do painel.

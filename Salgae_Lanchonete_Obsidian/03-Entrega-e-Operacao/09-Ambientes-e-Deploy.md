@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-09-26
+atualizado: 2026-10-08
 ---
 # Ambientes e deploy
 
@@ -20,6 +20,19 @@ O projeto terá dois ambientes reais e isolados, cada um com seu projeto Vercel 
 | Produção | `main` | Salgaê — Produção | `SALGAE-PRODUCTION` | Cardápio efetivamente usado pelos clientes. |
 
 > Os nomes exatos podem mudar no provedor, mas a separação deve permanecer.
+
+## Projetos Supabase provisionados
+
+Criados em 2026-10-08 na organização **Salgaê Lanchonete** (plano Free), região `sa-east-1` (São Paulo).
+
+| Ambiente | Projeto | Ref | URL da API |
+| --- | --- | --- | --- |
+| Homologação | `SALGAE-STAGING` | `csirmtmerqpbhatruzaf` | `https://csirmtmerqpbhatruzaf.supabase.co` |
+| Produção | `SALGAE-PRODUCTION` | `gqwtjrdfnkfitslolofg` | `https://gqwtjrdfnkfitslolofg.supabase.co` |
+
+O projeto antigo `xjvibtlnesfzvdyjhivg` (criado automaticamente, em `us-east-1`) está pausado e não faz parte do fluxo.
+
+> No plano Free, projetos sem atividade por cerca de 7 dias são pausados automaticamente. Antes do lançamento, avaliar o plano Pro para `SALGAE-PRODUCTION`, já que um cardápio pausado deixa de abrir para o cliente.
 
 ## Por que dois projetos Vercel
 
