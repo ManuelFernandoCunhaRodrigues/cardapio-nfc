@@ -8,6 +8,8 @@ export const dynamic = 'force-dynamic';
 
 type Category = { id: string; name: string; slug: string; sort_order: number };
 export default async function MenuPage() {
+  let menu: { categories: Category[]; products: Product[] } | null = null;
+
   try {
     const supabase = await createClient();
     const [categoriesResult, productsResult] = await Promise.all([
@@ -22,45 +24,44 @@ export default async function MenuPage() {
     if (categoriesResult.error || productsResult.error) throw new Error('Falha ao carregar o cardápio.');
     const categories = categoriesResult.data as Category[];
     const products: Product[] = (productsResult.data ?? []).map((product) => productSchema.parse(product));
-
-    if (categories.length === 0) {
-      return <MenuShell><EmptyMenu /></MenuShell>;
-    }
-
-    return (
-      <MenuShell>
-        <div className="space-y-8">
-          {categories.map((category) => {
-            const categoryProducts = products.filter((product) => product.category_id === category.id);
-            return (
-              <section aria-labelledby={`category-${category.id}`} key={category.id}>
-                <h2 className="disp text-2xl font-bold text-ink" id={`category-${category.id}`}>{category.name}</h2>
-                {categoryProducts.length === 0 ? (
-                  <p className="mt-2 text-sm text-muted">Ainda não há itens disponíveis nesta categoria.</p>
-                ) : (
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {categoryProducts.map((product) => (
-                      <Card className="flex items-start justify-between gap-4" key={product.id}>
-                        <div>
-                          <h3 className="disp text-lg font-bold text-ink">{product.name}</h3>
-                          {product.description ? <p className="mt-1 text-sm leading-6 text-muted">{product.description}</p> : null}
-                          {!product.is_available ? <p className="mt-3 text-xs font-bold text-danger">Indisponível no momento</p> : null}
-                        </div>
-                        <p className="disp shrink-0 pt-1 text-base font-extrabold text-brand">{formatPriceBRL(product.price_cents)}</p>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </section>
-            );
-          })}
-        </div>
-      </MenuShell>
-    );
+    menu = { categories, products };
   } catch (error) {
     reportServerError('falha_ao_carregar_cardapio', error);
-    return <MenuShell><MenuError /></MenuShell>;
   }
+
+  if (!menu) return <MenuShell><MenuError /></MenuShell>;
+  if (menu.categories.length === 0) return <MenuShell><EmptyMenu /></MenuShell>;
+
+  return (
+    <MenuShell>
+      <div className="space-y-8">
+        {menu.categories.map((category) => {
+          const categoryProducts = menu.products.filter((product) => product.category_id === category.id);
+          return (
+            <section aria-labelledby={`category-${category.id}`} key={category.id}>
+              <h2 className="disp text-2xl font-bold text-ink" id={`category-${category.id}`}>{category.name}</h2>
+              {categoryProducts.length === 0 ? (
+                <p className="mt-2 text-sm text-muted">Ainda não há itens disponíveis nesta categoria.</p>
+              ) : (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {categoryProducts.map((product) => (
+                    <Card className="flex items-start justify-between gap-4" key={product.id}>
+                      <div>
+                        <h3 className="disp text-lg font-bold text-ink">{product.name}</h3>
+                        {product.description ? <p className="mt-1 text-sm leading-6 text-muted">{product.description}</p> : null}
+                        {!product.is_available ? <p className="mt-3 text-xs font-bold text-danger">Indisponível no momento</p> : null}
+                      </div>
+                      <p className="disp shrink-0 pt-1 text-base font-extrabold text-brand">{formatPriceBRL(product.price_cents)}</p>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    </MenuShell>
+  );
 }
 
 function MenuShell({ children }: Readonly<{ children: React.ReactNode }>) {
