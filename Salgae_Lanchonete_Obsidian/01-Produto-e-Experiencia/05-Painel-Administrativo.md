@@ -49,6 +49,14 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 - ativar/desativar sem apagar o histórico;
 - validar tamanho e formato da imagem para não prejudicar a página pública.
 
+### Dados da loja
+
+- editar nome, frase, endereço, link do mapa, telefone, WhatsApp e Instagram;
+- horário de funcionamento por dia da semana, com opção de dia fechado;
+- abrir ou fechar a loja manualmente, sobrepondo o horário (ex.: feriado);
+- aviso curto opcional exibido no cardápio (ex.: "Hoje fechamos às 15h");
+- cada alteração fica registrada na auditoria.
+
 ## Permissões iniciais
 
 Começar com o menor número de papéis possível: **administrador**. Se outra pessoa passar a editar somente produtos, criar papel **editor** com permissões limitadas. As regras devem ser aplicadas no banco, não apenas escondidas na interface.

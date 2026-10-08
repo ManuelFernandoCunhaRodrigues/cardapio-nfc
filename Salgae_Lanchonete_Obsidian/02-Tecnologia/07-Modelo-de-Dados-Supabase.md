@@ -19,6 +19,7 @@ Voltar: [[00-Comece-Aqui]] · Segurança: [[12-Seguranca-e-Qualidade]]
 | `highlights` | `id`, `title`, `description`, `image_path`, `target`, `sort_order`, `is_active` | Controla conteúdo promocional no topo. |
 | `profiles` | `id`, `name`, `role`, `is_active` | Complementa a identidade do Supabase Auth. |
 | `audit_logs` (recomendado) | `id`, `actor_id`, `action`, `entity`, `entity_id`, `metadata`, `created_at` | Permite rastrear alterações administrativas relevantes. |
+| `store_settings` | `id` (linha única), `name`, `tagline`, `address`, `maps_url`, `phone`, `whatsapp`, `instagram`, `opening_hours`, `status_override`, `notice` | Dados da loja para a aba **Info** e o status aberta/fechada. `opening_hours` guarda os 7 dias; `status_override` (`auto`, `open`, `closed`) permite abrir ou fechar manualmente. Leitura pública, edição só admin. |
 
 ## Regras de integridade
 

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { SignOutButton } from '@/components/admin/sign-out-button';
@@ -40,6 +41,11 @@ export default async function AdminPage() {
       <Card className="mt-8 max-w-2xl">
         <h2 className="disp text-xl font-bold text-ink">Fundação pronta</h2>
         <p className="mt-2 text-sm leading-6 text-muted">A autenticação e a guarda de acesso estão configuradas. A gestão de categorias, produtos e destaques será incluída nos próximos épicos.</p>
+      </Card>
+      <Card className="mt-5 max-w-2xl">
+        <h2 className="disp text-xl font-bold text-ink">Dados da loja</h2>
+        <p className="mt-2 text-sm leading-6 text-muted">Edite contatos, endereço, horários e o status de funcionamento.</p>
+        <Link className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 py-3 text-sm font-bold text-white shadow-brand transition-colors hover:bg-positive focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20" href="/admin/loja">Abrir dados da loja</Link>
       </Card>
     </main>
   );
