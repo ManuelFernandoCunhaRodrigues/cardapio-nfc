@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-09-26
+atualizado: 2026-10-08
 ---
 # Épicos de desenvolvimento
 
@@ -58,17 +58,19 @@ Voltar: [[13-Roadmap]] · Segurança: [[12-Seguranca-e-Qualidade]]
 
 **Pronto quando:** uma pessoa sem conhecimento técnico consegue atualizar um produto sem quebrar o catálogo.
 
-## Épico 4 — Gestão de imagens e destaques
+## Épico 4 — Gestão de imagens, vídeos e destaques
 
 **Objetivo:** assegurar conteúdo visual de qualidade sem desperdício no Storage.
 
 - upload validado;
 - preview e fallback;
 - substituição atômica de imagem;
+- upload opcional de vídeo curto por produto, validado por formato, duração e tamanho;
+- player no detalhe do produto com a foto como capa, sem som automático e carregamento sob demanda;
 - limpeza de arquivo antigo somente sem referências;
 - CRUD de destaques.
 
-**Pronto quando:** alterar ou remover uma foto não deixa produto inconsistente nem arquivo órfão conhecido.
+**Pronto quando:** alterar ou remover uma foto ou um vídeo não deixa produto inconsistente nem arquivo órfão conhecido, e o vídeo não piora a abertura do cardápio em rede móvel.
 
 ## Épico 5 — Qualidade e homologação
 

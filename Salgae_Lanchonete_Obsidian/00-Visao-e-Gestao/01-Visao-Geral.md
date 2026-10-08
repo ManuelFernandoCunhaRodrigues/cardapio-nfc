@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-09-26
+atualizado: 2026-10-08
 ---
 # Visão geral
 
@@ -18,7 +18,7 @@ O sistema é composto por duas experiências conectadas:
 
 | Área | Quem usa | Resultado |
 | --- | --- | --- |
-| Cardápio público | Cliente no estabelecimento | Consulta produtos, preços, fotos, descrição, categorias e destaques. |
+| Cardápio público | Cliente no estabelecimento | Consulta produtos, preços, fotos, vídeos curtos, descrição, categorias e destaques. |
 | Painel administrativo | Dono/equipe autorizada | Mantém o cardápio atualizado sem alterar código. |
 
 ## Problema que resolve
@@ -45,6 +45,7 @@ Não é necessário iniciar com um painel analítico complexo. Os primeiros sina
 - itens mais visualizados;
 - tempo até a primeira visualização útil;
 - percentual de produtos que possuem foto e descrição;
+- quantos produtos têm vídeo e com que frequência ele é reproduzido;
 - frequência de atualização do cardápio pela equipe.
 
 Qualquer coleta deve respeitar [[12-Seguranca-e-Qualidade|privacidade e segurança]].

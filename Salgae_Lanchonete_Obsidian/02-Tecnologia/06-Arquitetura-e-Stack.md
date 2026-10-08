@@ -4,7 +4,7 @@ area: Tecnologia
 tags:
   - tecnologia
   - arquitetura
-atualizado: 2026-09-26
+atualizado: 2026-10-08
 ---
 # Arquitetura e stack
 
@@ -19,7 +19,7 @@ flowchart TD
   Publico --> Supabase[Supabase]
   Painel --> Supabase
   Supabase --> Banco[(PostgreSQL)]
-  Supabase --> Storage[Storage de imagens]
+  Supabase --> Storage[Storage de imagens e vídeos]
 ```
 
 O cardápio público lê apenas dados permitidos. O painel escreve mediante sessão autenticada e políticas de autorização. O Supabase é a fonte de verdade de dados e imagens.
@@ -30,7 +30,7 @@ O cardápio público lê apenas dados permitidos. O painel escreve mediante sess
 | --- | --- | --- |
 | Banco de dados | Supabase PostgreSQL | Produtos, categorias, destaques, usuários e auditoria. |
 | Autenticação | Supabase Auth | Sessões e identidade dos usuários administrativos. |
-| Arquivos | Supabase Storage | Fotos de produtos e artes de destaque. |
+| Arquivos | Supabase Storage | Fotos e vídeos curtos de produtos e artes de destaque. |
 | Hospedagem | Vercel | Aplicação web, com projetos independentes por ambiente. |
 | Controle de versão | Git/GitHub | Histórico, revisão e fluxo entre `develop` e `main`. |
 
@@ -45,7 +45,7 @@ O motivo da recomendação é manter interface, rotas protegidas, validação e 
 - Nunca colocar chaves administrativas do Supabase no navegador.
 - Separar funções públicas, administrativas e sensíveis.
 - Validar no cliente para orientar o usuário e no servidor/banco para garantir integridade.
-- Tratar operações de imagem e exclusão como ações com verificação.
+- Tratar operações de imagem, vídeo e exclusão como ações com verificação.
 - Usar tipagem e regras de domínio para preço, ordenação e disponibilidade.
 - Preferir componentes acessíveis e responsivos desde a primeira tela.
 

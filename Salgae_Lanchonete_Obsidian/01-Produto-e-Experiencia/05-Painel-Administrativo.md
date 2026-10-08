@@ -4,7 +4,7 @@ area: Produto
 tags:
   - produto
   - experiencia
-atualizado: 2026-09-26
+atualizado: 2026-10-08
 ---
 # Painel administrativo
 
@@ -36,11 +36,12 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 
 ### Produtos
 
-- nome, preço, descrição, categoria, imagem, ordem, ativo e disponibilidade;
+- nome, preço, descrição, categoria, imagem, vídeo curto opcional, ordem, ativo e disponibilidade;
 - validação antes de salvar;
 - prévia do que será mostrado no cardápio;
 - confirmação antes de ações irreversíveis;
-- remoção ou substituição segura da imagem antiga, conforme [[08-Imagens-e-Storage]].
+- envio, prévia, troca e remoção do vídeo do produto, com aviso claro dos limites (formato, duração e tamanho);
+- remoção ou substituição segura da imagem ou do vídeo antigo, conforme [[08-Imagens-e-Storage]].
 
 ### Destaques
 

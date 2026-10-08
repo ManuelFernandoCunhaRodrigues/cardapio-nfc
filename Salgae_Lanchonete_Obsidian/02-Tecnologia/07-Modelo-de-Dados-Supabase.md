@@ -4,7 +4,7 @@ area: Tecnologia
 tags:
   - tecnologia
   - arquitetura
-atualizado: 2026-09-26
+atualizado: 2026-10-08
 ---
 # Modelo de dados e Supabase
 
@@ -15,7 +15,7 @@ Voltar: [[00-Comece-Aqui]] · Segurança: [[12-Seguranca-e-Qualidade]]
 | Entidade | Campos essenciais | Observações |
 | --- | --- | --- |
 | `categories` | `id`, `name`, `slug`, `sort_order`, `is_active` | Organiza a leitura do cardápio. |
-| `products` | `id`, `category_id`, `name`, `description`, `price`, `image_path`, `sort_order`, `is_active`, `is_available` | Um produto deve referenciar uma categoria válida. |
+| `products` | `id`, `category_id`, `name`, `description`, `price`, `image_path`, `video_path`, `sort_order`, `is_active`, `is_available` | Um produto deve referenciar uma categoria válida. `video_path` é opcional. |
 | `highlights` | `id`, `title`, `description`, `image_path`, `target`, `sort_order`, `is_active` | Controla conteúdo promocional no topo. |
 | `profiles` | `id`, `name`, `role`, `is_active` | Complementa a identidade do Supabase Auth. |
 | `audit_logs` (recomendado) | `id`, `actor_id`, `action`, `entity`, `entity_id`, `metadata`, `created_at` | Permite rastrear alterações administrativas relevantes. |
@@ -26,7 +26,8 @@ Voltar: [[00-Comece-Aqui]] · Segurança: [[12-Seguranca-e-Qualidade]]
 - `slug` deve ser único por categoria quando ele fizer parte de URL.
 - `sort_order` precisa ter padrão previsível para evitar itens em ordem aleatória.
 - A categoria de um produto não deve ser removida enquanto houver produtos vinculados, salvo em transação/migração segura.
-- Uma imagem só deve ser apagada quando nenhum registro ainda a referenciar.
+- Uma imagem ou vídeo só deve ser apagado quando nenhum registro ainda o referenciar.
+- Produto com `video_path` precisa ter `image_path`, usada como capa do vídeo e fallback.
 - Conteúdo público considera, no mínimo, `is_active = true`; a regra de `is_available` segue [[04-Experiencia-do-Cliente]].
 
 ## Acesso e RLS

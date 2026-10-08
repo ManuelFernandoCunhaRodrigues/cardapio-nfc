@@ -23,6 +23,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 | Definida | Claude Code orquestra; Codex executa trabalho técnico pesado. | Reduz contexto repetido e dá um fluxo de execução rastreável. Ver [[11-Agentes-de-IA]]. |
 | Definida | Projetos Supabase criados na região `sa-east-1` (São Paulo). | Menor latência para clientes no Brasil. Refs registrados em [[09-Ambientes-e-Deploy]]. |
 | Definida | Frontend em Next.js + TypeScript, Tailwind CSS e Zod. | Confirma a base recomendada em [[06-Arquitetura-e-Stack]]: área pública, painel, rotas protegidas e deploy no mesmo projeto. |
+| Definida | Produto pode ter um vídeo curto opcional, além da foto. | Mostra o alimento de forma mais apetitosa. A foto continua obrigatória como capa e plano B. Ver [[08-Imagens-e-Storage]]. |
 
 ### Ambientes Supabase em São Paulo
 
@@ -42,6 +43,15 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Impacto:** inicia o Épico 1 em [[14-Epicos-de-Desenvolvimento]].
 - **Revisão:** somente se surgir requisito que o Next.js não atenda bem.
 
+### Vídeo do produto
+
+- **Data:** 2026-10-08
+- **Contexto:** além da foto, a Salgaê quer mostrar o alimento em vídeo no cardápio.
+- **Decisão:** cada produto pode ter **um** vídeo curto e opcional, exibido no detalhe do produto. A foto continua sendo a capa (poster) e o fallback.
+- **Por quê:** vídeo valoriza o produto (textura, recheio, preparo) sem mudar o fluxo de consulta.
+- **Impacto:** coluna `video_path` em `products` ([[07-Modelo-de-Dados-Supabase]]), política de vídeo em [[08-Imagens-e-Storage]], player no detalhe ([[04-Experiencia-do-Cliente]]), upload no painel ([[05-Painel-Administrativo]]) e entrega no Épico 4 ([[14-Epicos-de-Desenvolvimento]]).
+- **Revisão:** após medir o consumo de Storage e tráfego em homologação.
+
 ## Modelo de registro para próximas decisões
 
 ### Título da decisão
@@ -56,6 +66,8 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 ## Decisões pendentes relevantes
 
 - Forma de contato do cliente com a equipe durante a visita.
+- Onde hospedar os vídeos: Supabase Storage (padrão proposto) ou serviço de vídeo dedicado, conforme o consumo de tráfego no plano Free.
+- Limites finais de vídeo (duração, tamanho e resolução) e se destaques também poderão ter vídeo.
 - Política visual: identidade, cores, fotos, tamanhos e textos.
 - Papéis de acesso do painel.
 - Se haverá métricas anônimas desde a primeira versão.
