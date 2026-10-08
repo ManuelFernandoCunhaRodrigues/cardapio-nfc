@@ -67,7 +67,7 @@ set role = 'admin', is_active = true
 where id = 'UUID_DO_USUARIO';
 ```
 
-Não há trigger para promover automaticamente nenhum usuário. A autorização é conferida no banco por RLS e por `public.is_admin()`.
+Não há trigger para promover automaticamente nenhum usuário. A autorização é conferida no banco por RLS e pela função interna `private.is_admin()`, que não é exposta pela Data API.
 
 ## Fluxo de ambientes
 
