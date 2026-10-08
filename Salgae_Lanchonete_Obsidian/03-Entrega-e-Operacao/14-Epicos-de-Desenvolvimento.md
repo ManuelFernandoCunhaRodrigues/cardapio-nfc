@@ -38,6 +38,7 @@ Voltar: [[13-Roadmap]] · Segurança: [[12-Seguranca-e-Qualidade]]
 
 **Objetivo:** entregar a experiência de consulta no celular.
 
+- home no layout de [[19-Referencia-Layout-Cardapio]]: cabeçalho, busca, banner em carrossel, categorias em círculo, cards de produto e banner de oferta;
 - cabeçalho, categorias, produtos e detalhe;
 - destaques configuráveis;
 - estados de carregamento, vazio e erro;

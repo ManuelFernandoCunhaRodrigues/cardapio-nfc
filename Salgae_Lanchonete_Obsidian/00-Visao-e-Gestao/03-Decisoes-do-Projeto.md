@@ -24,6 +24,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 | Definida | Projetos Supabase criados na região `sa-east-1` (São Paulo). | Menor latência para clientes no Brasil. Refs registrados em [[09-Ambientes-e-Deploy]]. |
 | Definida | Frontend em Next.js + TypeScript, Tailwind CSS e Zod. | Confirma a base recomendada em [[06-Arquitetura-e-Stack]]: área pública, painel, rotas protegidas e deploy no mesmo projeto. |
 | Definida | Produto pode ter um vídeo curto opcional, além da foto. | Mostra o alimento de forma mais apetitosa. A foto continua obrigatória como capa e plano B. Ver [[08-Imagens-e-Storage]]. |
+| Definida | A home do cardápio segue uma referência visual de app de lanchonete (layout, cards e tipografia). | Dá um padrão moderno e conhecido ao cliente. Itens de pedido, conta e avaliação foram retirados. Ver [[19-Referencia-Layout-Cardapio]]. |
 
 ### Ambientes Supabase em São Paulo
 
@@ -69,5 +70,6 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - Onde hospedar os vídeos: Supabase Storage (padrão proposto) ou serviço de vídeo dedicado, conforme o consumo de tráfego no plano Free.
 - Limites finais de vídeo (duração, tamanho e resolução) e se destaques também poderão ter vídeo.
 - Política visual: identidade, cores, fotos, tamanhos e textos.
+- Detalhes da home do cardápio: cor escura dos banners, fonte condensada do título, badges de produto, barra inferior e fotos de categoria (lista em [[19-Referencia-Layout-Cardapio]]).
 - Papéis de acesso do painel.
 - Se haverá métricas anônimas desde a primeira versão.

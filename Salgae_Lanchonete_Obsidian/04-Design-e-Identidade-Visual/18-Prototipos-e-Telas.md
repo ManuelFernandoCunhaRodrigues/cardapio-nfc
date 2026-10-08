@@ -29,6 +29,8 @@ Os protótipos são interativos de verdade: têm estado, filtros, carrinho persi
 
 Acesso pelo NFC da mesa. É **somente consulta**: não há carrinho nem botão de chamar atendente.
 
+> **Atualização 2026-10-08:** a home (L01) passa a seguir o layout, os cards e a tipografia de [[19-Referencia-Layout-Cardapio]]. As telas L02 (detalhe) e L03 (busca) continuam valendo, ajustadas ao novo estilo.
+
 | ID | Tela | Elementos |
 | --- | --- | --- |
 | L01 | Início | Topo com menu, logo e info · hero escuro "Coxinha do Chef" com badge "Quentinho" e indicador de carrossel (3 pontos) · fila de chips de categoria · lista horizontal "Mais pedidos" com contador de itens · banner "Combo do dia" com selo de 20% de economia. |

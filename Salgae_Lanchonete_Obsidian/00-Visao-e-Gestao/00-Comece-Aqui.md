@@ -35,6 +35,7 @@ O produto deve ser simples para o cliente, rápido para a lanchonete manter e se
 - [[16-Identidade-Visual]] — marca, logotipo, cores e tom de voz.
 - [[17-Design-System-UI]] — tokens, componentes e layout da interface.
 - [[18-Prototipos-e-Telas]] — telas prototipadas, fluxos e divergências em aberto.
+- [[19-Referencia-Layout-Cardapio]] — referência visual da home do cardápio.
 
 ## Como usar este vault
 

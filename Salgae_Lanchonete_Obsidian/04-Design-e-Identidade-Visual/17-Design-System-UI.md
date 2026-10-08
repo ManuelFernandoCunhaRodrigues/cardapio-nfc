@@ -5,7 +5,7 @@ tags:
   - design
   - ui
   - tecnologia
-atualizado: 2026-09-27
+atualizado: 2026-10-08
 ---
 # Design system da interface
 
@@ -60,6 +60,8 @@ Escala prática observada: 56 px (capa) · 40/32/28 px (títulos de seção) · 
 - Imagem ausente: faixas diagonais escuras (`repeating-linear-gradient(135deg, #2A2019, #221A14)`) com o nome do item em mono. Esse marcador deve virar um componente real de *fallback* de imagem.
 
 ## Componentes-chave
+
+> Na home do cardápio público, cabeçalho, banner, chips de categoria e cards de produto seguem [[19-Referencia-Layout-Cardapio]] (chips com foto de 60–64 px, cards de 150–160 px com badge e preço em destaque). A tabela abaixo continua valendo para o painel e demais telas.
 
 | Componente | Especificação |
 | --- | --- |
