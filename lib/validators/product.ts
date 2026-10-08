@@ -9,6 +9,7 @@ export const productSchema = z
     price_cents: z.number().int().nonnegative(),
     image_path: z.string().nullable(),
     video_path: z.string().trim().min(1).nullable().optional(),
+    badge: z.enum(['mais_pedido', 'novo', 'quentinho']).nullable().optional().transform((value) => value ?? null),
     sort_order: z.number().int(),
     is_active: z.boolean(),
     is_available: z.boolean(),

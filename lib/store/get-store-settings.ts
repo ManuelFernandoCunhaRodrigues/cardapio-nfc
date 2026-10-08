@@ -2,9 +2,13 @@ import { reportServerError } from '@/lib/observability';
 import { createClient } from '@/lib/supabase/server';
 import { storeSettingsSchema, type StoreSettings } from '@/lib/validators/store-settings';
 
-export async function getStoreSettings(): Promise<StoreSettings | null> {
+type StoreSettingsClient = {
+  from: (table: 'store_settings') => ReturnType<Awaited<ReturnType<typeof createClient>>['from']>;
+};
+
+export async function getStoreSettings(client?: StoreSettingsClient): Promise<StoreSettings | null> {
   try {
-    const supabase = await createClient();
+    const supabase = client ?? await createClient();
     const { data, error } = await supabase
       .from('store_settings')
       .select('id, name, tagline, address, maps_url, phone, whatsapp, instagram, opening_hours, status_override, notice, updated_at')
