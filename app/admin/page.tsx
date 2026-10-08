@@ -1,0 +1,46 @@
+import { redirect } from 'next/navigation';
+
+import { SignOutButton } from '@/components/admin/sign-out-button';
+import { Card } from '@/components/ui/card';
+import { createClient } from '@/lib/supabase/server';
+
+export const dynamic = 'force-dynamic';
+
+export default async function AdminPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) redirect('/admin/login');
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, is_active, name')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const isAdmin = profile?.role === 'admin' && profile.is_active;
+  if (!isAdmin) {
+    return (
+      <main className="grid min-h-screen place-items-center px-4 py-10">
+        <Card className="w-full max-w-md">
+          <h1 className="disp text-2xl font-extrabold text-ink">Acesso não autorizado</h1>
+          <p className="mt-2 text-sm leading-6 text-muted">Sua conta não possui permissão ativa para acessar o painel administrativo.</p>
+          <div className="mt-6"><SignOutButton /></div>
+        </Card>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto min-h-screen max-w-6xl px-4 py-8 sm:px-6">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
+        <div><p className="lbl text-positive">Administração</p><h1 className="disp mt-2 text-3xl font-extrabold text-ink">Olá, {profile.name ?? 'administrador'}</h1></div>
+        <SignOutButton />
+      </header>
+      <Card className="mt-8 max-w-2xl">
+        <h2 className="disp text-xl font-bold text-ink">Fundação pronta</h2>
+        <p className="mt-2 text-sm leading-6 text-muted">A autenticação e a guarda de acesso estão configuradas. A gestão de categorias, produtos e destaques será incluída nos próximos épicos.</p>
+      </Card>
+    </main>
+  );
+}
