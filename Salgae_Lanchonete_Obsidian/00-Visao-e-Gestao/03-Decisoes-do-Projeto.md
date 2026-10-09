@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-10-08
+atualizado: 2026-10-09
 ---
 # Decisões do projeto
 
@@ -25,6 +25,9 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 | Definida | Frontend em Next.js + TypeScript, Tailwind CSS e Zod. | Confirma a base recomendada em [[06-Arquitetura-e-Stack]]: área pública, painel, rotas protegidas e deploy no mesmo projeto. |
 | Definida | Produto pode ter um vídeo curto opcional, além da foto. | Mostra o alimento de forma mais apetitosa. A foto continua obrigatória como capa e plano B. Ver [[08-Imagens-e-Storage]]. |
 | Definida | A home do cardápio segue uma referência visual de app de lanchonete (layout, cards e tipografia). | Dá um padrão moderno e conhecido ao cliente. Itens de pedido, conta e avaliação foram retirados. Ver [[19-Referencia-Layout-Cardapio]]. |
+| Definida | Imagens são comprimidas e convertidas para WebP (variantes `detail` 1600 px e `card` 640 px, qualidade 82→70). | Cardápio leve na rede móvel sem perda visível. Algoritmo em [[08-Imagens-e-Storage]]. |
+| Definida | O painel deve permitir cadastrar produtos, fotos e vídeos pelo celular. | Quem atende cadastra na hora, pelo próprio aparelho. Ver [[05-Painel-Administrativo]]. |
+| Definida | Testes cruzados entre Claude Code e Codex em toda entrega. | Cada um valida a ideia dos testes do outro antes de rodar. Ver [[11-Agentes-de-IA]]. |
 
 ### Ambientes Supabase em São Paulo
 

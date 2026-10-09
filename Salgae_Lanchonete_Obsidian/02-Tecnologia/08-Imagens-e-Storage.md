@@ -4,7 +4,7 @@ area: Tecnologia
 tags:
   - tecnologia
   - arquitetura
-atualizado: 2026-10-08
+atualizado: 2026-10-09
 ---
 # Imagens, vídeos e Storage
 
@@ -16,11 +16,31 @@ Fotos e vídeos tornam o cardápio mais atrativo, mas podem deixar a página len
 
 ## Regras de envio
 
-- Aceitar apenas formatos de imagem definidos (preferencialmente WebP, JPEG e PNG quando necessário).
+- Aceitar JPEG, PNG, WebP (e HEIC quando o navegador converter); **armazenar sempre em WebP**, conforme a seção de compressão abaixo.
 - Validar tipo real do arquivo, tamanho máximo e dimensões antes de disponibilizar.
 - Gerar ou solicitar imagens otimizadas para exibição em celular.
 - Usar nomes de arquivo não previsíveis, organizados por ambiente e tipo de recurso.
 - Não confiar apenas na extensão enviada pelo navegador.
+
+## Compressão e conversão para WebP (obrigatório)
+
+Toda imagem enviada pelo painel é comprimida e convertida para **WebP** antes de ir para o Storage. O objetivo é deixar o arquivo leve **sem perda visível de qualidade**, tanto na prévia do painel quanto no cardápio do cliente.
+
+### Algoritmo
+
+1. **No navegador (inclusive no celular):** a foto escolhida (galeria ou câmera) é lida com a orientação EXIF aplicada e reduzida para no máximo **2048 px** no maior lado, exportada como JPEG de alta qualidade (0,92). Isso deixa o envio rápido em rede móvel e funciona em todos os navegadores (o Safari não gera WebP pelo canvas). Imagens menores nunca são ampliadas.
+2. **No servidor (com admin verificado):** o arquivo é validado pelo **tipo real** (leitura do conteúdo com `sharp`, não pela extensão), girado conforme o EXIF, tem os **metadados removidos** (localização do celular etc.) e é convertido em **duas variantes WebP**:
+
+| Variante | Maior lado | Meta de tamanho | Uso |
+| --- | --- | --- | --- |
+| `detail` | 1600 px | até ~300 KB | detalhe do produto e destaques |
+| `card` | 640 px | até ~80 KB | cards, categorias e miniaturas do painel |
+
+3. **Qualidade adaptativa:** começa em qualidade **82** (`effort` 5, `smartSubsample`). Se passar da meta, reduz de 6 em 6 até o **mínimo de 70** — nunca abaixo disso, para não aparecerem borrões ou blocos. Se mesmo em 70 passar da meta, mantém 70 (qualidade vence tamanho).
+4. **Armazenamento:** as duas variantes vão para `product-images` com nome não previsível (UUID); o banco guarda só a base do caminho e a interface escolhe a variante (`srcset`).
+5. **Rejeições claras:** arquivo que não é imagem, imagem corrompida, menor que 400 px no menor lado ou maior que 15 MB antes da redução.
+
+> Os números (2048/1600/640 px, metas e qualidade 82→70) são o ponto de partida; ajustar depois de ver fotos reais em celular.
 
 ## Substituição de imagem
 

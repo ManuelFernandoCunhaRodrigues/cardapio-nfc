@@ -66,7 +66,7 @@ export async function createProduct(_previous: ProductActionState, formData: For
     if (error) { reportServerError('product_create_failed', error); return { status: 'error', message: 'Não foi possível criar o produto agora. Tente novamente.' }; }
     await audit(admin.userId, 'create', data.id, { name: result.values.name, category_id: result.values.category_id });
     catalogPaths(data.id);
-    return { status: 'success', message: 'Produto criado com sucesso.' };
+    return { status: 'success', message: 'Produto criado com sucesso.', entityId: data.id };
   } catch (error) {
     reportServerError('product_create_exception', error);
     return { status: 'error', message: 'Não foi possível criar o produto agora. Tente novamente.' };
@@ -86,7 +86,7 @@ export async function updateProduct(_previous: ProductActionState, formData: For
     if (error) { reportServerError('product_update_failed', error); return { status: 'error', message: 'Não foi possível salvar o produto agora. Tente novamente.' }; }
     await audit(admin.userId, 'update', id.data, { name: result.values.name, category_id: result.values.category_id });
     catalogPaths(id.data);
-    return { status: 'success', message: 'Produto atualizado com sucesso.' };
+    return { status: 'success', message: 'Produto atualizado com sucesso.', entityId: id.data };
   } catch (error) {
     reportServerError('product_update_exception', error);
     return { status: 'error', message: 'Não foi possível salvar o produto agora. Tente novamente.' };
@@ -132,9 +132,29 @@ export async function deleteProduct(_previous: ProductActionState, formData: For
   const admin = await requireAdmin({ redirectUnauthenticated: false });
   if (!admin) return { status: 'error', message: 'Sua sessão não permite esta alteração. Entre novamente.' };
   const supabase = await createClient();
+  const { data: media } = await supabase.from('products').select('image_path, video_path').eq('id', id.data).single();
   const { error } = await supabase.from('products').delete().eq('id', id.data);
   if (error) { reportServerError('product_delete_failed', error); return { status: 'error', message: 'Não foi possível excluir o produto agora.' }; }
-  await audit(admin.userId, 'delete', id.data, { storage_files_preserved: true });
+  if (media?.image_path) {
+    const [products, highlights, categories] = await Promise.all([
+      supabase.from('products').select('id').eq('image_path', media.image_path).limit(1),
+      supabase.from('highlights').select('id').eq('image_path', media.image_path).limit(1),
+      supabase.from('categories').select('id').eq('image_path', media.image_path).limit(1),
+    ]);
+    if (!products.data?.length && !highlights.data?.length && !categories.data?.length) {
+      const files = /\.[a-z0-9]{2,5}$/i.test(media.image_path) ? [media.image_path] : [`${media.image_path}-detail.webp`, `${media.image_path}-card.webp`];
+      const { error: storageError } = await supabase.storage.from('product-images').remove(files);
+      if (storageError) reportServerError('product_delete_image_cleanup_failed', storageError);
+    }
+  }
+  if (media?.video_path) {
+    const { data: references } = await supabase.from('products').select('id').eq('video_path', media.video_path).limit(1);
+    if (!references?.length) {
+      const { error: storageError } = await supabase.storage.from('product-videos').remove([media.video_path]);
+      if (storageError) reportServerError('product_delete_video_cleanup_failed', storageError);
+    }
+  }
+  await audit(admin.userId, 'delete', id.data, { media_cleanup_checked: true });
   catalogPaths(id.data);
-  return { status: 'success', message: 'Produto excluído. Arquivos de mídia não foram apagados.' };
+  return { status: 'success', message: 'Produto excluído.' };
 }

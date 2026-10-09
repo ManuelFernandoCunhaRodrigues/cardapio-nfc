@@ -4,7 +4,7 @@ area: Produto
 tags:
   - produto
   - experiencia
-atualizado: 2026-10-08
+atualizado: 2026-10-09
 ---
 # Painel administrativo
 
@@ -56,6 +56,16 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 - abrir ou fechar a loja manualmente, sobrepondo o horário (ex.: feriado);
 - aviso curto opcional exibido no cardápio (ex.: "Hoje fechamos às 15h");
 - cada alteração fica registrada na auditoria.
+
+### Uso pelo celular
+
+O cadastro precisa funcionar bem no celular de quem atende:
+
+- formulários em tela cheia, uma coluna, com botão **Salvar fixo** no rodapé;
+- foto pela **câmera ou galeria**, com prévia antes de salvar e indicador de progresso do envio;
+- vídeo curto gravado ou escolhido no aparelho, com aviso dos limites antes de enviar;
+- teclado numérico para preço (`inputmode="decimal"`), campos e botões com alvo de toque ≥ 44 px;
+- listas em cartões (não tabelas largas) e ações principais ao alcance do polegar.
 
 ## Permissões iniciais
 

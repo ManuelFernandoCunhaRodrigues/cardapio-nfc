@@ -26,6 +26,16 @@ export type AdminProduct = {
   category: { name: string; slug: string } | null;
 };
 
+export type AdminHighlight = {
+  id: string;
+  title: string;
+  description: string | null;
+  image_path: string | null;
+  target: string | null;
+  sort_order: number;
+  is_active: boolean;
+};
+
 export async function getAdminCategories(): Promise<AdminCategory[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -50,4 +60,10 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
     .order('name');
   if (error) return [];
   return (data ?? []) as unknown as AdminProduct[];
+}
+
+export async function getAdminHighlights(): Promise<AdminHighlight[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('highlights').select('id, title, description, image_path, target, sort_order, is_active').order('sort_order').order('title');
+  return error ? [] : (data ?? []) as AdminHighlight[];
 }

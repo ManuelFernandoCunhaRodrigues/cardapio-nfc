@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-10-08
+atualizado: 2026-10-09
 ---
 # Visão geral
 
@@ -31,6 +31,8 @@ Cardápios impressos ficam desatualizados, exigem reimpressão e não mostram be
 - Cardápio atualizado pela própria operação.
 - Produtos indisponíveis deixam de aparecer ou recebem indicação clara.
 - Destaques ajudam a promover combos, novidades e itens de maior margem.
+- Cada produto pode ter **foto e vídeo curto**, enviados pelo painel — inclusive pelo celular, na hora.
+- **Imagens comprimidas automaticamente em WebP** ao enviar: arquivos leves para abrir rápido na rede móvel, sem perder qualidade visível.
 - Estrutura reaproveitável futuramente para outros estabelecimentos, sem tornar esta primeira versão multiempresa.
 
 ## Resultado esperado no MVP

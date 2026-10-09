@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-10-08
+atualizado: 2026-10-09
 ---
 # Escopo atual
 
@@ -22,6 +22,9 @@ Voltar: [[00-Comece-Aqui]] · Próximo: [[04-Experiencia-do-Cliente]]
 - Banco de dados no Supabase/PostgreSQL.
 - Armazenamento de imagens e vídeos com limpeza controlada de arquivos sem uso.
 - Ambiente separado de homologação e produção.
+- Envio de vídeo curto por produto, além da foto.
+- Compressão e conversão automática das imagens para WebP antes de ir para o Storage ([[08-Imagens-e-Storage]]).
+- Painel totalmente utilizável no celular, para cadastrar e editar produtos, fotos e vídeos pelo próprio aparelho.
 
 ## Fora do escopo atual
 
