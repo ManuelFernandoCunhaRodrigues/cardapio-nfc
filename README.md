@@ -52,6 +52,18 @@ Os dados únicos da loja são criados pela migration `20261008232020_store_setti
 
 A migration `20261009103822_product_badge.sql` acrescenta `products.badge`, usado para os selos públicos `MAIS PEDIDO`, `NOVO` e `QUENTINHO`.
 
+## Painel administrativo
+
+Depois de promover um administrador ativo, o painel fica disponível nestas rotas:
+
+- `/admin` — resumo do catálogo;
+- `/admin/produtos` — busca, filtros, disponibilidade, ativo/inativo e ordenação;
+- `/admin/produtos/novo` e `/admin/produtos/[id]` — criação e edição com prévia do cardápio;
+- `/admin/categorias` — criação, edição, status e ordenação;
+- `/admin/loja` — dados e horários da loja.
+
+As ações do painel exigem um perfil `admin` ativo tanto na aplicação quanto no RLS. Categorias com produtos vinculados não podem ser excluídas: mova os produtos para outra categoria ou desative a categoria. A exclusão de um produto pede confirmação e não remove arquivos do Storage; essa gestão pertence ao Épico 4.
+
 ## Rotas públicas
 
 - `/` — início, destaques, categorias e mais pedidos.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { productSchema } from '@/lib/validators/product';
+import { productFormSchema, productSchema } from '@/lib/validators/product';
 
 const product = {
   id: 'b76b1cd3-7525-4f9f-8e90-0c14e66bd00a',
@@ -29,5 +29,10 @@ describe('productSchema', () => {
     expect(productSchema.safeParse({ ...product, badge: 'mais_pedido' }).success).toBe(true);
     expect(productSchema.safeParse({ ...product, badge: 'novo' }).success).toBe(true);
     expect(productSchema.safeParse({ ...product, badge: 'promo' }).success).toBe(false);
+  });
+
+  it('valida os campos editáveis do formulário', () => {
+    expect(productFormSchema.safeParse({ name: 'Coxinha', description: '', price: '8,90', category_id: product.category_id, badge: 'novo', is_active: true, is_available: true }).success).toBe(true);
+    expect(productFormSchema.safeParse({ name: '', description: '', price: '', category_id: 'inválido', badge: 'promo', is_active: true, is_available: true }).success).toBe(false);
   });
 });
