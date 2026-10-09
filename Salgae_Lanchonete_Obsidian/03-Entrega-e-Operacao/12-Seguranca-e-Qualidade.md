@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-10-08
+atualizado: 2026-10-09
 ---
 # Segurança e qualidade
 
@@ -55,3 +55,20 @@ Voltar: [[00-Comece-Aqui]] · Dados: [[07-Modelo-de-Dados-Supabase]]
 - [ ] Cardápio abre bem em celular com rede móvel.
 - [ ] Erros de formulário são compreensíveis.
 - [ ] Há procedimento conhecido para rollback.
+
+### Status em homologação (2026-10-09)
+
+Verificado em `https://salgae-homologacao.vercel.app` + `SALGAE-STAGING` (Épico 5). Evidências em `docs/testes/epico-4-*.md` e `docs/testes/epico-5-*.md`. Os itens só ficam ✅ no checklist acima quando repetidos em **produção**.
+
+| Item | Homologação | Evidência |
+| --- | --- | --- |
+| URL NFC/QR → produção | ⏳ pendente | Produção ainda não existe; QR atual aponta para homologação (H4) |
+| Produção só com credenciais de produção | ⏳ pendente | Projeto Vercel de produção ainda não criado |
+| Admin entra e visitante não acessa o painel | ✅ | H3 (`/admin*` → 307 login) e login testado no Épico 3/4 |
+| Produto ativo aparece; inativo não | ✅ | H5 (RLS 38/38) |
+| Indisponibilidade segue o comportamento definido | ✅ | Épico 4 N1/N10 (esmaecido + `INDISPONÍVEL`) |
+| Troca de foto sem quebrar nem deixar órfão | ✅ | Épico 4 B6/N6/R-N9b |
+| Vídeo só no detalhe, sem som, foto como fallback | ✅ | Épico 4 N7/R-N7 |
+| Abre bem no celular com rede móvel | ✅ simulado / ⏳ aparelho real | H1 (perf 88–98, LCP ≤ 2,9 s, CLS 0); falta H6 no celular |
+| Erros de formulário compreensíveis | ✅ | Épico 4 N5/N8 |
+| Procedimento de rollback conhecido | ✅ | [[09-Ambientes-e-Deploy]] (Recuperação): promover deploy anterior na Vercel / reverter PR |
