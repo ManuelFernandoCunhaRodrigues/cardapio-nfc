@@ -35,3 +35,30 @@ Resposta aos ajustes da validação do Codex, rodada 2 (pontos 3 e 4).
 2. H6 — teste no celular real pelo usuário (`epico-5-roteiro-celular.md`).
 3. Validação desta rodada pelo Codex.
 4. Observação de produto, fora deste PR: `positive` (#A8441B) e `danger` (#983F22) são dois laranjas-terracota muito parecidos, então "Aberta" e "Fechada" se distinguem só pelo texto. Isso é aceitável para WCAG, porque a cor não é o único indicador, mas vale revisar no design.
+
+## Adendo — rodada final no deploy 7589abe (2026-10-09 ~20:30, loja fechada)
+
+Entre a rodada acima e esta entraram `a495549` (contraste do selo "Fechada") e `7589abe` (pedido do usuário: cards de produto em faixa horizontal, 2 inteiros e metade do 3º).
+
+**Rodada descartada (394a3c6):** acessibilidade 100 nas cinco rotas, o que confirma a correção do contraste no ar. O TBT foi **descartado**: o Codex rodava na mesma máquina em paralelo, e a variância chegou a 112–708 ms na mesma rota.
+
+**Rodada válida:** `resumo.json` registra `commit: "7589abe"`, sem alterações locais. Nada rodou em paralelo.
+
+| Rota | Perf. | A11y | BP | LCP | CLS | TBT (mediana; 3 execuções) | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `/` | 94 | 100 | 96 | 2.754 ms | 0 | 119 (165/119/75) | OK |
+| `/cardapio` | 96 | 100 | 96 | 2.488 ms | 0 | 107 (62/107/120) | OK |
+| `/produto/…` | 96 | 100 | 96 | 2.410 ms | 0 | 152 (73/203/152) | OK |
+| `/info` | 98 | 100 | 96 | 2.321 ms | 0 | 82 (275/48/82) | OK |
+| `/admin/login` | 94 | 100 | 96 | 2.661 ms | 0 | 166 (166/157/167) | OK |
+
+H1 e H2 foram aprovados no SHA exato do deploy. A home foi medida com o selo "Fechada" visível.
+
+### Faixa horizontal de produtos (7589abe), testes do Claude no navegador
+
+Testes feitos no `next dev` local, com dados do staging:
+- A largura do card segue `(100cqw − 40px) / 2,5`: 112 px em 320, 134 px em 375 e 176 px em 480. O 3º card fica **50% visível** em 375 e 480, e o primeiro começa a 16 px da borda.
+- Snap: rolando até 120 px, a faixa assenta em 188 px (um card mais o gap). No fim, o último card fica a 16 px da borda direita.
+- Achados e correções: (1) "R$ 25,00" truncava em 375 px → no compacto, o botão foi para o canto da foto e o preço ficou `whitespace-nowrap`; (2) nomes truncados → `line-clamp-2`; (3) selos cortados ("MAIS P…", "INDI…") → empilhados no topo esquerdo; (4) `aria-label` numa div sem papel → `role="group"`.
+- Depois das correções: nenhum preço, nome ou selo cortado em 320, 375 e 480 px, e todos os cards da faixa com a mesma altura.
+- A grade da busca não mudou.
