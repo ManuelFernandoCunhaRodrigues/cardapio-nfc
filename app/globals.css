@@ -12,7 +12,8 @@
   --color-surface-inner: #F5F0E5;
   --color-border-inner: #E8E0CF;
   --color-positive: #A8441B;
-  --color-danger: #B35B37;
+  /* AA: danger sobre danger/10 ≥ 4,90:1 em qualquer fundo do app (pior caso: sand). */
+  --color-danger: #983F22;
   --color-amber: #F9A436;
   --color-muted: #6B5F4A;
   --color-body: #3D3527;
