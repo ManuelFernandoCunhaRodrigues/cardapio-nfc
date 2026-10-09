@@ -50,7 +50,7 @@ Para dados de exemplo, use `supabase/seed.sql` somente em ambiente local ou de h
 
 Os dados únicos da loja são criados pela migration `20261008232020_store_settings.sql`. Administradores ativos podem editá-los em `/admin/loja`; visitantes apenas os leem para a futura aba Info e para o status aberto/fechado.
 
-A migration `20261009020000_product_badge.sql` acrescenta `products.badge`, usado para os selos públicos `MAIS PEDIDO`, `NOVO` e `QUENTINHO`.
+A migration `20261009103822_product_badge.sql` acrescenta `products.badge`, usado para os selos públicos `MAIS PEDIDO`, `NOVO` e `QUENTINHO`.
 
 ## Rotas públicas
 
