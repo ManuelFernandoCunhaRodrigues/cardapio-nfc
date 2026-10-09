@@ -61,6 +61,7 @@ export async function updateStoreSettings(
     }
 
     revalidatePath('/admin/loja');
+    revalidatePath('/', 'layout');
     return { status: 'success', message: 'Dados da loja salvos com sucesso.' };
   } catch (error) {
     reportServerError('store_settings_update_exception', error);

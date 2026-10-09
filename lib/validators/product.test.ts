@@ -24,4 +24,10 @@ describe('productSchema', () => {
     expect(productSchema.safeParse({ ...product, video_path: 'products/coxinha.mp4' }).success).toBe(false);
     expect(productSchema.safeParse({ ...product, image_path: 'products/coxinha.jpg', video_path: 'products/coxinha.mp4' }).success).toBe(true);
   });
+
+  it('aceita somente os badges previstos', () => {
+    expect(productSchema.safeParse({ ...product, badge: 'mais_pedido' }).success).toBe(true);
+    expect(productSchema.safeParse({ ...product, badge: 'novo' }).success).toBe(true);
+    expect(productSchema.safeParse({ ...product, badge: 'promo' }).success).toBe(false);
+  });
 });

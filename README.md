@@ -50,6 +50,18 @@ Para dados de exemplo, use `supabase/seed.sql` somente em ambiente local ou de h
 
 Os dados únicos da loja são criados pela migration `20261008232020_store_settings.sql`. Administradores ativos podem editá-los em `/admin/loja`; visitantes apenas os leem para a futura aba Info e para o status aberto/fechado.
 
+A migration `20261009103822_product_badge.sql` acrescenta `products.badge`, usado para os selos públicos `MAIS PEDIDO`, `NOVO` e `QUENTINHO`.
+
+## Rotas públicas
+
+- `/` — início, destaques, categorias e mais pedidos.
+- `/cardapio` — lista completa por categoria.
+- `/produto/[id]` — detalhe do item, com vídeo opcional sob demanda.
+- `/busca` — busca local por nome ou ingrediente.
+- `/info` — situação da loja, horários e contatos configurados no painel.
+
+O cardápio é somente de consulta: **"Consulta apenas. Faça seu pedido com o atendente."**
+
 ### Promover o primeiro administrador
 
 1. Crie o usuário em **Authentication > Users** no Supabase.
