@@ -3,8 +3,8 @@
 import { useActionState, useEffect, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 
-import { initialStoreSettingsActionState } from '@/app/admin/loja/action-state';
-import { updateStoreSettings } from '@/app/admin/loja/actions';
+import { initialStoreSettingsActionState } from '@/app/admin/(painel)/loja/action-state';
+import { updateStoreSettings } from '@/app/admin/(painel)/loja/actions';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

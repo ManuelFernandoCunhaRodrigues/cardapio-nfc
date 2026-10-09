@@ -81,4 +81,5 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - Política visual: identidade, cores, fotos, tamanhos e textos.
 - Fotos das categorias na home: foto própria por categoria ou emoji como fallback ([[19-Referencia-Layout-Cardapio]]).
 - Papéis de acesso do painel.
+- Controle de estoque e status "Promoção" do protótipo do painel: ficaram fora do Épico 3 (não estão no escopo nem no banco); decidir se entram.
 - Se haverá métricas anônimas desde a primeira versão.
