@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-10-08
+atualizado: 2026-10-09
 ---
 # Épicos de desenvolvimento
 
@@ -63,7 +63,8 @@ Voltar: [[13-Roadmap]] · Segurança: [[12-Seguranca-e-Qualidade]]
 
 **Objetivo:** assegurar conteúdo visual de qualidade sem desperdício no Storage.
 
-- upload validado;
+- upload validado, com **compressão e conversão para WebP** (variantes `detail` e `card`, qualidade adaptativa — ver [[08-Imagens-e-Storage]]);
+- envio de foto e vídeo **pelo celular** (câmera/galeria), com prévia e progresso;
 - preview e fallback;
 - substituição atômica de imagem;
 - upload opcional de vídeo curto por produto, validado por formato, duração e tamanho;

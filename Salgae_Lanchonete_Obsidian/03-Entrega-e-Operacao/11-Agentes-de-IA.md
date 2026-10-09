@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-09-26
+atualizado: 2026-10-09
 ---
 # Agentes de IA: Claude Code e Codex
 
@@ -48,6 +48,17 @@ Ao concluir, o Codex deve devolver um resumo curto com:
 4. Codex valida localmente e produz handoff.
 5. Claude Code confere se o resultado cumpre o objetivo e solicita decisão humana quando houver trade-off.
 6. A mudança segue o PR e a homologação definidos em [[10-Git-e-Fluxo-de-Entrega]].
+
+## Testes cruzados (obrigatório)
+
+Toda entrega passa por testes validados pelos dois agentes:
+
+1. **Validar a ideia antes de rodar:** o Codex propõe os testes dele (unitários e integração) e o Claude Code valida; o Claude Code propõe os dele (navegador, banco/RLS, ponta a ponta) e o Codex valida.
+2. **Executar** os testes aprovados.
+3. **Conferir o resultado** contra a ideia do projeto (este vault), não só se "passou".
+4. **Corrigir e repetir** até tudo bater; só então PR e merge.
+
+Subagentes extras apenas quando realmente necessário, para economizar tokens.
 
 ## Revisões
 
