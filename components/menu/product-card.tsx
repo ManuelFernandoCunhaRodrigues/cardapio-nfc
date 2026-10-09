@@ -19,7 +19,7 @@ export function ProductCard({ product, compact = false }: Readonly<{ product: Me
     <div className="p-3">
       <h3 className="disp truncate text-[13px] font-bold text-ink">{product.name}</h3>
       <p className="mt-1 line-clamp-2 min-h-8 text-[11px] leading-4 text-muted">{product.description || 'Feito na Salgaê'}</p>
-      <div className="mt-3 flex items-center justify-between gap-2"><p className="disp text-base font-extrabold text-brand">{formatPriceBRL(product.price_cents)}</p><Link aria-label={`Ver detalhes de ${product.name}`} className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-white shadow-brand transition-colors hover:bg-positive focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20" href={`/produto/${product.id}`}><Icon name="arrow" /></Link></div>
+      <div className="mt-3 flex items-center justify-between gap-2"><p className="disp text-base font-extrabold text-brand-strong">{formatPriceBRL(product.price_cents)}</p><Link aria-label={`Ver detalhes de ${product.name}`} className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-white shadow-brand transition-colors hover:bg-positive focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20" href={`/produto/${product.id}`}><Icon name="arrow" /></Link></div>
     </div>
   </article>;
 }

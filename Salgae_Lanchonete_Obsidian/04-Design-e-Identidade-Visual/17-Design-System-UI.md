@@ -5,7 +5,7 @@ tags:
   - design
   - ui
   - tecnologia
-atualizado: 2026-10-08
+atualizado: 2026-10-09
 ---
 # Design system da interface
 
@@ -19,18 +19,19 @@ Valores retirados do CSS das telas do protótipo. São os tokens que o código d
 | --- | --- | --- |
 | Tinta (rotulado "Verde") | `#17110D` | Fundos escuros: hero, banner de promoção, sidebar do admin, botões secundários, cor do texto principal. |
 | Laranja de ação | `#E65F2A` | CTA primário, item de menu ativo, chip de categoria selecionado, badge de promoção, preço em destaque, ícone do carrinho. |
+| Laranja forte (texto) | `#C2491A` | **Todo texto laranja** (preços, links, aba ativa) e fundos laranja com texto branco (botões, chips selecionados). Contraste 4,9:1 sobre branco — WCAG AA. O `#E65F2A` fica para fundos sem texto, ícones, sombras e o banner. |
 | Creme | `#FAF7EF` | Superfície de cartões e painéis; texto claro sobre fundo escuro. |
 | Areia | `#F0E9D8` | Fundo da página e de campos internos. |
 | Areia escura | `#EDDFC1` | Fim do gradiente vertical do fundo. |
 | Borda | `#E0D6BC` | Todas as bordas de 1 px, divisores e trilho de toggle desligado. |
 | Superfície interna | `#F5F0E5` | Campos, blocos de resumo e caixas dentro do celular. |
 | Borda interna | `#E8E0CF` | Bordas dentro do celular. |
-| Sucesso / Ativo | `#B84C1F` | Status "Ativo", toggles ligados, links, alerta de estoque baixo. |
+| Sucesso / Ativo | `#A8441B` (era `#B84C1F`, escurecido para 4,8:1 sobre fundos claros) | Status "Ativo", toggles ligados, links, alerta de estoque baixo. |
 | Terracota | `#B35B37` | Destrutivo e negativo: excluir, "Indisponível", "Desativado", "Esgotado". |
 | Âmbar | `#F9A436` | Rótulo de combo, borda do campo de estoque baixo. |
 | Texto secundário | `#6B5F4A` | Legendas, rótulos, descrições. |
 | Texto de corpo | `#3D3527` | Parágrafos longos dentro das telas. |
-| Placeholder | `#8B7E67` | Texto de campo vazio. |
+| Placeholder | `#7A6E58` (era `#8B7E67`, escurecido para 5:1) | Texto de campo vazio. |
 | WhatsApp | `#128C7E` sobre `rgba(37,211,102,0.12)` | Somente nos avisos de que o pedido chega pelo WhatsApp. |
 
 Fundo padrão de página: `linear-gradient(180deg, #F0E9D8 0%, #EDDFC1 100%)`. Dentro do celular, o fundo é branco puro (`#FFFFFF`).

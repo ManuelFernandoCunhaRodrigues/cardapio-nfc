@@ -3,18 +3,20 @@
 @theme inline {
   --color-ink: #17110D;
   --color-brand: #E65F2A;
+  /* Laranja para texto e fundo de texto branco: 4,9:1 sobre branco (WCAG AA). */
+  --color-brand-strong: #C2491A;
   --color-cream: #FAF7EF;
   --color-sand: #F0E9D8;
   --color-sand-dark: #EDDFC1;
   --color-border: #E0D6BC;
   --color-surface-inner: #F5F0E5;
   --color-border-inner: #E8E0CF;
-  --color-positive: #B84C1F;
+  --color-positive: #A8441B;
   --color-danger: #B35B37;
   --color-amber: #F9A436;
   --color-muted: #6B5F4A;
   --color-body: #3D3527;
-  --color-placeholder: #8B7E67;
+  --color-placeholder: #7A6E58;
   --radius-card: 1.25rem;
   --radius-product: 1rem;
   --shadow-card: 0 2px 8px rgba(23, 17, 13, 0.06);
