@@ -1,16 +1,46 @@
-FALHOU / {
-  performance: 80,
+npm notice
+npm notice New major version of npm available! 10.9.2 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
+OK / {
+  performance: 94,
+  accessibility: 95,
+  bestPractices: 96,
+  lcp: 2962,
+  cls: 0,
+  tbt: 93
+} 
+OK /cardapio {
+  performance: 96,
   accessibility: 100,
   bestPractices: 96,
-  lcp: 3007,
+  lcp: 2532,
   cls: 0,
-  tbt: 581
-} LCP 3007 ms > 3000; TBT 581 ms > 300
-FALHOU /cardapio {
-  performance: 85,
+  tbt: 130
+} 
+OK /produto/35fadaf3-79c3-444d-a50f-b0a604d709a1 {
+  performance: 95,
   accessibility: 100,
   bestPractices: 96,
-  lcp: 2765,
+  lcp: 2434,
   cls: 0,
-  tbt: 447
-} TBT 447 ms > 300
+  tbt: 151
+} 
+OK /info {
+  performance: 92,
+  accessibility: 100,
+  bestPractices: 96,
+  lcp: 2556,
+  cls: 0,
+  tbt: 265
+} 
+OK /admin/login {
+  performance: 92,
+  accessibility: 100,
+  bestPractices: 96,
+  lcp: 2799,
+  cls: 0,
+  tbt: 195
+} 
+exit=0

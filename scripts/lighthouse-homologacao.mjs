@@ -37,7 +37,8 @@ await mkdir(outDir, { recursive: true });
 // Evidência sempre da execução atual: apaga relatórios brutos anteriores.
 for (const name of await readdir(outDir)) if (/-\d\.json$/.test(name)) await rm(path.join(outDir, name));
 const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD']).toString().trim();
-const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no']).toString().trim() !== '';
+// A própria pasta de evidências (execucao.log, relatórios) não conta como alteração de código.
+const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no', '--', '.', ':!docs/testes/lighthouse']).toString().trim() !== '';
 const summary = [];
 let failed = false;
 for (const route of routes) {

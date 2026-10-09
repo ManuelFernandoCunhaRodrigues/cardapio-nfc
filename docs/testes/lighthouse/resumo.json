@@ -1,69 +1,61 @@
 {
   "base": "https://salgae-homologacao.vercel.app",
-  "generatedAt": "2026-10-09T16:18:06.107Z",
-  "commit": "06cf930+alterações locais",
+  "generatedAt": "2026-10-09T22:57:51.051Z",
+  "commit": "6f9bd4c+alterações locais",
   "runs": 3,
   "summary": [
     {
       "route": "/",
-      "performance": 89,
-      "accessibility": 100,
+      "performance": 94,
+      "accessibility": 95,
       "bestPractices": 96,
-      "lcp": 2641,
+      "lcp": 2962,
       "cls": 0,
-      "tbt": 320,
-      "status": "FALHOU",
-      "failures": [
-        "TBT 320 ms > 300"
-      ]
+      "tbt": 93,
+      "status": "OK",
+      "failures": []
     },
     {
       "route": "/cardapio",
-      "performance": 85,
+      "performance": 96,
       "accessibility": 100,
       "bestPractices": 96,
-      "lcp": 2848,
+      "lcp": 2532,
       "cls": 0,
-      "tbt": 371,
-      "status": "FALHOU",
-      "failures": [
-        "TBT 371 ms > 300"
-      ]
+      "tbt": 130,
+      "status": "OK",
+      "failures": []
     },
     {
       "route": "/produto/35fadaf3-79c3-444d-a50f-b0a604d709a1",
-      "performance": 88,
+      "performance": 95,
       "accessibility": 100,
       "bestPractices": 96,
-      "lcp": 2504,
+      "lcp": 2434,
       "cls": 0,
-      "tbt": 378,
-      "status": "FALHOU",
-      "failures": [
-        "TBT 378 ms > 300"
-      ]
+      "tbt": 151,
+      "status": "OK",
+      "failures": []
     },
     {
       "route": "/info",
-      "performance": 90,
+      "performance": 92,
       "accessibility": 100,
       "bestPractices": 96,
-      "lcp": 2341,
+      "lcp": 2556,
       "cls": 0,
-      "tbt": 356,
-      "status": "FALHOU",
-      "failures": [
-        "TBT 356 ms > 300"
-      ]
+      "tbt": 265,
+      "status": "OK",
+      "failures": []
     },
     {
       "route": "/admin/login",
       "performance": 92,
       "accessibility": 100,
       "bestPractices": 96,
-      "lcp": 2629,
+      "lcp": 2799,
       "cls": 0,
-      "tbt": 259,
+      "tbt": 195,
       "status": "OK",
       "failures": []
     }
