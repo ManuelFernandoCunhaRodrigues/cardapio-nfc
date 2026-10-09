@@ -12,6 +12,6 @@ function ProductCardLinkContent() {
   </span>;
 }
 
-export function ProductCardLink({ href, label }: Readonly<{ href: string; label: string }>) {
-  return <Link aria-label={label} className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-strong text-white shadow-brand transition-colors hover:bg-positive focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20" href={href}><ProductCardLinkContent /></Link>;
+export function ProductCardLink({ href, label, onImage = false }: Readonly<{ href: string; label: string; onImage?: boolean }>) {
+  return <Link aria-label={label} className={`grid size-11 shrink-0 place-items-center rounded-full bg-brand-strong text-white transition-colors hover:bg-positive focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20 ${onImage ? 'ring-2 ring-white shadow-[0_2px_8px_rgba(23,17,13,0.35)]' : 'shadow-brand'}`} href={href}><ProductCardLinkContent /></Link>;
 }
