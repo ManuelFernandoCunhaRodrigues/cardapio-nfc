@@ -3,7 +3,7 @@
 @theme inline {
   --color-ink: #17110D;
   --color-brand: #E65F2A;
-  /* Laranja para texto e fundo de texto branco: 4,9:1 sobre branco (WCAG AA). */
+  /* AA: brand-strong/branco 4,93:1; placeholder/surface-inner 5,11:1; creme/#C2491A do banner 4,60:1. */
   --color-brand-strong: #C2491A;
   --color-cream: #FAF7EF;
   --color-sand: #F0E9D8;
@@ -16,7 +16,7 @@
   --color-amber: #F9A436;
   --color-muted: #6B5F4A;
   --color-body: #3D3527;
-  --color-placeholder: #7A6E58;
+  --color-placeholder: #6F6450;
   --radius-card: 1.25rem;
   --radius-product: 1rem;
   --shadow-card: 0 2px 8px rgba(23, 17, 13, 0.06);

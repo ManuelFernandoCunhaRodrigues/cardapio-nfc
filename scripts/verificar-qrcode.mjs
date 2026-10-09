@@ -16,6 +16,10 @@ async function decode(width) {
 }
 
 let failed = false;
+const metadata = await sharp(file).metadata();
+const dimensionsOk = metadata.width === 1024 && metadata.height === 1024;
+failed ||= !dimensionsOk;
+console.log(`${dimensionsOk ? 'OK' : 'FALHOU'} dimensões: ${metadata.width ?? '?'}x${metadata.height ?? '?'} (esperado 1024x1024)`);
 for (const width of [1024, 256]) {
   const text = await decode(width);
   const ok = text === url;

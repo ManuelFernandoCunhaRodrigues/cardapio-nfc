@@ -65,7 +65,7 @@ Verificado em `https://salgae-homologacao.vercel.app` + `SALGAE-STAGING` (Épico
 | URL NFC/QR → produção | ⏳ pendente | Produção ainda não existe; QR atual aponta para homologação (H4) |
 | Produção só com credenciais de produção | ⏳ pendente | Projeto Vercel de produção ainda não criado |
 | Admin entra e visitante não acessa o painel | ✅ | H3 (`/admin*` → 307 login) e login testado no Épico 3/4 |
-| Produto ativo aparece; inativo não | ✅ | H5 (RLS 38/38) |
+| Produto ativo aparece; inativo não | ✅ | Banco: H5 (RLS 38/38, inativos invisíveis ao visitante). Tela: cardápio de homologação lista só itens ativos (Épico 2/4) |
 | Indisponibilidade segue o comportamento definido | ✅ | Épico 4 N1/N10 (esmaecido + `INDISPONÍVEL`) |
 | Troca de foto sem quebrar nem deixar órfão | ✅ | Épico 4 B6/N6/R-N9b |
 | Vídeo só no detalhe, sem som, foto como fallback | ✅ | Épico 4 N7/R-N7 |

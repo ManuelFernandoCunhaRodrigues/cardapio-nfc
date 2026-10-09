@@ -66,7 +66,7 @@ Escala prática observada: 56 px (capa) · 40/32/28 px (títulos de seção) · 
 
 | Componente | Especificação |
 | --- | --- |
-| Botão primário | Pílula laranja `#E65F2A`, texto branco, peso 600–700, 12–16 px de padding vertical. |
+| Botão primário | Pílula laranja forte `#C2491A`, texto branco (4,9:1), peso 600–700, 12–16 px de padding vertical. |
 | Botão secundário | Pílula `#17110D`, texto creme. |
 | Botão neutro | Pílula transparente com borda `#E0D6BC`. |
 | Botão destrutivo | Texto/borda em `#B35B37`; preenchido em `#B35B37` quando confirma exclusão. |

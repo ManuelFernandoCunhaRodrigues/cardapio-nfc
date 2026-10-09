@@ -11,9 +11,15 @@ import { formatPriceBRL } from '@/lib/utils/format-price';
 
 export const revalidate = 60;
 type ProductPageProps = { params: Promise<{ id: string }> };
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string) {
+  return UUID_PATTERN.test(value);
+}
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { id } = await params;
+  if (!isUuid(id)) return { title: 'Produto | Salgaê' };
   const result = await getPublicProducts();
   const product = result.data?.find((item) => item.id === id);
   return { title: product ? `${product.name} | Salgaê` : 'Produto | Salgaê' };
@@ -21,6 +27,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const [productsResult, categoriesResult] = await Promise.all([getPublicProducts(), getPublicCategories()]);
   if (productsResult.error || categoriesResult.error) return <main className="p-4 pt-6"><Link className="text-sm font-bold text-brand-strong" href="/cardapio">← Voltar ao cardápio</Link><section className="mt-5 rounded-card bg-cream p-5"><h1 className="disp text-xl font-bold text-ink">Não foi possível abrir este item</h1><p className="mt-2 text-sm leading-6 text-muted">Tente novamente em instantes.</p></section></main>;
   const product = productsResult.data.find((item) => item.id === id);

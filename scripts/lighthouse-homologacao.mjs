@@ -2,7 +2,7 @@
 // mediana por métrica, comparação com os limiares do plano H1/H2 do Épico 5.
 // Uso: node scripts/lighthouse-homologacao.mjs [baseUrl]   (sai com código 1 se algo reprovar)
 import { execFileSync } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const base = (process.argv[2] ?? 'https://salgae-homologacao.vercel.app').replace(/\/$/, '');
@@ -34,6 +34,10 @@ async function runOnce(url, file) {
 }
 
 await mkdir(outDir, { recursive: true });
+// Evidência sempre da execução atual: apaga relatórios brutos anteriores.
+for (const name of await readdir(outDir)) if (/-\d\.json$/.test(name)) await rm(path.join(outDir, name));
+const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD']).toString().trim();
+const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no']).toString().trim() !== '';
 const summary = [];
 let failed = false;
 for (const route of routes) {
@@ -56,5 +60,5 @@ for (const route of routes) {
   summary.push({ route, ...result, status: failures.length ? 'FALHOU' : 'OK', failures });
   console.log(`${failures.length ? 'FALHOU' : 'OK'} ${route}`, result, failures.join('; '));
 }
-await writeFile(path.join(outDir, 'resumo.json'), `${JSON.stringify({ base, runs: RUNS, summary }, null, 2)}\n`);
+await writeFile(path.join(outDir, 'resumo.json'), `${JSON.stringify({ base, generatedAt: new Date().toISOString(), commit: dirty ? `${commit}+alterações locais` : commit, runs: RUNS, summary }, null, 2)}\n`);
 process.exit(failed ? 1 : 0);
