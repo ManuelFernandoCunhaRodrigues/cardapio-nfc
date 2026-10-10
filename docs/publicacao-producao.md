@@ -76,6 +76,7 @@ Repetir em produção o checklist de `12-Seguranca-e-Qualidade` (vault):
 ## 8. Rollback
 
 - **Código:** na Vercel, promover o deploy anterior estável (Deployments → Promote to Production) e depois reverter o PR no Git.
+- **Backup:** no plano Free do Supabase não há backup diário automático; até mudar de plano, o backup é manual (`pg_dump`) e deve entrar na rotina técnica.
 - **Banco:** migrations não têm "desfazer" automático. Antes de qualquer migration em produção com dados reais, fazer backup (`pg_dump` ou backup do painel) e ter o SQL de reversão revisado.
 - Toda correção de urgência entra pelo Git e é sincronizada com a `develop`.
 

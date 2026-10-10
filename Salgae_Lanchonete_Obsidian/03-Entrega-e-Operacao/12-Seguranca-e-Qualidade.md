@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-10-09
+atualizado: 2026-10-10
 ---
 # Segurança e qualidade
 
@@ -72,3 +72,9 @@ Verificado em `https://salgae-homologacao.vercel.app` + `SALGAE-STAGING` (Épico
 | Abre bem no celular com rede móvel | ✅ simulado / ⏳ aparelho real | H1 (perf 88–98, LCP ≤ 2,9 s, CLS 0); falta H6 no celular |
 | Erros de formulário compreensíveis | ✅ | Épico 4 N5/N8 |
 | Procedimento de rollback conhecido | ✅ | [[09-Ambientes-e-Deploy]] (Recuperação): promover deploy anterior na Vercel / reverter PR |
+
+### Preparação da produção (2026-10-10)
+
+Pacote pré-lançamento testado em build de produção local (evidências em `docs/testes/epico-6-resultados.md`): ícones e favicon, manifest, `robots.txt` por ambiente, painel sempre `noindex`, cabeçalhos de segurança e trava de envio duplicado no login. Roteiro de publicação em `docs/publicacao-producao.md` e orientação da equipe em `docs/guia-da-equipe.md`.
+
+Ainda dependem do responsável: teste em celular real (H6), projeto Vercel de produção, endereço público, administrador de produção e conteúdo real.
