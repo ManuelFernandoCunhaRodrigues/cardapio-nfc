@@ -5,7 +5,7 @@ tags:
   - design
   - ui
   - produto
-atualizado: 2026-09-27
+atualizado: 2026-10-08
 ---
 # Protótipos e telas
 
@@ -28,6 +28,8 @@ Os protótipos são interativos de verdade: têm estado, filtros, carrinho persi
 ## Cardápio local — 3 telas
 
 Acesso pelo NFC da mesa. É **somente consulta**: não há carrinho nem botão de chamar atendente.
+
+> **Atualização 2026-10-08:** a home (L01) passa a seguir o layout, os cards e a tipografia de [[19-Referencia-Layout-Cardapio]]. As telas L02 (detalhe) e L03 (busca) continuam valendo, ajustadas ao novo estilo.
 
 | ID | Tela | Elementos |
 | --- | --- | --- |
@@ -80,3 +82,4 @@ Pontos em que o design está incompleto ou conflita com o que já está escrito 
 8. **Admin mobile fora do índice.** A página existe e está completa, mas não aparece nos cartões do índice nem no menu das outras páginas (só no menu dela mesma).
 9. **Tokens com nome errado.** "Verde" é `#17110D` e "Sucesso" é `#B84C1F`; a fonte de texto anunciada é Inter mas a carregada é Nunito Sans. Detalhado em [[17-Design-System-UI]].
 10. **Nome do arquivo índice.** A página principal ainda se chama `Sistema Cardapio Brasa e Osso.dc.html`, herança de outro projeto.
+11. **Vídeo do produto sem tela.** O vídeo curto opcional foi decidido depois do protótipo (ver [[03-Decisoes-do-Projeto]]). Falta desenhar o player no detalhe L02 (capa com ícone de play, pausa) e o campo de upload na edição de produto do painel.

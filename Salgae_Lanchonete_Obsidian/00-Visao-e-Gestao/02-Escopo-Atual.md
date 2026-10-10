@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-09-26
+atualizado: 2026-10-09
 ---
 # Escopo atual
 
@@ -14,14 +14,17 @@ Voltar: [[00-Comece-Aqui]] · Próximo: [[04-Experiencia-do-Cliente]]
 
 - Cardápio público responsivo para celular, tablet e desktop.
 - Acesso por NFC e URL/QR Code de contingência.
-- Categorias, produtos, preço, descrição, foto e disponibilidade.
+- Categorias, produtos, preço, descrição, foto, vídeo curto opcional e disponibilidade.
 - Destaques visuais no topo do cardápio.
 - Painel com login para gerenciar conteúdo.
 - CRUD de categorias e produtos.
 - Ativação/desativação e ordenação de itens.
 - Banco de dados no Supabase/PostgreSQL.
-- Armazenamento de imagens com limpeza controlada de arquivos sem uso.
+- Armazenamento de imagens e vídeos com limpeza controlada de arquivos sem uso.
 - Ambiente separado de homologação e produção.
+- Envio de vídeo curto por produto, além da foto.
+- Compressão e conversão automática das imagens para WebP antes de ir para o Storage ([[08-Imagens-e-Storage]]).
+- Painel totalmente utilizável no celular, para cadastrar e editar produtos, fotos e vídeos pelo próprio aparelho.
 
 ## Fora do escopo atual
 

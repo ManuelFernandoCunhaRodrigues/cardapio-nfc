@@ -4,7 +4,7 @@ area: Produto
 tags:
   - produto
   - experiencia
-atualizado: 2026-09-26
+atualizado: 2026-10-09
 ---
 # Painel administrativo
 
@@ -36,17 +36,36 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 
 ### Produtos
 
-- nome, preço, descrição, categoria, imagem, ordem, ativo e disponibilidade;
+- nome, preço, descrição, categoria, imagem, vídeo curto opcional, ordem, ativo e disponibilidade;
 - validação antes de salvar;
 - prévia do que será mostrado no cardápio;
 - confirmação antes de ações irreversíveis;
-- remoção ou substituição segura da imagem antiga, conforme [[08-Imagens-e-Storage]].
+- envio, prévia, troca e remoção do vídeo do produto, com aviso claro dos limites (formato, duração e tamanho);
+- remoção ou substituição segura da imagem ou do vídeo antigo, conforme [[08-Imagens-e-Storage]].
 
 ### Destaques
 
 - cadastrar arte, título, texto opcional, destino e ordem de exibição;
 - ativar/desativar sem apagar o histórico;
 - validar tamanho e formato da imagem para não prejudicar a página pública.
+
+### Dados da loja
+
+- editar nome, frase, endereço, link do mapa, telefone, WhatsApp e Instagram;
+- horário de funcionamento por dia da semana, com opção de dia fechado;
+- abrir ou fechar a loja manualmente, sobrepondo o horário (ex.: feriado);
+- aviso curto opcional exibido no cardápio (ex.: "Hoje fechamos às 15h");
+- cada alteração fica registrada na auditoria.
+
+### Uso pelo celular
+
+O cadastro precisa funcionar bem no celular de quem atende:
+
+- formulários em tela cheia, uma coluna, com botão **Salvar fixo** no rodapé;
+- foto pela **câmera ou galeria**, com prévia antes de salvar e indicador de progresso do envio;
+- vídeo curto gravado ou escolhido no aparelho, com aviso dos limites antes de enviar;
+- teclado numérico para preço (`inputmode="decimal"`), campos e botões com alvo de toque ≥ 44 px;
+- listas em cartões (não tabelas largas) e ações principais ao alcance do polegar.
 
 ## Permissões iniciais
 

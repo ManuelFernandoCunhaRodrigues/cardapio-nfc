@@ -4,7 +4,7 @@ area: Tecnologia
 tags:
   - tecnologia
   - arquitetura
-atualizado: 2026-09-26
+atualizado: 2026-10-08
 ---
 # Modelo de dados e Supabase
 
@@ -15,10 +15,11 @@ Voltar: [[00-Comece-Aqui]] · Segurança: [[12-Seguranca-e-Qualidade]]
 | Entidade | Campos essenciais | Observações |
 | --- | --- | --- |
 | `categories` | `id`, `name`, `slug`, `sort_order`, `is_active` | Organiza a leitura do cardápio. |
-| `products` | `id`, `category_id`, `name`, `description`, `price`, `image_path`, `sort_order`, `is_active`, `is_available` | Um produto deve referenciar uma categoria válida. |
+| `products` | `id`, `category_id`, `name`, `description`, `price`, `image_path`, `video_path`, `badge`, `sort_order`, `is_active`, `is_available` | Um produto deve referenciar uma categoria válida. `video_path` é opcional. `badge` é opcional: `MAIS PEDIDO`, `NOVO` ou `QUENTINHO` ([[19-Referencia-Layout-Cardapio]]). |
 | `highlights` | `id`, `title`, `description`, `image_path`, `target`, `sort_order`, `is_active` | Controla conteúdo promocional no topo. |
 | `profiles` | `id`, `name`, `role`, `is_active` | Complementa a identidade do Supabase Auth. |
 | `audit_logs` (recomendado) | `id`, `actor_id`, `action`, `entity`, `entity_id`, `metadata`, `created_at` | Permite rastrear alterações administrativas relevantes. |
+| `store_settings` | `id` (linha única), `name`, `tagline`, `address`, `maps_url`, `phone`, `whatsapp`, `instagram`, `opening_hours`, `status_override`, `notice` | Dados da loja para a aba **Info** e o status aberta/fechada. `opening_hours` guarda os 7 dias; `status_override` (`auto`, `open`, `closed`) permite abrir ou fechar manualmente. Leitura pública, edição só admin. |
 
 ## Regras de integridade
 
@@ -26,7 +27,8 @@ Voltar: [[00-Comece-Aqui]] · Segurança: [[12-Seguranca-e-Qualidade]]
 - `slug` deve ser único por categoria quando ele fizer parte de URL.
 - `sort_order` precisa ter padrão previsível para evitar itens em ordem aleatória.
 - A categoria de um produto não deve ser removida enquanto houver produtos vinculados, salvo em transação/migração segura.
-- Uma imagem só deve ser apagada quando nenhum registro ainda a referenciar.
+- Uma imagem ou vídeo só deve ser apagado quando nenhum registro ainda o referenciar.
+- Produto com `video_path` precisa ter `image_path`, usada como capa do vídeo e fallback.
 - Conteúdo público considera, no mínimo, `is_active = true`; a regra de `is_available` segue [[04-Experiencia-do-Cliente]].
 
 ## Acesso e RLS

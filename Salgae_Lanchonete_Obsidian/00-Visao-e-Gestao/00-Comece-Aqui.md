@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-09-27
+atualizado: 2026-10-08
 ---
 # Salgaê Lanchonete — Cérebro do Projeto
 
@@ -25,7 +25,7 @@ O produto deve ser simples para o cliente, rápido para a lanchonete manter e se
 - [[05-Painel-Administrativo]] — responsabilidades da área de gestão.
 - [[06-Arquitetura-e-Stack]] — visão técnica e tecnologias.
 - [[07-Modelo-de-Dados-Supabase]] — entidades e regras de dados.
-- [[08-Imagens-e-Storage]] — política para fotos dos produtos.
+- [[08-Imagens-e-Storage]] — política para fotos e vídeos dos produtos.
 - [[09-Ambientes-e-Deploy]] — homologação e produção.
 - [[10-Git-e-Fluxo-de-Entrega]] — branches, PRs e publicação.
 - [[11-Agentes-de-IA]] — colaboração entre Claude Code e Codex.
@@ -35,6 +35,7 @@ O produto deve ser simples para o cliente, rápido para a lanchonete manter e se
 - [[16-Identidade-Visual]] — marca, logotipo, cores e tom de voz.
 - [[17-Design-System-UI]] — tokens, componentes e layout da interface.
 - [[18-Prototipos-e-Telas]] — telas prototipadas, fluxos e divergências em aberto.
+- [[19-Referencia-Layout-Cardapio]] — referência visual da home do cardápio.
 
 ## Como usar este vault
 

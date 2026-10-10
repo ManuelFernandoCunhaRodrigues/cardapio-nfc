@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-09-26
+atualizado: 2026-10-09
 ---
 # Épicos de desenvolvimento
 
@@ -38,6 +38,7 @@ Voltar: [[13-Roadmap]] · Segurança: [[12-Seguranca-e-Qualidade]]
 
 **Objetivo:** entregar a experiência de consulta no celular.
 
+- home no layout de [[19-Referencia-Layout-Cardapio]]: cabeçalho, busca, banner em carrossel, categorias em círculo, cards de produto e banner de oferta;
 - cabeçalho, categorias, produtos e detalhe;
 - destaques configuráveis;
 - estados de carregamento, vazio e erro;
@@ -58,17 +59,20 @@ Voltar: [[13-Roadmap]] · Segurança: [[12-Seguranca-e-Qualidade]]
 
 **Pronto quando:** uma pessoa sem conhecimento técnico consegue atualizar um produto sem quebrar o catálogo.
 
-## Épico 4 — Gestão de imagens e destaques
+## Épico 4 — Gestão de imagens, vídeos e destaques
 
 **Objetivo:** assegurar conteúdo visual de qualidade sem desperdício no Storage.
 
-- upload validado;
+- upload validado, com **compressão e conversão para WebP** (variantes `detail` e `card`, qualidade adaptativa — ver [[08-Imagens-e-Storage]]);
+- envio de foto e vídeo **pelo celular** (câmera/galeria), com prévia e progresso;
 - preview e fallback;
 - substituição atômica de imagem;
+- upload opcional de vídeo curto por produto, validado por formato, duração e tamanho;
+- player no detalhe do produto com a foto como capa, sem som automático e carregamento sob demanda;
 - limpeza de arquivo antigo somente sem referências;
 - CRUD de destaques.
 
-**Pronto quando:** alterar ou remover uma foto não deixa produto inconsistente nem arquivo órfão conhecido.
+**Pronto quando:** alterar ou remover uma foto ou um vídeo não deixa produto inconsistente nem arquivo órfão conhecido, e o vídeo não piora a abertura do cardápio em rede móvel.
 
 ## Épico 5 — Qualidade e homologação
 

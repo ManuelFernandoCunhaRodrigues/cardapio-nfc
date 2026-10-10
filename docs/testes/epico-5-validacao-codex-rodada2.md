@@ -1,0 +1,15 @@
+# Épico 5 — validação do Codex, rodada 2
+
+Data: 2026-10-09  
+Escopo: validação posterior, em leitura, de `docs/testes/epico-5-plano-claude.md`, `docs/testes/lighthouse/resumo.json` e dos 15 relatórios Lighthouse arquivados. Não houve nova execução em staging, homologação ou navegador pelo Codex.
+
+| Ponto | Veredito | Validação curta |
+| --- | --- | --- |
+| 1. C2 — mutação RLS | **APROVADO** | Concordo em remover o bloco que levantava uma exceção fixa após o rollback: ele não comprovava o resultado calculado pela suíte. A variante que devolveu exatamente uma divergência, `anon.ve_categoria_inativa ok:0→ok:1`, prova a sensibilidade da verificação correta; a confirmação de 0 linhas em `pg_policies` fecha a não persistência. |
+| 2. H3/C3 — 404 e feedback | **APROVADO** | O resultado registrado atende exatamente à matriz H3: 15/15, incluindo 404 HTTP para UUID inválido e inexistente, e 200 para produto válido. A observação do indicador “Abrindo detalhes do produto…” até abrir o detalhe confirma o requisito separado de feedback de navegação. |
+| 3. H2 — reteste completo | **AJUSTE** | Os dados técnicos de acessibilidade/contraste são bons: os 15 JSONs têm `accessibility.score = 1`, `color-contrast.score = 1` e zero itens, nas cinco rotas. Porém, não são evidência do commit final `d3f99aa`: os arquivos foram gravados entre **13:11 e 13:18**, enquanto `d3f99aa` é de **13:39:18 -03:00**; o próprio `resumo.json` diz `commit: "06cf930+alterações locais"`, não `d3f99aa`. Reexecutar H2 em worktree limpo no SHA final e arquivar o resumo com esse SHA exato. Após essa correção de proveniência, `label-content-name-mismatch` no atalho de busca e `favicon.ico` 404 podem ir para PR pequeno seguinte, desde que registrados: o primeiro é débito de acessibilidade de baixo impacto, o segundo é erro de recurso; nenhum invalida o contraste já medido. |
+| 4. H1 — TBT, H6 e merge | **AJUSTE** | Concordo que registrar TBT como **inconclusivo**, sem inventar regressão nem aprovação, é honesto: a variância relatada e o A/B não isolam efeito do código. Os demais valores arquivados passam (Performance 85–92, LCP 2.341–2.848 ms, CLS 0), mas o `resumo.json` atual reprova formalmente TBT em todas as quatro rotas públicas (320, 371, 378 e 356 ms, acima de 300). Portanto H1 não está aprovado; precisa de nova medição estável. Também H6 permanece pendente. O checklist em `12-Seguranca-e-Qualidade.md` exige teste manual em celular para alteração de interface pública antes de merge. Assim, não recomendo declarar esta entrega pronta para merge em `develop` sem uma exceção explícita do responsável; ela pode permanecer na branch como candidata enquanto se repete H1 e se executa H6. Não há impedimento técnico para um merge excepcional conscientemente aceito, mas não é aprovação deste gate. |
+
+## Conclusão
+
+C2 e H3/C3 estão aprovados. H2 deve ser reexecutado para vincular a evidência ao SHA `d3f99aa`; o conteúdo dos relatórios atuais é favorável, mas a proveniência não é. H1-TBT e H6 seguem pendentes e impedem uma aprovação integral de homologação/merge pelos critérios documentados.

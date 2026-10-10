@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-09-26
+atualizado: 2026-10-09
 ---
 # Visão geral
 
@@ -18,7 +18,7 @@ O sistema é composto por duas experiências conectadas:
 
 | Área | Quem usa | Resultado |
 | --- | --- | --- |
-| Cardápio público | Cliente no estabelecimento | Consulta produtos, preços, fotos, descrição, categorias e destaques. |
+| Cardápio público | Cliente no estabelecimento | Consulta produtos, preços, fotos, vídeos curtos, descrição, categorias e destaques. |
 | Painel administrativo | Dono/equipe autorizada | Mantém o cardápio atualizado sem alterar código. |
 
 ## Problema que resolve
@@ -31,6 +31,8 @@ Cardápios impressos ficam desatualizados, exigem reimpressão e não mostram be
 - Cardápio atualizado pela própria operação.
 - Produtos indisponíveis deixam de aparecer ou recebem indicação clara.
 - Destaques ajudam a promover combos, novidades e itens de maior margem.
+- Cada produto pode ter **foto e vídeo curto**, enviados pelo painel — inclusive pelo celular, na hora.
+- **Imagens comprimidas automaticamente em WebP** ao enviar: arquivos leves para abrir rápido na rede móvel, sem perder qualidade visível.
 - Estrutura reaproveitável futuramente para outros estabelecimentos, sem tornar esta primeira versão multiempresa.
 
 ## Resultado esperado no MVP
@@ -45,6 +47,7 @@ Não é necessário iniciar com um painel analítico complexo. Os primeiros sina
 - itens mais visualizados;
 - tempo até a primeira visualização útil;
 - percentual de produtos que possuem foto e descrição;
+- quantos produtos têm vídeo e com que frequência ele é reproduzido;
 - frequência de atualização do cardápio pela equipe.
 
 Qualquer coleta deve respeitar [[12-Seguranca-e-Qualidade|privacidade e segurança]].

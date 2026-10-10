@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-09-26
+atualizado: 2026-10-10
 ---
 # Ambientes e deploy
 
@@ -21,6 +21,19 @@ O projeto terá dois ambientes reais e isolados, cada um com seu projeto Vercel 
 
 > Os nomes exatos podem mudar no provedor, mas a separação deve permanecer.
 
+## Projetos Supabase provisionados
+
+Criados em 2026-10-08 na organização **Salgaê Lanchonete** (plano Free), região `sa-east-1` (São Paulo).
+
+| Ambiente | Projeto | Ref | URL da API |
+| --- | --- | --- | --- |
+| Homologação | `SALGAE-STAGING` | `csirmtmerqpbhatruzaf` | `https://csirmtmerqpbhatruzaf.supabase.co` |
+| Produção | `SALGAE-PRODUCTION` | `gqwtjrdfnkfitslolofg` | `https://gqwtjrdfnkfitslolofg.supabase.co` |
+
+O projeto antigo `xjvibtlnesfzvdyjhivg` (criado automaticamente, em `us-east-1`) está pausado e não faz parte do fluxo.
+
+> No plano Free, projetos sem atividade por cerca de 7 dias são pausados automaticamente. Antes do lançamento, avaliar o plano Pro para `SALGAE-PRODUCTION`, já que um cardápio pausado deixa de abrir para o cliente.
+
 ## Por que dois projetos Vercel
 
 Não será usado apenas um preview temporário da mesma aplicação. Cada ambiente tem URL, variáveis, banco e regras próprios. Isso permite a equipe testar uma atualização sem criar ou alterar produtos reais e sem risco de o NFC do estabelecimento apontar para uma versão em avaliação.
@@ -32,6 +45,8 @@ Cada projeto Vercel deve receber apenas as chaves do seu ambiente:
 - URL do Supabase correspondente;
 - chave pública/anon permitida ao frontend;
 - configurações de URL pública e autenticação;
+- `NEXT_PUBLIC_SITE_ENV`: `production` somente no projeto de produção. Ausente ou com outro valor, o site se comporta como homologação e bloqueia a indexação (`robots.txt` com `Disallow: /` e `noindex`);
+- `NEXT_PUBLIC_SITE_URL`: endereço público do ambiente, usado como base dos metadados;
 - qualquer segredo de servidor somente no ambiente privado.
 
 Nunca copiar arquivo `.env` de produção para homologação sem revisar cada valor. Nunca commitar `.env` ou segredo no Git.
