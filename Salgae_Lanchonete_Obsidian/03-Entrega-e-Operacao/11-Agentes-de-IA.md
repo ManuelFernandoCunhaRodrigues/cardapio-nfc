@@ -66,14 +66,15 @@ Regra definida pelo responsável em 2026-10-10: antes de delegar, o Claude Code 
 
 | Complexidade | Exemplos | Modelo | Esforço |
 | --- | --- | --- | --- |
-| Simples | ajuste em um arquivo, texto, documentação, rodar lint/testes, pequenas correções | `gpt-6-luna` | `medium` |
-| Média | funcionalidade em uma área, testes novos, validação de plano de testes, correção de bug localizado | `gpt-6.1-sol` | `medium` |
-| Alta | várias áreas ao mesmo tempo, banco/RLS/migrations, segurança, mídia, depuração difícil | `gpt-6.1-sol` | `high` |
-| Crítica | arquitetura, planejamento de mudança de escopo, revisão adversarial antes de produção | `gpt-6.1-sol` | `xhigh` |
+| Simples | ajuste em um arquivo, texto, documentação, rodar lint/testes, pequenas correções | `gpt-5.6-luna` | `medium` |
+| Média | funcionalidade em uma área, testes novos, validação de plano de testes, correção de bug localizado | `gpt-5.6-terra` | `medium` |
+| Alta | várias áreas ao mesmo tempo, banco/RLS/migrations, segurança, mídia, depuração difícil | `gpt-5.6-sol` | `high` |
+| Crítica | arquitetura, planejamento de mudança de escopo, revisão adversarial antes de produção | `gpt-5.6-sol` | `xhigh` |
 
+- **Modelos realmente disponíveis:** a conta ChatGPT ligada ao Codex nesta máquina aceita `gpt-5.6-sol`, `gpt-5.6-terra` e `gpt-5.6-luna`. A família `gpt-6` é recusada pela conta (testado em 2026-10-10 com `gpt-6.1-sol`). Se a conta mudar, rever esta tabela.
 - O modelo é passado explicitamente em cada tarefa (`--model` e `--effort`); não depender do padrão da máquina, que pode mudar.
 - Na dúvida entre dois níveis, usar o mais alto: retrabalho custa mais que raciocínio.
-- Se o modelo escolhido estiver indisponível, descer para `gpt-6-sol` e depois `gpt-5.6-terra`, nunca subir para o `gpt-6-astra`.
+- Se o modelo escolhido for recusado, descer um nível (`sol` → `terra` → `luna`), nunca usar o `gpt-6-astra`.
 - O modelo e o esforço usados entram no registro dos testes de cada entrega.
 
 ## Revisões
