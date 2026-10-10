@@ -1,0 +1,63 @@
+{
+  "base": "https://salgae-homologacao.vercel.app",
+  "generatedAt": "2026-10-09T23:33:01.798Z",
+  "commit": "7589abe",
+  "runs": 3,
+  "summary": [
+    {
+      "route": "/",
+      "performance": 94,
+      "accessibility": 100,
+      "bestPractices": 96,
+      "lcp": 2754,
+      "cls": 0,
+      "tbt": 119,
+      "status": "OK",
+      "failures": []
+    },
+    {
+      "route": "/cardapio",
+      "performance": 96,
+      "accessibility": 100,
+      "bestPractices": 96,
+      "lcp": 2488,
+      "cls": 0,
+      "tbt": 107,
+      "status": "OK",
+      "failures": []
+    },
+    {
+      "route": "/produto/35fadaf3-79c3-444d-a50f-b0a604d709a1",
+      "performance": 96,
+      "accessibility": 100,
+      "bestPractices": 96,
+      "lcp": 2410,
+      "cls": 0,
+      "tbt": 152,
+      "status": "OK",
+      "failures": []
+    },
+    {
+      "route": "/info",
+      "performance": 98,
+      "accessibility": 100,
+      "bestPractices": 96,
+      "lcp": 2321,
+      "cls": 0,
+      "tbt": 82,
+      "status": "OK",
+      "failures": []
+    },
+    {
+      "route": "/admin/login",
+      "performance": 94,
+      "accessibility": 100,
+      "bestPractices": 96,
+      "lcp": 2661,
+      "cls": 0,
+      "tbt": 166,
+      "status": "OK",
+      "failures": []
+    }
+  ]
+}

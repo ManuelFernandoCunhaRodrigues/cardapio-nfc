@@ -10,6 +10,6 @@ describe('getPublicMediaUrl', () => {
 
   it('não retorna URL para mídia ou projeto ausente', () => {
     expect(getPublicMediaUrl('product-images', null, 'https://abc.supabase.co')).toBeNull();
-    expect(getPublicMediaUrl('product-images', 'foto.webp', undefined)).toBeNull();
+    expect(getPublicMediaUrl('product-images', 'foto.webp', '')).toBeNull();
   });
 });
