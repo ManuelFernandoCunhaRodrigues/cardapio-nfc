@@ -11,8 +11,8 @@ atualizado: 2026-10-10
 
 Voltar: [[00-Comece-Aqui]] · Relacionado: [[05-Painel-Administrativo]] · [[20-Ideia-Pedido-pela-Mesa]]
 
-> **Status: ideia em análise. Nada aqui está aprovado nem em desenvolvimento.**
-> Hoje existe um único papel (`admin`) e os usuários são criados direto no Supabase. Esta ideia só entra com a validação do responsável.
+> **Status: ideia registrada no planejamento. Não está aprovada para desenvolvimento.**
+> Ela só entra em desenvolvimento quando o responsável disser, de forma explícita, que quer desenvolver esta ideia. Hoje existe um único papel (`admin`) e os usuários são criados direto no Supabase.
 
 ## O que foi pedido (2026-10-10)
 
