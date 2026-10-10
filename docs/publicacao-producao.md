@@ -2,7 +2,12 @@
 
 Sequência para colocar o cardápio no ar pela primeira vez. Cada passo tem dono e critério de conferência. **Nada aqui roda sozinho**: produção só é tocada com autorização explícita do responsável.
 
-Estado em 2026-10-10: `SALGAE-PRODUCTION` (`gqwtjrdfnkfitslolofg`) está ativo e **vazio** (nenhuma migration aplicada). Não existe projeto Vercel de produção.
+Estado em 2026-10-10 (fim do dia):
+
+- **Banco:** `SALGAE-PRODUCTION` (`gqwtjrdfnkfitslolofg`) com as 5 migrations aplicadas, versões iguais às do repositório, e conferido contra a homologação por hash (colunas, 28 políticas, funções, restrições, permissões, buckets, índices, gatilhos e RLS idênticos). Advisors de segurança sem avisos. Sem dados além do registro padrão da loja.
+- **Código:** `main` recebeu a primeira promoção (PR #11).
+- **Vercel:** projeto `salgae-producao` criado e conectado ao repositório, com `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SITE_ENV=production` e `NEXT_PUBLIC_SITE_URL=https://salgae-producao.vercel.app`. **Falta `NEXT_PUBLIC_SUPABASE_ANON_KEY`** (chave publicável de produção), que o responsável define no painel da Vercel. O primeiro deploy de produção sai no merge do PR #13.
+- **Pendente:** primeiro administrador, conteúdo real, teste em celular, QR Code de produção e trocar a Production Branch do projeto `salgae-homologacao` para `develop`.
 
 ## 0. Pré-requisitos (decisões do responsável)
 
