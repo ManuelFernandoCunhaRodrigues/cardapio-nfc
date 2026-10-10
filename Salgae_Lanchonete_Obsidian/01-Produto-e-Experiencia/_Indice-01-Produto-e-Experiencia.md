@@ -11,7 +11,7 @@ atualizado: 2026-10-10
 - [[04-Experiencia-do-Cliente]] — fluxo do cardápio público.
 - [[05-Painel-Administrativo]] — responsabilidades da gestão.
 
-Ideias em análise (ainda não aprovadas):
+Ideias registradas no planejamento. O produto continua no básico; cada ideia só entra em desenvolvimento quando o responsável pedir de forma explícita:
 
 - [[20-Ideia-Pedido-pela-Mesa]] — pedido direto da mesa, acesso só no local e banco em VPS.
 - [[21-Ideia-Usuarios-e-Rastreabilidade]] — logins criados pelo administrador e histórico de ações.
