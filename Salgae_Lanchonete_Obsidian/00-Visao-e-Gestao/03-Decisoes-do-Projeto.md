@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-10-09
+atualizado: 2026-10-10
 ---
 # Decisões do projeto
 
@@ -64,6 +64,15 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** padrão moderno e familiar para o cliente, sem sair do escopo de consulta no local.
 - **Impacto:** campo `badge` em `products` ([[07-Modelo-de-Dados-Supabase]]), fonte Anton no design system e Épico 2 ([[14-Epicos-de-Desenvolvimento]]).
 - **Revisão:** após testes com clientes no local.
+
+### Indexação por ambiente e cabeçalhos de segurança
+
+- **Data:** 2026-10-10
+- **Contexto:** homologação e produção rodam o mesmo código; a homologação não pode aparecer em buscadores nem ser confundida com o cardápio real.
+- **Decisão:** a variável `NEXT_PUBLIC_SITE_ENV` define o ambiente. Só `production` libera indexação; qualquer outro valor (ou ausência) bloqueia tudo. O painel é sempre `noindex`. Todas as rotas recebem cabeçalhos de segurança (`nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, HSTS). Content-Security-Policy ficou para depois do lançamento.
+- **Por quê:** falhar para o lado seguro — um ambiente mal configurado nunca é indexado por engano.
+- **Impacto:** variáveis em [[09-Ambientes-e-Deploy]]; roteiro em `docs/publicacao-producao.md`.
+- **Revisão:** ao definir o domínio público e ao avaliar a CSP.
 
 ## Modelo de registro para próximas decisões
 

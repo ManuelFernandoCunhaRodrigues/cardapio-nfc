@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
+
 import { LoginForm } from '@/components/admin/login-form';
 import { Card } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function AdminLoginPage() {
   return (

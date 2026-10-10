@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,11 @@ export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmittingRef.current) return;
 
     setError(null);
     const formData = new FormData(event.currentTarget);
@@ -29,6 +30,7 @@ export function LoginForm() {
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       const supabase = createClient();
@@ -42,6 +44,7 @@ export function LoginForm() {
     } catch {
       setError('Não foi possível entrar agora. Tente novamente em instantes.');
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   }

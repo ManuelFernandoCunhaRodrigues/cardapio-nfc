@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-10-08
+atualizado: 2026-10-10
 ---
 # Ambientes e deploy
 
@@ -45,6 +45,8 @@ Cada projeto Vercel deve receber apenas as chaves do seu ambiente:
 - URL do Supabase correspondente;
 - chave pública/anon permitida ao frontend;
 - configurações de URL pública e autenticação;
+- `NEXT_PUBLIC_SITE_ENV`: `production` somente no projeto de produção. Ausente ou com outro valor, o site se comporta como homologação e bloqueia a indexação (`robots.txt` com `Disallow: /` e `noindex`);
+- `NEXT_PUBLIC_SITE_URL`: endereço público do ambiente, usado como base dos metadados;
 - qualquer segredo de servidor somente no ambiente privado.
 
 Nunca copiar arquivo `.env` de produção para homologação sem revisar cada valor. Nunca commitar `.env` ou segredo no Git.
