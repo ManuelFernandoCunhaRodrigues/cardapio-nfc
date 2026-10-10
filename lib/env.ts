@@ -9,7 +9,20 @@ const supabaseEnvSchema = z.object({
     .min(1, 'NEXT_PUBLIC_SUPABASE_ANON_KEY deve conter a chave anônima/publicável do Supabase.'),
 });
 
+const siteEnvSchema = z.enum(['production', 'staging']);
+
 export type SupabaseEnv = z.infer<typeof supabaseEnvSchema>;
+export type SiteEnv = z.infer<typeof siteEnvSchema>;
+
+export function getSiteEnv(): SiteEnv {
+  const parsed = siteEnvSchema.safeParse(process.env.NEXT_PUBLIC_SITE_ENV);
+  return parsed.success ? parsed.data : 'staging';
+}
+
+export function getSiteUrl(): URL | undefined {
+  const parsed = z.string().url().safeParse(process.env.NEXT_PUBLIC_SITE_URL);
+  return parsed.success ? new URL(parsed.data) : undefined;
+}
 
 export function getSupabaseEnv(): SupabaseEnv {
   const parsed = supabaseEnvSchema.safeParse({
