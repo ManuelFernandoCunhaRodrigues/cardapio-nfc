@@ -26,6 +26,18 @@ Registro da conversa com o responsável, nas palavras dele organizadas:
 6. **Acesso ao cardápio só dentro do restaurante.** Quem está fora não deveria conseguir acessar.
 7. **O projeto será entregue a outra pessoa, que vai rodá-lo em uma VPS Ubuntu.** É preciso explicar como o banco está organizado hoje no Supabase e qual a melhor forma de reproduzir (ou melhorar) essa organização na VPS.
 
+## Complementos do responsável (2026-10-10, conversa de validação)
+
+Depois de ouvir a primeira explicação da ideia, o responsável acrescentou:
+
+1. **Cada mesa terá um cartão NFC e um QR Code.** Os dois ficam na mesa e levam ao cardápio daquela mesa.
+2. **Quem aceita o primeiro pedido da mesa é o atendente.**
+3. **Cada mesa tem um ID de identificação.** No tablet ou no telão aparece "Mesa 5", "Mesa 6", e o sistema reconhece sozinho de qual mesa veio o pedido.
+4. **O caixa pode ser um sistema que já existe no restaurante.** Não se sabe ainda se o estabelecimento terá sistema de caixa próprio. Muitos restaurantes já usam um, fechado e sem API aberta, e não vão querer trocar. A ideia precisa funcionar nesses casos.
+5. **O nosso sistema guarda o preço do que foi pedido.** Para fazer a ponte com o caixa, pensar em algo que possa ser impresso (um papel com o que a mesa consumiu).
+
+Os pontos 4 e 5 estão sendo planejados por Claude Code e Codex (rodada 3), junto com o detalhe do NFC.
+
 ## Como isso será tratado
 
 1. Claude Code e Codex planejam juntos, em segundo plano, a melhor forma de executar.
@@ -36,11 +48,16 @@ Registro da conversa com o responsável, nas palavras dele organizadas:
 ## Perguntas em aberto
 
 - A cozinha vai usar tela, impressora térmica ou os dois? Já existe impressora? Qual modelo?
-- O pagamento continua no caixa, como hoje?
+- O restaurante já tem sistema de caixa? Qual? Ele aceita importar pedidos ou só digitação?
+- O papel com o consumo da mesa é impresso no caixa, com o atendente, ou nos dois?
 - O cliente pode fazer vários pedidos na mesma visita (conta aberta por mesa)?
-- Alguém da equipe confirma o pedido antes de ir para a cozinha, ou vai direto?
 - "Só dentro do restaurante" vale para **ver** o cardápio ou só para **pedir**?
 - Quantas mesas existem e como são identificadas hoje?
+
+Respondidas em 2026-10-10:
+
+- ~~Alguém da equipe confirma o pedido antes de ir para a cozinha, ou vai direto?~~ O atendente aceita o primeiro pedido da mesa.
+- ~~O pagamento continua no caixa, como hoje?~~ Sim, fora do nosso sistema; o caixa pode ser um sistema próprio do restaurante.
 
 ## Proposta
 
