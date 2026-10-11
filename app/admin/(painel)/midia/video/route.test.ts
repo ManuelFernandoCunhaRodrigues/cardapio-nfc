@@ -30,6 +30,16 @@ const rawId = '22222222-2222-4222-8222-222222222222';
 const rawPath = `uploads/${productId}_${rawId}.mov`;
 const temporaryDirectories: string[] = [];
 
+function deferred<T = void>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
 function request(body: unknown, headers: Record<string, string> = {}) {
   return new Request('https://painel.exemplo.com/admin/midia/video', {
     method: 'POST',
@@ -38,14 +48,20 @@ function request(body: unknown, headers: Record<string, string> = {}) {
   });
 }
 
-function fakeClient(options: { updateError?: boolean; referenceError?: Error } = {}) {
+function fakeClient(options: {
+  updateError?: boolean;
+  updateRows?: Array<{ id: string }>;
+  referenceError?: Error;
+  download?: () => Promise<never>;
+  upload?: (path: string) => Promise<never>;
+} = {}) {
   const calls: string[] = [];
   const removals: Array<{ bucket: string; paths: string[] }> = [];
   const client = {
     storage: {
       from: (bucket: string) => ({
-        download: async (path: string) => { calls.push(`baixar:${path}`); return { data: new Blob([Buffer.from('bruto')]), error: null }; },
-        upload: async (path: string) => { calls.push(`enviar:${path}`); return { data: { path }, error: null }; },
+        download: async (path: string) => { calls.push(`baixar:${path}`); return options.download ? options.download() : { data: new Blob([Buffer.from('bruto')]), error: null }; },
+        upload: async (path: string) => { calls.push(`enviar:${path}`); return options.upload ? options.upload(path) : { data: { path }, error: null }; },
         remove: async (paths: string[]) => { calls.push(`remover:${bucket}:${paths[0]}`); removals.push({ bucket, paths }); return { data: null, error: null }; },
       }),
     },
@@ -70,12 +86,94 @@ function fakeClient(options: { updateError?: boolean; referenceError?: Error } =
           }),
         }),
         update: () => ({
-          eq: async () => { calls.push('gravar-video-path'); return { error: options.updateError ? new Error('db') : null }; },
+          eq: () => ({
+            select: async () => {
+              calls.push('gravar-video-path');
+              return { data: options.updateRows ?? [{ id: productId }], error: options.updateError ? new Error('db') : null };
+            },
+          }),
         }),
       };
     },
   };
   return { client, calls, removals };
+}
+
+function concurrentVideoClients(writeOrder: Array<'P1' | 'P2'>, rawPaths: Record<'P1' | 'P2', string>) {
+  const originalPath = 'products/anterior.mp4';
+  const buckets = {
+    'product-videos': new Set([originalPath]),
+    'product-video-uploads': new Set(Object.values(rawPaths)),
+  };
+  const state = { videoPath: originalPath };
+  const outputs: Partial<Record<'P1' | 'P2', string>> = {};
+  const removals: Array<{ bucket: string; path: string }> = [];
+  const currentBarrier = deferred();
+  const updatesReady = deferred();
+  const gates = { P1: deferred(), P2: deferred() };
+  const written = { P1: deferred(), P2: deferred() };
+  let currentReads = 0;
+  let updateCalls = 0;
+
+  const makeClient = (label: 'P1' | 'P2') => ({
+    storage: {
+      from: (bucket: 'product-videos' | 'product-video-uploads') => ({
+        download: async () => ({ data: new Blob([Buffer.from(`bruto-${label}`)]), error: null }),
+        upload: async (path: string) => {
+          buckets[bucket].add(path);
+          if (bucket === 'product-videos') outputs[label] = path;
+          return { data: { path }, error: null };
+        },
+        remove: async (paths: string[]) => {
+          for (const path of paths) {
+            removals.push({ bucket, path });
+            buckets[bucket].delete(path);
+          }
+          return { data: null, error: null };
+        },
+      }),
+    },
+    from: (table: string) => {
+      if (table === 'audit_logs') return { insert: async () => ({ error: null }) };
+      return {
+        select: (columns: string) => ({
+          eq: (_column: string, value: string) => ({
+            single: async () => {
+              if (columns === 'image_path') return { data: { image_path: 'products/capa' }, error: null };
+              const snapshot = state.videoPath;
+              currentReads += 1;
+              if (currentReads === 2) currentBarrier.resolve();
+              await currentBarrier.promise;
+              return { data: { video_path: snapshot }, error: null };
+            },
+            limit: async () => ({ data: state.videoPath === value ? [{ id: productId }] : [], error: null }),
+          }),
+        }),
+        update: ({ video_path: nextPath }: { video_path: string }) => ({
+          eq: () => ({
+            select: async () => {
+              updateCalls += 1;
+              if (updateCalls === 2) updatesReady.resolve();
+              await gates[label].promise;
+              state.videoPath = nextPath;
+              written[label].resolve();
+              return { data: [{ id: productId }], error: null };
+            },
+          }),
+        }),
+      };
+    },
+  });
+
+  async function releaseWrites() {
+    await updatesReady.promise;
+    for (const label of writeOrder) {
+      gates[label].resolve();
+      await written[label].promise;
+    }
+  }
+
+  return { clients: { P1: makeClient('P1'), P2: makeClient('P2') }, state, buckets, outputs, removals, originalPath, releaseWrites };
 }
 
 beforeEach(() => {
@@ -181,6 +279,26 @@ describe('POST /admin/midia/video', () => {
     expect(fake.removals).toContainEqual({ bucket: 'product-video-uploads', paths: [rawPath] });
   });
 
+  it('faz rollback da saída nova quando o produto some antes do update', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'rota-video-sem-produto-'));
+    temporaryDirectories.push(directory);
+    const outputPath = join(directory, 'saida.mp4');
+    await writeFile(outputPath, Buffer.from('mp4'));
+    mocks.compress.mockResolvedValue({
+      outputPath, inputBytes: 10, outputBytes: 3, duration: 1,
+      width: 320, height: 180, fps: 24, hdrConverted: false, usedFallback: false, elapsedMs: 5,
+    });
+    const fake = fakeClient({ updateRows: [] });
+    mocks.createClient.mockResolvedValue(fake.client);
+
+    const response = await POST(request({ productId, path: rawPath }));
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toMatchObject({
+      message: 'O vídeo foi compactado, mas não pôde ser vinculado ao produto. Tente novamente.',
+    });
+    expect(fake.removals.some(({ bucket, paths }) => bucket === 'product-videos' && paths[0] !== 'products/anterior.mp4')).toBe(true);
+  });
+
   it('tenta apagar o bruto mesmo quando a compactação falha', async () => {
     mocks.compress.mockRejectedValue(new Error('falha interna'));
     const fake = fakeClient();
@@ -217,5 +335,105 @@ describe('POST /admin/midia/video', () => {
       code: 'video_timeout', detail: 'ffmpeg terminou com código 137',
     });
     await expect(response.json()).resolves.toMatchObject({ message: 'A compactação demorou mais que o esperado. Tente novamente.' });
+  });
+
+  it('retorna 504, e tenta apagar o bruto, quando o download não termina', async () => {
+    vi.useFakeTimers();
+    const started = deferred();
+    const fake = fakeClient({ download: () => { started.resolve(); return new Promise<never>(() => undefined); } });
+    mocks.createClient.mockResolvedValue(fake.client);
+
+    const pending = POST(request({ productId, path: rawPath }));
+    await started.promise;
+    await vi.advanceTimersByTimeAsync(60_000);
+    const response = await pending;
+
+    expect(response.status).toBe(504);
+    expect(fake.removals).toContainEqual({ bucket: 'product-video-uploads', paths: [rawPath] });
+    expect(mocks.compress).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('retorna 504, não vincula e tenta apagar a saída quando o upload não termina', async () => {
+    vi.useFakeTimers();
+    const directory = await mkdtemp(join(tmpdir(), 'rota-video-upload-timeout-'));
+    temporaryDirectories.push(directory);
+    const outputPath = join(directory, 'saida.mp4');
+    await writeFile(outputPath, Buffer.from('mp4'));
+    mocks.compress.mockResolvedValue({ outputPath, inputBytes: 10, outputBytes: 3, duration: 1, width: 320, height: 180, fps: 24, hdrConverted: false, usedFallback: false, elapsedMs: 5 });
+    const started = deferred();
+    const fake = fakeClient({ upload: () => { started.resolve(); return new Promise<never>(() => undefined); } });
+    mocks.createClient.mockResolvedValue(fake.client);
+
+    const pending = POST(request({ productId, path: rawPath }));
+    await started.promise;
+    await vi.advanceTimersByTimeAsync(30_000);
+    const response = await pending;
+
+    expect(response.status).toBe(504);
+    expect(fake.calls).not.toContain('gravar-video-path');
+    expect(fake.removals.some(({ bucket }) => bucket === 'product-videos')).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('limita o timeout do ffmpeg ao tempo restante menos a reserva', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'rota-video-orcamento-'));
+    temporaryDirectories.push(directory);
+    const outputPath = join(directory, 'saida.mp4');
+    await writeFile(outputPath, Buffer.from('mp4'));
+    mocks.compress.mockResolvedValue({ outputPath, inputBytes: 10, outputBytes: 3, duration: 1, width: 320, height: 180, fps: 24, hdrConverted: false, usedFallback: false, elapsedMs: 5 });
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000);
+    const fake = fakeClient({
+      download: async () => {
+        now.mockReturnValue(31_000);
+        return Promise.resolve(undefined as never);
+      },
+    });
+    fake.client.storage.from = (bucket: string) => ({
+      download: async (path: string) => { fake.calls.push(`baixar:${path}`); now.mockReturnValue(31_000); return { data: new Blob([Buffer.from('bruto')]), error: null }; },
+      upload: async (path: string) => { fake.calls.push(`enviar:${path}`); return { data: { path }, error: null }; },
+      remove: async (paths: string[]) => { fake.removals.push({ bucket, paths }); return { data: null, error: null }; },
+    });
+    mocks.createClient.mockResolvedValue(fake.client);
+
+    expect((await POST(request({ productId, path: rawPath }))).status).toBe(200);
+    expect(mocks.compress).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: 120_000 }));
+    now.mockRestore();
+  });
+
+  it.each([
+    ['P1 depois de P2', ['P2', 'P1'] as Array<'P1' | 'P2'>],
+    ['P2 depois de P1', ['P1', 'P2'] as Array<'P1' | 'P2'>],
+  ])('mantém o objeto do último vínculo em dois processamentos intercalados: %s', async (_case, writeOrder) => {
+    const secondRawId = '44444444-4444-4444-8444-444444444444';
+    const rawPaths = { P1: rawPath, P2: `uploads/${productId}_${secondRawId}.mov` };
+    const outputFiles = await Promise.all(['p1', 'p2'].map(async (label) => {
+      const directory = await mkdtemp(join(tmpdir(), `rota-video-${label}-`));
+      temporaryDirectories.push(directory);
+      const outputPath = join(directory, 'saida.mp4');
+      await writeFile(outputPath, Buffer.from(`mp4-${label}`));
+      return outputPath;
+    }));
+    for (const outputPath of outputFiles) {
+      mocks.compress.mockResolvedValueOnce({ outputPath, inputBytes: 10, outputBytes: 3, duration: 1, width: 320, height: 180, fps: 24, hdrConverted: false, usedFallback: false, elapsedMs: 5 });
+    }
+    const fake = concurrentVideoClients(writeOrder, rawPaths);
+    mocks.createClient.mockResolvedValueOnce(fake.clients.P1).mockResolvedValueOnce(fake.clients.P2);
+
+    const p1 = POST(request({ productId, path: rawPaths.P1 }));
+    const p2 = POST(request({ productId, path: rawPaths.P2 }));
+    await fake.releaseWrites();
+    const responses = await Promise.all([p1, p2]);
+
+    expect(responses.map(({ status }) => status)).toEqual([200, 200]);
+    const winner = writeOrder.at(-1)!;
+    const loser = writeOrder[0];
+    expect(fake.state.videoPath).toBe(fake.outputs[winner]);
+    expect(fake.buckets['product-videos'].has(fake.state.videoPath)).toBe(true);
+    expect(fake.buckets['product-videos'].has(fake.originalPath)).toBe(false);
+    expect(fake.buckets['product-videos'].has(fake.outputs[loser]!)).toBe(true);
+    expect(fake.outputs[loser]).not.toBe(fake.state.videoPath);
+    expect(fake.removals.filter(({ path }) => path === fake.originalPath)).toHaveLength(2);
+    expect(fake.buckets['product-video-uploads'].size).toBe(0);
   });
 });

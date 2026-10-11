@@ -41,6 +41,13 @@ async function canDeleteImagePath(path: string, exclude: { table: 'products' | '
     supabase.from('highlights').select('id').eq('image_path', path).neq('id', exclude.table === 'highlights' ? exclude.id : '00000000-0000-0000-0000-000000000000').limit(1),
     supabase.from('categories').select('id').eq('image_path', path).limit(1),
   ]);
+  const checks = [products, highlights, categories];
+  for (const check of checks) {
+    if (check.error || check.data === null) {
+      reportServerError('media_image_reference_check_failed', check.error ?? new Error('media_image_reference_data_missing'));
+      return false;
+    }
+  }
   return isMediaUnreferenced([Boolean(products.data?.length), Boolean(highlights.data?.length), Boolean(categories.data?.length)]);
 }
 async function cleanupImagePath(bucket: 'product-images' | 'highlight-images', path: string | null, exclude: { table: 'products' | 'highlights'; id: string }) {
@@ -174,10 +181,12 @@ export async function removeProductVideo(_previous: MediaActionState, formData: 
   const supabase = await createClient();
   const { data: product, error } = await supabase.from('products').select('video_path').eq('id', productId.data).single();
   if (error || !product?.video_path) return fail('Este produto já não tem vídeo.');
-  const { error: updateError } = await supabase.from('products').update({ video_path: null }).eq('id', productId.data);
-  if (updateError) return fail('Não foi possível remover o vídeo agora.');
-  const { data: references } = await supabase.from('products').select('id').eq('video_path', product.video_path).neq('id', productId.data).limit(1);
-  if (!references?.length) {
+  const { data: updated, error: updateError } = await supabase.from('products').update({ video_path: null }).eq('id', productId.data).select('id');
+  if (updateError || updated?.length !== 1) return fail('Não foi possível remover o vídeo agora.');
+  const { data: references, error: referenceError } = await supabase.from('products').select('id').eq('video_path', product.video_path).neq('id', productId.data).limit(1);
+  if (referenceError || references === null) {
+    reportServerError('media_video_reference_check_failed', referenceError ?? new Error('media_video_reference_data_missing'));
+  } else if (references.length === 0) {
     const { error: removeError } = await supabase.storage.from('product-videos').remove([product.video_path]);
     if (removeError) reportServerError('media_video_cleanup_failed', removeError);
   }

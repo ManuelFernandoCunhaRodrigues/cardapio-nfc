@@ -10,6 +10,7 @@ import {
 export const VIDEO_MAX_BYTES = VIDEO_RAW_MAX_BYTES;
 export const VIDEO_MAX_DURATION_SECONDS = VIDEO_DURATION_TOLERANCE_SECONDS;
 export const acceptedVideoTypes = ACCEPTED_VIDEO_MIME_TYPES;
+const VIDEO_METADATA_TIMEOUT_MS = 8_000;
 
 export function isAcceptedVideoType(type: string): type is (typeof acceptedVideoTypes)[number] {
   return (acceptedVideoTypes as readonly string[]).includes(type);
@@ -35,8 +36,20 @@ export async function validateVideoForUpload(file: File): Promise<{ duration: nu
     const duration = await new Promise<number | null>((resolve) => {
       const video = document.createElement('video');
       video.preload = 'metadata';
-      video.onloadedmetadata = () => resolve(video.duration);
-      video.onerror = () => resolve(null);
+      let settled = false;
+      const finish = (value: number | null) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        video.onloadedmetadata = null;
+        video.onerror = null;
+        video.removeAttribute('src');
+        video.load();
+        resolve(value);
+      };
+      const timeout = setTimeout(() => finish(null), VIDEO_METADATA_TIMEOUT_MS);
+      video.onloadedmetadata = () => finish(video.duration);
+      video.onerror = () => finish(null);
       video.src = objectUrl;
     });
     if (duration !== null && Number.isFinite(duration) && duration > VIDEO_MAX_DURATION_SECONDS) throw new Error('O vídeo deve durar no máximo 15 segundos.');

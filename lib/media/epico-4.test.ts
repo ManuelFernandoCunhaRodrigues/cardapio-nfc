@@ -128,7 +128,7 @@ describe('Épico 4 — algoritmo de mídia', () => {
     vi.stubGlobal('URL', { createObjectURL: () => 'blob:video', revokeObjectURL: vi.fn() });
     vi.stubGlobal('document', {
       createElement: () => {
-        const element: { preload: string; onloadedmetadata: (() => void) | null; onerror: (() => void) | null; duration: number; src: string } = { preload: '', onloadedmetadata: null, onerror: null, duration, src: '' };
+        const element = { preload: '', onloadedmetadata: null as (() => void) | null, onerror: null as (() => void) | null, duration, src: '', removeAttribute: vi.fn(), load: vi.fn() };
         Object.defineProperty(element, 'src', { set: () => { element.duration = duration; queueMicrotask(() => element.onloadedmetadata?.()); } });
         return element;
       },
@@ -138,7 +138,7 @@ describe('Épico 4 — algoritmo de mídia', () => {
     await expect(validateVideoForUpload(new File([new Uint8Array(1)], 'longo.webm', { type: 'video/webm' }))).rejects.toThrow('15 segundos');
     vi.stubGlobal('document', {
       createElement: () => {
-        const element: { preload: string; onloadedmetadata: (() => void) | null; onerror: (() => void) | null; duration: number; src: string } = { preload: '', onloadedmetadata: null, onerror: null, duration: Number.NaN, src: '' };
+        const element = { preload: '', onloadedmetadata: null as (() => void) | null, onerror: null as (() => void) | null, duration: Number.NaN, src: '', removeAttribute: vi.fn(), load: vi.fn() };
         Object.defineProperty(element, 'src', { set: () => queueMicrotask(() => element.onerror?.()) });
         return element;
       },
