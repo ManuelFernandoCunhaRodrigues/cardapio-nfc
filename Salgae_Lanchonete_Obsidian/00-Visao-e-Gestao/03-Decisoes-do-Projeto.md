@@ -56,6 +56,15 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Impacto:** coluna `video_path` em `products` ([[07-Modelo-de-Dados-Supabase]]), política de vídeo em [[08-Imagens-e-Storage]], player no detalhe ([[04-Experiencia-do-Cliente]]), upload no painel ([[05-Painel-Administrativo]]) e entrega no Épico 4 ([[14-Epicos-de-Desenvolvimento]]).
 - **Revisão:** após medir o consumo de Storage e tráfego em homologação.
 
+### Compactação automática de vídeo
+
+- **Data:** 2026-10-10
+- **Contexto:** o painel só validava o vídeo (MP4/WebM, 15 s, 10 MB) e publicava o arquivo como veio. Vídeo comum de celular (25–35 MB) era recusado, e o que passava chegava pesado ao cliente. O responsável pediu: "o vídeo deve ficar sempre leve, para o cliente conseguir ver com facilidade, e com boa qualidade".
+- **Decisão:** todo vídeo é compactado **no servidor**, com `ffmpeg`, antes de ser publicado. Saída única: MP4 H.264, sem áudio, até 720p, até 30 quadros por segundo, início rápido, alvo de até 3 MB para 15 s (teto de 4 MB). O painel passa a aceitar MP4, MOV e WebM de até 50 MB e 15 s. O original fica num bucket privado só durante o processamento e é apagado em seguida.
+- **Por quê:** compactar no celular de quem envia (navegador) daria uma qualidade diferente por aparelho e não funciona bem em todos os iPhones e Androids; no servidor o resultado é sempre igual e pode ser medido. O volume é pequeno (um vídeo por produto), então processar na hora, sem fila, é o mais simples que funciona, cabe nos limites do plano gratuito da Vercel e é o mesmo código quando o projeto for para um servidor próprio.
+- **Impacto:** política em [[08-Imagens-e-Storage]]; bucket privado novo e limite menor no bucket público (migration `20261011003026_video_compression_storage.sql`); dependência `ffmpeg-static`; rota `/admin/midia/video`; testes em `docs/testes/video-compactacao-*.md`.
+- **Revisão:** depois do primeiro vídeo real enviado por celular em stage (iPhone e Android), e se o tempo de compactação na Vercel passar de um minuto ou o volume de vídeos crescer — nesse caso, avaliar fila/servidor próprio.
+
 ### Layout da home do cardápio
 
 - **Data:** 2026-10-08
@@ -89,7 +98,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 
 - Forma de contato do cliente com a equipe durante a visita.
 - Onde hospedar os vídeos: Supabase Storage (padrão proposto) ou serviço de vídeo dedicado, conforme o consumo de tráfego no plano Free.
-- Limites finais de vídeo (duração, tamanho e resolução) e se destaques também poderão ter vídeo.
+- Se destaques também poderão ter vídeo (os limites de vídeo de produto foram fechados em "Compactação automática de vídeo").
 - Política visual: identidade, cores, fotos, tamanhos e textos.
 - Fotos das categorias na home: foto própria por categoria ou emoji como fallback ([[19-Referencia-Layout-Cardapio]]).
 - Papéis de acesso do painel.

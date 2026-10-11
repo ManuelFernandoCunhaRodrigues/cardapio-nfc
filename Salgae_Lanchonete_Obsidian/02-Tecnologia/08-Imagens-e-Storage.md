@@ -4,7 +4,7 @@ area: Tecnologia
 tags:
   - tecnologia
   - arquitetura
-atualizado: 2026-10-09
+atualizado: 2026-10-10
 ---
 # Imagens, vídeos e Storage
 
@@ -63,27 +63,53 @@ Use imagens com tamanho responsivo, carregamento adiado para itens fora da tela 
 
 Cada produto pode ter **um** vídeo curto e opcional. A foto continua obrigatória quando houver vídeo, porque ela é a capa (poster) e o fallback.
 
-### Limites propostos (a confirmar em [[03-Decisoes-do-Projeto]])
+### Compactação automática (obrigatório)
+
+Regra do responsável (2026-10-10): **o vídeo deve ficar sempre leve, para o cliente conseguir ver com facilidade, e com boa qualidade.** Por isso todo vídeo enviado pelo painel é compactado **no servidor** antes de ir para o cardápio. Quem cadastra pode gravar com o celular que tiver; o cliente recebe sempre o mesmo padrão. Decisão registrada em [[03-Decisoes-do-Projeto]].
+
+### O que o painel aceita
 
 | Item | Limite |
 | --- | --- |
-| Formato | MP4 (H.264) — compatível com todos os celulares; WebM opcional |
-| Duração | até 15 segundos |
-| Tamanho | até 10 MB por arquivo |
-| Resolução | até 720p, vertical ou quadrado |
-| Áudio | removido ou ignorado; o vídeo toca sem som |
+| Formato | MP4, MOV (iPhone) ou WebM |
+| Duração | até 15 segundos (tolerância de meio segundo) |
+| Tamanho | até 50 MB — um vídeo Full HD de 15 s pesa de 25 a 35 MB; 4K não cabe, gravar em Full HD |
+| Capa | o produto precisa ter foto antes do vídeo |
 
-### Regras de envio
+### O que o cliente recebe
 
-- Validar tipo real, tamanho e duração antes de disponibilizar; rejeitar com mensagem clara.
-- Guardar em bucket ou pasta própria (`product-videos`), separada das imagens, com nome de arquivo não previsível.
-- Troca e exclusão seguem a mesma ordem segura das imagens: enviar e validar o novo, atualizar o registro, confirmar que o antigo não é mais referenciado e só então apagá-lo.
+| Item | Padrão |
+| --- | --- |
+| Formato | MP4 H.264, compatível com qualquer celular (iPhone incluído) |
+| Tamanho | até cerca de 3 MB para 15 s (normalmente 1 a 2,5 MB); nunca mais que 4 MB |
+| Resolução | cabe em 1280×720 (deitado) ou 720×1280 (em pé); vídeo pequeno não é ampliado |
+| Quadros | no máximo 30 por segundo |
+| Áudio | removido; o vídeo toca sem som |
+| Início rápido | o arquivo é organizado para começar a tocar antes de terminar de baixar |
+| Privacidade | localização e dados do aparelho gravados pelo celular são removidos |
+| Cores | vídeo HDR de iPhone é convertido para o padrão comum, para não ficar lavado |
+
+A qualidade é conferida por medição: a saída precisa manter similaridade (SSIM) de pelo menos 0,95 em relação ao original reduzido ao mesmo tamanho. Os números medidos estão em `docs/testes/video-compactacao-resultados.md`.
+
+### Como funciona
+
+1. O painel confere tipo, tamanho e duração e envia o vídeo original para um bucket **privado** (`product-video-uploads`), com barra de progresso.
+2. O servidor confere o tipo real do arquivo, compacta com `ffmpeg`, confere o resultado e publica em `product-videos`.
+3. Só depois disso o produto passa a apontar para o vídeo novo; o anterior é apagado em seguida (mesma ordem segura das imagens).
+4. O original e os arquivos temporários são apagados sempre, tenha dado certo ou não.
+
+Se o arquivo não for um vídeo, passar de 15 s, ou a compactação falhar ou demorar demais, o painel mostra uma mensagem clara e o produto continua exatamente como estava — nunca fica com vídeo quebrado. Sobras de um envio interrompido (aba fechada, queda de conexão) são apagadas automaticamente no envio seguinte, depois de 30 minutos.
+
+### Vídeos já publicados
+
+Não precisam ser refeitos: continuam tocando. Para deixá-los leves, basta enviar o vídeo de novo pelo painel.
 
 ### Exibição e custo
 
-- Carregar o vídeo apenas no detalhe do produto, com `preload="none"` ou `metadata`, nunca na listagem.
+- Carregar o vídeo apenas no detalhe do produto e só quando o cliente toca no botão de play (`preload="none"`), nunca na listagem.
 - Servir com cache longo (arquivo novo = caminho novo) para reduzir tráfego repetido.
-- Vídeo consome muito mais tráfego que foto. No plano Free do Supabase a cota de Storage e de tráfego é limitada: acompanhar o uso em homologação e, se necessário, migrar os vídeos para um serviço de vídeo dedicado ou para o plano Pro.
+- Com vídeos de até 3 MB, os 5 GB mensais de tráfego do plano Free do Supabase comportam mais de 1.600 reproduções completas por mês. Acompanhar o uso; se o cardápio crescer muito, avaliar o plano Pro ou um serviço de vídeo dedicado.
+- A compactação roda na própria aplicação (função da Vercel hoje; no servidor próprio no futuro, sem mudança de código).
 
 ## Acesso ao bucket
 

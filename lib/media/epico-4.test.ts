@@ -2,11 +2,11 @@ import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { initialMediaActionState } from '@/app/admin/(painel)/midia/action-state';
-import { confirmProductVideoUpload, createProductVideoUpload, removeHighlightImage, removeProductImage, removeProductVideo, uploadHighlightImage, uploadProductImage } from '@/app/admin/(painel)/midia/actions';
+import { createProductVideoUpload, removeHighlightImage, removeProductImage, removeProductVideo, uploadHighlightImage, uploadProductImage } from '@/app/admin/(painel)/midia/actions';
 import { createHighlight } from '@/app/admin/(painel)/destaques/actions';
 import { swapSortOrders } from '@/lib/admin/reorder';
 import { CLIENT_IMAGE_MAX_BYTES, fitImageWithin as fitClientImage } from '@/lib/media/client-resize';
-import { VIDEO_MAX_BYTES, acceptedVideoTypes, isAcceptedVideoType, validateVideoForUpload } from '@/lib/media/client-video';
+import { VIDEO_MAX_BYTES, acceptedVideoTypes, isAcceptedVideoType, resolveVideoMimeType, validateVideoForUpload } from '@/lib/media/client-video';
 import { chooseWebpQuality, compressImageToWebp, fitImageWithin as fitServerImage, IMAGE_MAX_BYTES, webpQualityCandidates } from '@/lib/media/compress';
 import { getImageVariantPath } from '@/lib/media';
 import { commitStagedMedia, isMediaUnreferenced, mediaObjectPaths } from '@/lib/media/workflow';
@@ -115,12 +115,16 @@ describe('Épico 4 — algoritmo de mídia', () => {
   });
 
   it('6. valida formato, tamanho e duração de vídeo no cliente', async () => {
-    expect(acceptedVideoTypes).toEqual(['video/mp4', 'video/webm']);
+    expect(acceptedVideoTypes).toEqual(['video/mp4', 'video/quicktime', 'video/webm']);
+    expect(VIDEO_MAX_BYTES).toBe(52_428_800);
     expect(isAcceptedVideoType('video/mp4')).toBe(true);
-    expect(isAcceptedVideoType('video/quicktime')).toBe(false);
-    await expect(validateVideoForUpload(new File([new Uint8Array(1)], 'x.mov', { type: 'video/quicktime' }))).rejects.toThrow('MP4 ou WebM');
-    await expect(validateVideoForUpload(new File([new Uint8Array(VIDEO_MAX_BYTES + 1)], 'x.mp4', { type: 'video/mp4' }))).rejects.toThrow('10 MB');
-    let duration = 15;
+    expect(isAcceptedVideoType('video/quicktime')).toBe(true);
+    expect(resolveVideoMimeType({ name: 'iphone.MOV', type: '' })).toBe('video/quicktime');
+    expect(resolveVideoMimeType({ name: 'clip.m4v', type: 'video/x-m4v' })).toBe('video/quicktime');
+    const oversized = new File([new Uint8Array(1)], 'x.mp4', { type: 'video/mp4' });
+    Object.defineProperty(oversized, 'size', { value: VIDEO_MAX_BYTES + 1 });
+    await expect(validateVideoForUpload(oversized)).rejects.toThrow('50 MB');
+    let duration = 15.5;
     vi.stubGlobal('URL', { createObjectURL: () => 'blob:video', revokeObjectURL: vi.fn() });
     vi.stubGlobal('document', {
       createElement: () => {
@@ -129,9 +133,17 @@ describe('Épico 4 — algoritmo de mídia', () => {
         return element;
       },
     });
-    await expect(validateVideoForUpload(new File([new Uint8Array(1)], 'ok.mp4', { type: 'video/mp4' }))).resolves.toEqual({ duration: 15 });
-    duration = 15.1;
+    await expect(validateVideoForUpload(new File([new Uint8Array(1)], 'ok.mp4', { type: 'video/mp4' }))).resolves.toEqual({ duration: 15.5, mimeType: 'video/mp4' });
+    duration = 15.51;
     await expect(validateVideoForUpload(new File([new Uint8Array(1)], 'longo.webm', { type: 'video/webm' }))).rejects.toThrow('15 segundos');
+    vi.stubGlobal('document', {
+      createElement: () => {
+        const element: { preload: string; onloadedmetadata: (() => void) | null; onerror: (() => void) | null; duration: number; src: string } = { preload: '', onloadedmetadata: null, onerror: null, duration: Number.NaN, src: '' };
+        Object.defineProperty(element, 'src', { set: () => queueMicrotask(() => element.onerror?.()) });
+        return element;
+      },
+    });
+    await expect(validateVideoForUpload(new File([new Uint8Array(1)], 'iphone.mov', { type: '' }))).resolves.toEqual({ duration: null, mimeType: 'video/quicktime' });
     vi.unstubAllGlobals();
   });
 
@@ -213,12 +225,11 @@ describe('Épico 4 — Server Actions com fakes de Supabase/Storage', () => {
     expect(storage.from).not.toHaveBeenCalled();
   });
 
-  it('12. não confirma vídeo que não existe no Storage', async () => {
-    const list = vi.fn().mockResolvedValue({ data: [], error: null });
-    mocks.createClient.mockResolvedValue({ storage: { from: vi.fn(() => ({ list })) } });
-    const result = await confirmProductVideoUpload(initialMediaActionState, form({ product_id: productId, path: `products/${productId}/44444444-4444-4444-8444-444444444444.mp4` }));
-    expect(result).toMatchObject({ status: 'error', message: expect.stringContaining('não foi concluído') });
-    expect(list).toHaveBeenCalledWith(`products/${productId}`, { search: '44444444-4444-4444-8444-444444444444.mp4' });
+  it('12. recusa tamanho bruto inválido antes de chamar Supabase', async () => {
+    const client = vi.fn(); mocks.createClient.mockImplementation(client);
+    const result = await createProductVideoUpload(initialMediaActionState, form({ product_id: productId, mime_type: 'video/mp4', size: String(52_428_801) }));
+    expect(result).toMatchObject({ status: 'error', message: expect.stringContaining('50 MB') });
+    expect(client).not.toHaveBeenCalled();
   });
 
   it('13. cria destaque na próxima ordem, registra auditoria e a troca de ordem continua limitada ao par', async () => {
@@ -244,8 +255,7 @@ describe('Épico 4 — Server Actions com fakes de Supabase/Storage', () => {
       removeProductImage(initialMediaActionState, form({ product_id: productId })),
       uploadHighlightImage(initialMediaActionState, form({ highlight_id: highlightId })),
       removeHighlightImage(initialMediaActionState, form({ highlight_id: highlightId })),
-      createProductVideoUpload(initialMediaActionState, form({ product_id: productId, mime_type: 'video/mp4' })),
-      confirmProductVideoUpload(initialMediaActionState, form({ product_id: productId, path: `products/${productId}/44444444-4444-4444-8444-444444444444.mp4` })),
+      createProductVideoUpload(initialMediaActionState, form({ product_id: productId, mime_type: 'video/mp4', size: '1024' })),
       removeProductVideo(initialMediaActionState, form({ product_id: productId })),
     ]);
     calls.forEach((result) => expect(result).toMatchObject({ status: 'error', message: expect.stringContaining('sessão') }));

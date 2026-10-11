@@ -14,7 +14,7 @@ function ConfirmButton() {
   return <Button disabled={pending} type="submit" variant="danger">{pending ? 'Excluindo…' : 'Excluir de vez'}</Button>;
 }
 
-export function ConfirmDialog({ action, entityId, title, description, triggerLabel = 'Excluir', fieldName = 'id', onSuccess }: Readonly<{ action: ConfirmAction; entityId: string; title: string; description: string; triggerLabel?: string; fieldName?: string; onSuccess?: () => void }>) {
+export function ConfirmDialog({ action, entityId, title, description, triggerLabel = 'Excluir', fieldName = 'id', onSuccess, disabled = false }: Readonly<{ action: ConfirmAction; entityId: string; title: string; description: string; triggerLabel?: string; fieldName?: string; onSuccess?: () => void; disabled?: boolean }>) {
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -74,7 +74,7 @@ export function ConfirmDialog({ action, entityId, title, description, triggerLab
     </div> : null;
 
   return <>
-    <Button aria-haspopup="dialog" id={triggerId} onClick={() => setOpen(true)} ref={triggerRef} variant="danger">{triggerLabel}</Button>
+    <Button aria-haspopup="dialog" disabled={disabled} id={triggerId} onClick={() => setOpen(true)} ref={triggerRef} variant="danger">{triggerLabel}</Button>
     {dialog && typeof document !== 'undefined' ? createPortal(dialog, document.body) : null}
   </>;
 }
