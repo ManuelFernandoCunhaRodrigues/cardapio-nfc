@@ -14,7 +14,7 @@ atualizado: 2026-10-10
 Ideias registradas no planejamento. O produto continua no básico; cada ideia só entra em desenvolvimento quando o responsável pedir de forma explícita:
 
 - [[20-Ideia-Pedido-pela-Mesa]] — pedido direto da mesa, acesso só no local e banco em VPS.
-- [[21-Ideia-Usuarios-e-Rastreabilidade]] — logins criados pelo administrador e histórico de ações.
+- [[21-Ideia-Usuarios-e-Rastreabilidade]] — logins criados pelo administrador, papel de operador e histórico de ações.
 
 Base visual dessas telas: [[_Indice-04-Design-e-Identidade-Visual]].
 
