@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { createProductVideoUpload, confirmProductVideoUpload, removeProductImage, removeProductVideo, uploadProductImage } from '@/app/admin/(painel)/midia/actions';
+import { createProductVideoUpload, removeProductImage, removeProductVideo, uploadProductImage } from '@/app/admin/(painel)/midia/actions';
 import { initialMediaActionState } from '@/app/admin/(painel)/midia/action-state';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
 import { resizeImageForUpload } from '@/lib/media/client-resize';
@@ -22,12 +22,12 @@ function Progress({ value, label }: { value: number; label: string }) {
   );
 }
 
-async function putSignedVideo(signedUrl: string, file: File, onProgress: (value: number) => void) {
+async function putSignedVideo(signedUrl: string, file: File, mimeType: string, onProgress: (value: number) => void) {
   await new Promise<void>((resolve, reject) => {
     const request = new XMLHttpRequest();
     const uploadUrl = signedUrl.startsWith('http') ? signedUrl : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1${signedUrl}`;
     request.open('PUT', uploadUrl);
-    request.setRequestHeader('Content-Type', file.type);
+    request.setRequestHeader('Content-Type', mimeType);
     request.upload.onprogress = (event) => { if (event.lengthComputable) onProgress(Math.max(10, Math.round((event.loaded / event.total) * 90))); };
     request.onload = () => request.status >= 200 && request.status < 300 ? resolve() : reject(new Error('upload_failed'));
     request.onerror = () => reject(new Error('upload_failed'));
@@ -71,22 +71,33 @@ export function ProductMediaManager({ productId, name, imagePath, videoPath, onI
     if (!file || !productId) return;
     setBusy(true); setProgress(5);
     try {
-      setMessage('Validando vídeo…'); await validateVideoForUpload(file);
-      const signedForm = new FormData(); signedForm.set('product_id', productId); signedForm.set('mime_type', file.type);
+      setMessage('Validando vídeo…'); const validation = await validateVideoForUpload(file);
+      const signedForm = new FormData(); signedForm.set('product_id', productId); signedForm.set('mime_type', validation.mimeType); signedForm.set('size', String(file.size));
       const signed = await createProductVideoUpload(initialMediaActionState, signedForm);
       if (signed.status !== 'success' || !signed.signedUrl || !signed.path) throw new Error(signed.message);
-      setMessage('Enviando vídeo…'); await putSignedVideo(signed.signedUrl, file, setProgress);
-      setProgress(95); setMessage('Confirmando vídeo…'); const confirm = new FormData(); confirm.set('product_id', productId); confirm.set('path', signed.path);
-      const result = await confirmProductVideoUpload(initialMediaActionState, confirm);
-      if (result.status === 'error') {
-        setProgress(undefined); setMessage(result.message);
-      } else {
-        setCurrentVideoPath(result.path ?? signed.path); setProgress(100); setMessage(result.message);
-      }
-    } catch (error) { setProgress(undefined); setMessage(error instanceof Error && error.message && error.message !== 'upload_failed' ? error.message : 'Não foi possível enviar o vídeo. Tente novamente.'); }
+      setMessage('Enviando vídeo…'); await putSignedVideo(signed.signedUrl, file, validation.mimeType, setProgress);
+      setProgress(95); setMessage('Compactando o vídeo… pode levar até um minuto. Não feche esta tela.');
+      const response = await fetch('/admin/midia/video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, path: signed.path }),
+      });
+      if (response.status === 504) throw new Error('video_timeout_gateway');
+      const contentType = response.headers.get('content-type') ?? '';
+      if (!contentType.includes('application/json')) throw new Error('video_timeout_gateway');
+      const result = await response.json() as { status?: string; message?: string; path?: string };
+      if (!response.ok || result.status !== 'success' || !result.path) throw new Error(result.message || 'video_process_failed');
+      setCurrentVideoPath(result.path); setProgress(100); setMessage(result.message);
+    } catch (error) {
+      setProgress(undefined);
+      const reason = error instanceof Error ? error.message : '';
+      if (reason === 'video_timeout_gateway') setMessage('A compactação demorou mais que o esperado. Tente novamente.');
+      else if (reason && reason !== 'upload_failed' && reason !== 'video_process_failed') setMessage(reason);
+      else setMessage('Não foi possível enviar o vídeo. Tente novamente.');
+    }
     finally { setBusy(false); }
   }
 
   /* eslint-disable-next-line @next/next/no-img-element -- prévia local antes da conversão no servidor */
-  return <section className="mt-6 border-t border-border pt-6"><h2 className="disp text-xl font-bold text-ink">Foto e vídeo</h2><p className="mt-1 text-sm leading-6 text-muted">Foto: câmera ou galeria. Ela será convertida em WebP. Vídeo opcional: MP4/WebM, até 15 s e 10 MB.</p><div className="mt-4 grid gap-5 sm:grid-cols-2"><div><div className="aspect-square overflow-hidden rounded-card border border-border bg-surface-inner">{preview ? <img alt={`Prévia de ${name}`} className="h-full w-full object-cover" src={preview} /> : <div className="grid h-full place-items-center p-5 text-center text-sm text-muted">A foto de capa aparece aqui.</div>}</div><label className="mt-3 flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-border bg-white px-4 text-sm font-bold text-ink hover:bg-surface-inner"><input accept="image/*" className="sr-only" disabled={busy} onChange={(event) => void selectImage(event.target.files?.[0])} type="file" />Escolher foto</label>{hasImage && productId ? <ConfirmDialog action={removeProductImage} description="A foto deixará de aparecer no cardápio. Remova o vídeo antes, se existir." entityId={productId} fieldName="product_id" onSuccess={() => { setPreview(null); setHasImage(false); setMessage('Foto removida.'); setProgress(undefined); }} title="Remover foto deste produto?" triggerLabel="Remover foto" /> : null}</div><div className="rounded-card border border-border bg-surface-inner p-4"><p className="font-bold text-ink">Vídeo curto</p><p className="mt-1 text-xs leading-5 text-muted">A foto continua sendo a capa e o fallback.</p>{currentVideoPath ? <video className="mt-3 aspect-video w-full rounded-xl bg-ink object-cover" controls muted preload="metadata" src={getPublicMediaUrl('product-videos', currentVideoPath) ?? undefined} /> : <div className="mt-3 grid aspect-video place-items-center rounded-xl border border-dashed border-border bg-white p-4 text-center text-xs text-muted">Nenhum vídeo enviado.</div>}{productId ? <><label className="mt-3 flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-ink px-4 text-sm font-bold text-cream"><input accept="video/mp4,video/webm" className="sr-only" disabled={busy} onChange={(event) => void selectVideo(event.target.files?.[0])} type="file" />Escolher vídeo</label>{currentVideoPath ? <ConfirmDialog action={removeProductVideo} description="O vídeo será removido do produto e do Storage quando não houver outra referência." entityId={productId} fieldName="product_id" onSuccess={() => { setCurrentVideoPath(null); setMessage('Vídeo removido.'); setProgress(undefined); }} title="Remover vídeo deste produto?" triggerLabel="Remover vídeo" /> : null}</> : <p className="mt-3 text-xs text-muted">Salve o produto e a foto primeiro para adicionar vídeo.</p>}</div></div>{progress !== undefined ? <Progress label={message ?? 'Processando…'} value={progress} /> : null}{message && progress === undefined ? <p aria-live="polite" className="mt-3 text-sm text-muted">{message}</p> : null}</section>;
+  return <section aria-busy={busy} className="mt-6 border-t border-border pt-6"><h2 className="disp text-xl font-bold text-ink">Foto e vídeo</h2><p className="mt-1 text-sm leading-6 text-muted">Foto: câmera ou galeria. Ela será convertida em WebP. Vídeo opcional: MP4, MOV ou WebM, até 15 s e 50 MB. Ele é compactado automaticamente.</p><div className="mt-4 grid gap-5 sm:grid-cols-2"><div><div className="aspect-square overflow-hidden rounded-card border border-border bg-surface-inner">{preview ? <img alt={`Prévia de ${name}`} className="h-full w-full object-cover" src={preview} /> : <div className="grid h-full place-items-center p-5 text-center text-sm text-muted">A foto de capa aparece aqui.</div>}</div><label className="mt-3 flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-border bg-white px-4 text-sm font-bold text-ink hover:bg-surface-inner"><input accept="image/*" className="sr-only" disabled={busy} onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; void selectImage(file); }} type="file" />Escolher foto</label>{hasImage && productId ? <ConfirmDialog action={removeProductImage} description="A foto deixará de aparecer no cardápio. Remova o vídeo antes, se existir." disabled={busy} entityId={productId} fieldName="product_id" onSuccess={() => { setPreview(null); setHasImage(false); setMessage('Foto removida.'); setProgress(undefined); }} title="Remover foto deste produto?" triggerLabel="Remover foto" /> : null}</div><div className="rounded-card border border-border bg-surface-inner p-4"><p className="font-bold text-ink">Vídeo curto</p><p className="mt-1 text-xs leading-5 text-muted">A foto continua sendo a capa e o fallback.</p>{currentVideoPath ? <video className="mt-3 aspect-video w-full rounded-xl bg-ink object-cover" controls muted preload="metadata" src={getPublicMediaUrl('product-videos', currentVideoPath) ?? undefined} /> : <div className="mt-3 grid aspect-video place-items-center rounded-xl border border-dashed border-border bg-white p-4 text-center text-xs text-muted">Nenhum vídeo enviado.</div>}{productId ? <><label className="mt-3 flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-ink px-4 text-sm font-bold text-cream"><input accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm" className="sr-only" disabled={busy} onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; void selectVideo(file); }} type="file" />Escolher vídeo</label>{currentVideoPath ? <ConfirmDialog action={removeProductVideo} description="O vídeo será removido do produto e do Storage quando não houver outra referência." disabled={busy} entityId={productId} fieldName="product_id" onSuccess={() => { setCurrentVideoPath(null); setMessage('Vídeo removido.'); setProgress(undefined); }} title="Remover vídeo deste produto?" triggerLabel="Remover vídeo" /> : null}</> : <p className="mt-3 text-xs text-muted">Salve o produto e a foto primeiro para adicionar vídeo.</p>}</div></div>{progress !== undefined ? <Progress label={message ?? 'Processando…'} value={progress} /> : null}{message && progress === undefined ? <p aria-live="polite" className="mt-3 text-sm text-muted">{message}</p> : null}</section>;
 }

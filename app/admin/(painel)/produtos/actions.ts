@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { swapSortOrders } from '@/lib/admin/reorder';
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { reportServerError } from '@/lib/observability';
+import { cleanupVideoOrphans, type VideoCleanupClient } from '@/lib/media/video/storage-cleanup';
 import { createClient } from '@/lib/supabase/server';
 import { parsePriceBRL } from '@/lib/utils/parse-price';
 import { productFormSchema } from '@/lib/validators/product';
@@ -154,6 +155,10 @@ export async function deleteProduct(_previous: ProductActionState, formData: For
       if (storageError) reportServerError('product_delete_video_cleanup_failed', storageError);
     }
   }
+  await cleanupVideoOrphans(supabase as unknown as VideoCleanupClient, {
+    productId: id.data,
+    onError: reportServerError,
+  });
   await audit(admin.userId, 'delete', id.data, { media_cleanup_checked: true });
   catalogPaths(id.data);
   return { status: 'success', message: 'Produto excluído.' };
