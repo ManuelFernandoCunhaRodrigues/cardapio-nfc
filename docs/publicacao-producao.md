@@ -8,7 +8,13 @@ Estado em 2026-10-10 (fim do dia):
 - **Código:** `main` recebeu a primeira promoção (PR #11).
 - **Vercel:** projeto `salgae-producao` conectado ao repositório, com as quatro variáveis de produção. Primeiro deploy de produção em 2026-10-10 (PR #13 + republicação após corrigir a chave publicável).
 - **No ar:** `https://salgae-producao.vercel.app`. Conferido após o deploy: todas as rotas públicas 200; `/admin` redireciona para o login; `robots.txt` com `Disallow: /admin` e home indexável; login `noindex`; os cinco cabeçalhos de segurança (HSTS sob HTTPS); cardápio lendo o banco de produção sem erros no log; QR Code em `docs/qr/salgae-producao-vercel-app.*` verificado.
-- **Pendente:** primeiro administrador, conteúdo real (o banco só tem o registro padrão da loja), teste em celular real, decisão do plano da Vercel e trocar a Production Branch do projeto `salgae-homologacao` para `develop`.
+- **Pendente:** conteúdo real (o banco só tem o registro padrão da loja) e teste em celular real.
+
+Atualização em 2026-10-11:
+
+- **Administrador:** a conta da lanchonete está ativa em produção desde 2026-10-10.
+- **Planos:** Vercel Hobby e Supabase gratuito, sem domínio próprio — o projeto é uma demonstração para clientes.
+- **Stage:** o responsável trocou a Production Branch do projeto `salgae-homologacao` para `develop`. A partir daqui, cada merge na `develop` publica `https://salgae-homologacao.vercel.app`.
 
 ## 0. Pré-requisitos (decisões do responsável)
 
