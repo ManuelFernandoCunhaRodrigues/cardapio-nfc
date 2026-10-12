@@ -11,6 +11,7 @@ Legenda: ✅ passou · ⚠️ passou com ressalva · ❌ falhou · ⛔ **não ex
 - A compactação funciona e cumpre os limiares em **8 vídeos de verdade** na máquina de desenvolvimento e nos testes automatizados do **CI em Linux** (mesmo binário que a Vercel instala).
 - **Não foi provado dentro da Vercel.** O deploy de preview do PR existe, compilou e a função da rota foi criada com o binário, mas os previews do projeto `salgae-homologacao` exigem login da Vercel e o Claude Code não tem essa sessão (nem digita senha). O único atalho por linha de comando (`vercel curl`) criaria um segredo permanente de "bypass" nas configurações de segurança do projeto — não foi feito. **A primeira execução real na Vercel precisa ser conferida em stage antes de ir para produção** (roteiro no fim).
 - **O fluxo pelo painel no navegador não foi executado**: não há sessão de administrador de stage no navegador de teste (nem em `localhost`, nem no stage) e o Claude Code não digita senha nem cria conta.
+- **Atualização de 2026-10-12:** os dois pontos acima foram fechados em stage com **um** envio feito pelo responsável no painel — a rota rodou dentro da Vercel e o fluxo completo gravou o vídeo no produto. Detalhes e limites dessa prova na [seção 12](#12-prova-em-stage-pelo-painel-2026-10-12).
 
 ## 1. Ponta a ponta com vídeos de verdade (E1–E11)
 
@@ -188,3 +189,19 @@ Depois das correções: lint e typecheck sem erros, **28 arquivos e 134 testes**
 4. Repetir com um vídeo de iPhone (de preferência com HDR ligado) e conferir as cores.
 5. Tentar um vídeo de mais de 15 s e um arquivo que não é vídeo: mensagem clara e o vídeo anterior continua no ar.
 6. Se o passo 2 falhar: `vercel logs <url-do-deploy>` e procurar `[salgae] media_video_compression_failed` — o campo `detail` diz o motivo (binário não encontrado, sem permissão, ffmpeg terminou com código N, tempo esgotado).
+
+## 12. Prova em stage pelo painel (2026-10-12)
+
+Ambiente: `https://salgae-homologacao.vercel.app`, deploy de produção do projeto `salgae-homologacao` no commit `f26088f` (primeiro deploy depois que a Production Branch passou a ser `develop`), banco `SALGAE-STAGING`. O envio foi feito pelo responsável, logado no painel; o Claude Code só conferiu o resultado pelo banco e pelo arquivo publicado.
+
+| Item | Resultado |
+| --- | --- |
+| Produto | "Coixinha de Carne", criado pelo painel com foto e, em seguida, vídeo. |
+| V2 ffmpeg rodando na Vercel | ✅ A saída existe em `product-videos` e só a rota a produz. |
+| Fluxo completo (N1, B8) | ✅ `video_path` do produto aponta para a saída; objeto criado às 02:59:09 UTC e produto atualizado às 02:59:16 UTC. |
+| Limpeza do bruto | ✅ `product-video-uploads` com 0 objetos depois do envio. |
+| Saída | ✅ 1.284.889 bytes (1,23 MiB) para 10,00 s · H.264 High · 1280×720 · 24 fps · sem áudio · `moov` antes de `mdat` (faststart). |
+| Tamanho do bruto | ⛔ não medido: o bruto é apagado ao fim e a mensagem do painel não foi registrada. |
+| Tempo de compactação na Vercel | ⛔ não medido (sem acesso aos logs da função). |
+
+Limites desta prova: foi **um** vídeo, e não era gravação de celular. Continuam em aberto os itens 3 a 7 e 9 a 12 da seção 10 (celular real, HDR de iPhone, seletor do iPhone/Android, rede móvel lenta, arquivo perto de 50 MiB, vídeo acima de 15 s pelo painel, troca e remoção pelo painel).
