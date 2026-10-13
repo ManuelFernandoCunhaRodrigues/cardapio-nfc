@@ -83,6 +83,14 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Impacto:** variáveis em [[09-Ambientes-e-Deploy]]; roteiro em `docs/publicacao-producao.md`.
 - **Revisão:** ao definir o domínio público e ao avaliar a CSP.
 
+### Banco local no CI, testes de RLS automáticos e testes de ponta a ponta
+
+- **Data:** 2026-10-13
+- **Contexto:** os testes de RLS eram rodados à mão no stage, as migrations nunca tinham sido aplicadas do zero fora dele e nenhum teste passava pela tela. Reordenar pelo painel, por exemplo, só tinha teste de banco.
+- **Decisão:** todo PR sobe o Supabase local em contêineres, aplica todas as migrations em um banco vazio, confere se os tipos versionados batem com esse banco, roda os testes SQL e depois os testes de ponta a ponta (Playwright) contra o build de produção. O administrador de teste só existe nesse banco e a senha é sorteada a cada execução.
+- **Por quê:** migration que só funciona em cima do stage, política de acesso afrouxada por engano e fluxo quebrado na tela passam a barrar o merge em vez de aparecerem depois.
+- **Impacto:** `.github/workflows/ci.yml`, `supabase/config.toml`, `e2e/`, `scripts/testar-banco-local.sh`; resultados em `docs/testes/banco-local-e-ponta-a-ponta-resultados.md`. O CI fica cerca de 3 minutos mais longo. Envio de foto e vídeo e as telas de categorias, destaques e loja ainda não têm teste de ponta a ponta.
+- **Revisão:** ao criar tela nova no painel ou tabela nova no banco.
 ### Página de produto com leitura própria, prévia de link e sitemap
 
 - **Data:** 2026-10-13

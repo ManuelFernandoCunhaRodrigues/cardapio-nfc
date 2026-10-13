@@ -74,6 +74,7 @@ Organização das pastas:
 - `components/menu` e `components/admin` — interface de cada lado; `components/ui` — peças comuns.
 - `lib` — regras sem interface (ordenação, busca, horários, mídia, validadores), onde ficam os testes.
 - `supabase/migrations` — esquema, políticas e funções; `supabase/tests` — testes de RLS em SQL.
+- `e2e` — testes de ponta a ponta.
 
 ## Rotas
 
@@ -108,9 +109,10 @@ Organização das pastas:
 
 ## Qualidade
 
-- 169 testes unitários e de integração com Vitest (`npm test`), concentrados nas regras de `lib/` e na rota de vídeo.
+- 174 testes unitários e de integração com Vitest (`npm test`), concentrados nas regras de `lib/` e na rota de vídeo.
 - Testes de RLS em SQL (`supabase/tests/`), que rodam dentro de uma transação desfeita no fim e conferem o que visitante, usuário comum e administrador conseguem ler e escrever.
-- CI no GitHub Actions a cada PR: formatação, lint, typecheck, testes e build.
+- 12 testes de ponta a ponta com Playwright (`e2e/`): o cardápio no celular e, no painel, entrar, criar produto, reordenar, marcar em falta e sair, conferindo o efeito no cardápio.
+- CI no GitHub Actions a cada PR, em dois jobs. O primeiro confere formatação, lint, typecheck, testes e build. O segundo sobe o Supabase local, aplica todas as migrations em um banco vazio, confere se os tipos versionados batem com esse banco, roda os testes de RLS e depois os de ponta a ponta contra o build de produção.
 - Acessibilidade tratada como requisito: navegação por teclado, rótulos para leitor de tela e respeito a movimento reduzido. No Lighthouse móvel do stage, acessibilidade 100 e desempenho de 94 a 98 nas rotas públicas (medição de 2026-10-09, anterior ao redesign).
 - Cabeçalhos de segurança (`HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) e páginas de stage fora dos buscadores.
 
@@ -133,6 +135,9 @@ Preencha em `.env.local` a URL e a chave anônima/publicável do Supabase. A apl
 | `npm run lint` | ESLint. |
 | `npm run typecheck` | TypeScript estrito, sem emitir arquivos. |
 | `npm test` | Testes com Vitest. |
+| `npm run test:db` | Testes SQL de RLS, Storage e reordenação contra o Supabase local. |
+| `npm run test:e2e` | Testes de ponta a ponta com Playwright, contra o build de produção. |
+| `npm run test:types-db` | Confere os tipos versionados contra os gerados do banco local (usado no CI). |
 | `npm run format` / `npm run format:check` | Formata ou confere a formatação com Prettier. |
 
 ## Banco de dados
