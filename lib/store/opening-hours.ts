@@ -14,7 +14,14 @@ export type StoreStatus = {
   opensNext?: Date;
 };
 
-type LocalDateTime = { year: number; month: number; day: number; weekday: number; hour: number; minute: number };
+type LocalDateTime = {
+  year: number;
+  month: number;
+  day: number;
+  weekday: number;
+  hour: number;
+  minute: number;
+};
 
 function getLocalDateTime(date: Date): LocalDateTime {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -28,27 +35,50 @@ function getLocalDateTime(date: Date): LocalDateTime {
     hourCycle: 'h23',
   }).formatToParts(date);
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  const weekdays: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const weekdays: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
 
   return {
-    year: Number(values.year), month: Number(values.month), day: Number(values.day),
-    weekday: weekdays[values.weekday], hour: Number(values.hour), minute: Number(values.minute),
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+    weekday: weekdays[values.weekday],
+    hour: Number(values.hour),
+    minute: Number(values.minute),
   };
 }
 
-function localDateForOffset(local: LocalDateTime, offset: number): Pick<LocalDateTime, 'year' | 'month' | 'day'> {
+function localDateForOffset(
+  local: LocalDateTime,
+  offset: number,
+): Pick<LocalDateTime, 'year' | 'month' | 'day'> {
   const date = new Date(Date.UTC(local.year, local.month - 1, local.day + offset));
   return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate() };
 }
 
 function toUtc(localDate: Pick<LocalDateTime, 'year' | 'month' | 'day'>, time: string): Date {
   const [hour, minute] = time.split(':').map(Number);
-  let candidate = new Date(Date.UTC(localDate.year, localDate.month - 1, localDate.day, hour, minute));
+  let candidate = new Date(
+    Date.UTC(localDate.year, localDate.month - 1, localDate.day, hour, minute),
+  );
   const desired = Date.UTC(localDate.year, localDate.month - 1, localDate.day, hour, minute);
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const actual = getLocalDateTime(candidate);
-    const actualAsUtc = Date.UTC(actual.year, actual.month - 1, actual.day, actual.hour, actual.minute);
+    const actualAsUtc = Date.UTC(
+      actual.year,
+      actual.month - 1,
+      actual.day,
+      actual.hour,
+      actual.minute,
+    );
     const difference = desired - actualAsUtc;
     if (difference === 0) break;
     candidate = new Date(candidate.getTime() + difference);
@@ -80,7 +110,11 @@ export function getStoreStatus(settings: StatusSettings, now: Date): StoreStatus
   const localNow = getLocalDateTime(now);
   const schedule = settings.opening_hours.find((hour) => hour.day === localNow.weekday);
   if (!schedule || schedule.closed) {
-    return { isOpen: false, reason: 'closed-today', opensNext: nextOpening(settings.opening_hours, localNow) };
+    return {
+      isOpen: false,
+      reason: 'closed-today',
+      opensNext: nextOpening(settings.opening_hours, localNow),
+    };
   }
 
   const nowMinutes = localNow.hour * 60 + localNow.minute;
@@ -88,5 +122,9 @@ export function getStoreStatus(settings: StatusSettings, now: Date): StoreStatus
     return { isOpen: true, reason: 'within-hours', closesAt: toUtc(localNow, schedule.close) };
   }
 
-  return { isOpen: false, reason: 'outside-hours', opensNext: nextOpening(settings.opening_hours, localNow) };
+  return {
+    isOpen: false,
+    reason: 'outside-hours',
+    opensNext: nextOpening(settings.opening_hours, localNow),
+  };
 }

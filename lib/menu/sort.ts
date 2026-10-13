@@ -10,10 +10,11 @@ export function sortProductsForHome(products: MenuProduct[]): MenuProduct[] {
 export function sortProductsByAvailability(products: readonly MenuProduct[]): MenuProduct[] {
   return products
     .map((product, originalIndex) => ({ product, originalIndex }))
-    .sort((a, b) => (
-      Number(b.product.is_available) - Number(a.product.is_available)
-      || a.product.sort_order - b.product.sort_order
-      || a.originalIndex - b.originalIndex
-    ))
+    .sort(
+      (a, b) =>
+        Number(b.product.is_available) - Number(a.product.is_available) ||
+        a.product.sort_order - b.product.sort_order ||
+        a.originalIndex - b.originalIndex,
+    )
     .map(({ product }) => product);
 }
