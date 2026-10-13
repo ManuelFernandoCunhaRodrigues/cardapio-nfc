@@ -1,27 +1,32 @@
 import Link from 'next/link';
 
-import { Icon } from '@/components/menu/icons';
+import { Icon, type IconName } from '@/components/menu/icons';
 import { getPublicStoreSettings } from '@/lib/menu/get-public-menu';
+import { formatStoreStatusTime, getSaoPauloWeekday } from '@/lib/menu/presentation';
 import { getStoreStatus } from '@/lib/store/opening-hours';
 
 export const revalidate = 60;
 const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-function formatTime(date: Date) { return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date); }
-function currentDay() {
-  const weekday = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', weekday: 'short' }).format(new Date());
-  return ({ Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 } as Record<string, number>)[weekday];
-}
 
 export default async function InfoPage() {
   const settings = await getPublicStoreSettings();
-  if (!settings) return <main className="p-4 pt-6"><h1 className="disp text-2xl font-extrabold text-ink">Informações</h1><section className="mt-5 rounded-card bg-cream p-5"><h2 className="disp text-xl font-bold text-ink">Informações indisponíveis agora</h2><p className="mt-2 text-sm leading-6 text-muted">Tente novamente em instantes ou fale com a equipe no balcão.</p></section></main>;
-  const status = getStoreStatus(settings, new Date());
-  const detail = status.isOpen && status.closesAt ? `Fecha às ${formatTime(status.closesAt)}` : !status.isOpen && status.opensNext ? `Abre às ${formatTime(status.opensNext)}` : status.isOpen ? 'Atendendo agora' : 'Fechada no momento';
-  const today = currentDay();
-  return <main className="p-4 pt-6"><h1 className="disp text-2xl font-extrabold text-ink">Informações</h1><section className={`mt-5 rounded-card p-5 ${status.isOpen ? 'bg-positive/10' : 'bg-danger/10'}`}><p className="font-mono text-[10px] font-bold tracking-[0.12em] text-muted">STATUS DA LOJA</p><h2 className={`disp mt-1 text-2xl font-extrabold ${status.isOpen ? 'text-positive' : 'text-danger'}`}>{status.isOpen ? 'Aberta' : 'Fechada'}</h2><p className="mt-1 text-sm font-semibold text-body">{detail}</p>{settings.notice ? <p className="mt-4 rounded-product bg-white/65 px-3 py-2 text-sm leading-5 text-body">{settings.notice}</p> : null}</section><section className="mt-7" aria-labelledby="horarios"><h2 className="disp text-xl font-bold text-ink" id="horarios">Horários</h2><dl className="mt-3 overflow-hidden rounded-card border border-border">{[...settings.opening_hours].sort((a, b) => a.day - b.day).map((hour) => <div className={`flex justify-between px-4 py-3 text-sm ${hour.day === today ? 'bg-brand/10 font-bold text-ink' : 'bg-white text-body'} ${hour.day !== 6 ? 'border-b border-border/70' : ''}`} key={hour.day}><dt>{weekdays[hour.day]}</dt><dd>{hour.closed ? 'Fechado' : `${hour.open} às ${hour.close}`}</dd></div>)}</dl></section><section className="mt-7 space-y-3" aria-label="Contato">{settings.address ? <InfoLink href={settings.maps_url ?? undefined} icon="pin" label={settings.address} /> : null}{settings.phone ? <InfoLink href={`tel:${settings.phone}`} icon="phone" label={settings.phone} /> : null}{settings.whatsapp ? <InfoLink href={`https://wa.me/${settings.whatsapp}`} icon="phone" label="WhatsApp" /> : null}{settings.instagram ? <InfoLink href={`https://instagram.com/${settings.instagram}`} icon="instagram" label={`@${settings.instagram}`} /> : null}</section></main>;
+  if (!settings) return <main className="p-4 pt-1"><h1 className="disp text-2xl font-bold text-ink">Informações</h1><section className="mt-5 rounded-card bg-white p-5"><h2 className="disp text-xl font-bold text-ink">Informações indisponíveis agora</h2><p className="mt-2 text-sm leading-6 text-muted">Tente novamente em instantes ou fale com a equipe no balcão.</p></section></main>;
+  const now = new Date();
+  const status = getStoreStatus(settings, now);
+  const detail = status.isOpen && status.closesAt ? `Fecha às ${formatStoreStatusTime(status.closesAt)}` : !status.isOpen && status.opensNext ? `Abre ${formatStoreStatusTime(status.opensNext, true)}` : status.isOpen ? 'Atendendo agora' : 'Fechada no momento';
+  const today = getSaoPauloWeekday(now);
+  return <main className="p-4 pt-1"><h1 className="disp text-2xl font-bold text-ink">Informações</h1>
+    <section className={`mt-4 rounded-card p-4 ${status.isOpen ? 'bg-green-soft' : 'bg-danger-soft'}`}><p className="lbl text-muted">Status da loja</p><h2 className={`disp mt-1 flex items-center gap-2 text-2xl font-bold ${status.isOpen ? 'text-green' : 'text-danger'}`}><span aria-hidden="true" className="size-2.5 rounded-full bg-current" />{status.isOpen ? 'Aberta' : 'Fechada'}</h2><p className="mt-0.5 text-sm font-bold text-body">{detail}</p>{settings.notice ? <p className="mt-2 flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold leading-4 text-body"><Icon height={16} name="info" width={16} />{settings.notice}</p> : null}</section>
+    <section className="mt-4" aria-labelledby="horarios"><h2 className="disp text-lg font-semibold text-ink" id="horarios">Horários</h2><dl className="mt-2 overflow-hidden rounded-card bg-white shadow-card">{[...settings.opening_hours].sort((a, b) => a.day - b.day).map((hour, index) => <div className={`flex justify-between px-4 py-2.5 text-sm ${hour.day === today ? 'bg-peach font-bold text-ink' : 'text-body'} ${index < settings.opening_hours.length - 1 ? 'border-b border-border/70' : ''}`} key={hour.day}><dt>{weekdays[hour.day]}{hour.day === today ? ' · hoje' : ''}</dt><dd>{hour.closed ? 'Fechado' : `${hour.open} às ${hour.close}`}</dd></div>)}</dl></section>
+    <section className="mt-4" aria-labelledby="contato"><h2 className="disp text-lg font-semibold text-ink" id="contato">Endereço e contato</h2>{settings.address ? <AddressLink address={settings.address} href={settings.maps_url} /> : null}<div className="mt-2 grid grid-cols-3 gap-2">{settings.phone ? <ContactLink href={`tel:${settings.phone}`} icon="phone" label="Ligar" /> : null}{settings.whatsapp ? <ContactLink href={`https://wa.me/${settings.whatsapp}`} icon="whatsapp" label="WhatsApp" /> : null}{settings.instagram ? <ContactLink href={`https://instagram.com/${settings.instagram}`} icon="instagram" label="Instagram" /> : null}</div></section>
+  </main>;
 }
 
-function InfoLink({ href, icon, label }: Readonly<{ href?: string; icon: 'pin' | 'phone' | 'instagram'; label: string }>) {
-  const content = <><span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-inner text-brand"><Icon name={icon} /></span><span className="text-sm font-bold text-ink">{label}</span></>;
-  return href ? <Link className="flex min-h-14 items-center gap-3 rounded-product border border-border bg-white px-3 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20" href={href} rel={href.startsWith('http') ? 'noreferrer' : undefined} target={href.startsWith('http') ? '_blank' : undefined}>{content}</Link> : <div className="flex min-h-14 items-center gap-3 rounded-product border border-border bg-white px-3">{content}</div>;
+function AddressLink({ address, href }: Readonly<{ address: string; href: string | null }>) {
+  const content = <><span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-inner text-brand-strong"><Icon name="pin" /></span><span className="min-w-0 flex-1"><strong className="block truncate text-sm text-ink">{address}</strong>{href ? <span className="block text-xs text-muted">Ver no mapa</span> : null}</span>{href ? <Icon className="text-muted" name="arrow-simple" /> : null}</>;
+  return href ? <Link className="mt-2 flex min-h-14 items-center gap-3 rounded-product bg-white px-3 shadow-card focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20" href={href} rel="noreferrer" target="_blank">{content}</Link> : <div className="mt-2 flex min-h-14 items-center gap-3 rounded-product bg-white px-3 shadow-card">{content}</div>;
+}
+
+function ContactLink({ href, icon, label }: Readonly<{ href: string; icon: IconName; label: string }>) {
+  return <Link className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-product bg-white text-brand-strong shadow-card focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20" href={href} rel={href.startsWith('http') ? 'noreferrer' : undefined} target={href.startsWith('http') ? '_blank' : undefined}><Icon name={icon} /><span className="text-xs font-bold text-ink">{label}</span></Link>;
 }
