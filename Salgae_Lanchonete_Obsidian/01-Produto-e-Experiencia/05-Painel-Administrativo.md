@@ -4,7 +4,7 @@ area: Produto
 tags:
   - produto
   - experiencia
-atualizado: 2026-10-09
+atualizado: 2026-10-12
 ---
 # Painel administrativo
 
@@ -47,7 +47,8 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 
 - cadastrar arte, título, texto opcional, destino e ordem de exibição;
 - ativar/desativar sem apagar o histórico;
-- validar tamanho e formato da imagem para não prejudicar a página pública.
+- validar tamanho e formato da imagem para não prejudicar a página pública;
+- sem limite de quantidade; contador de destaques ativos e aviso acima de 8 ativos ([[22-Carrossel-de-Destaques]]).
 
 ### Dados da loja
 
