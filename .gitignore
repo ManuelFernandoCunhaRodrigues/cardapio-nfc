@@ -12,3 +12,7 @@ docs/testes/lighthouse/*-[0-9].json
 
 # Layout pessoal do Obsidian (muda a cada abertura)
 Salgae_Lanchonete_Obsidian/.obsidian/workspace.json
+
+# Saídas do Playwright
+playwright-report/
+test-results/

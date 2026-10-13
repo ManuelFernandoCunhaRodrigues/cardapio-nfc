@@ -36,3 +36,51 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  banco-e-e2e:
+    name: banco local e ponta a ponta
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Login que só existe no banco local criado neste job.
+      E2E_ADMIN_EMAIL: admin@salgae.test
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.120.0
+      # Banco vazio: aplica todas as migrations, na ordem, e depois o seed.
+      - name: Sobe o Supabase local
+        run: supabase start
+      - name: Lê o endereço e a chave pública do banco local
+        run: |
+          supabase status -o env > "$RUNNER_TEMP/supabase.env"
+          read_var() { grep "^$1=" "$RUNNER_TEMP/supabase.env" | cut -d= -f2- | tr -d '"'; }
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$(read_var API_URL)"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(read_var ANON_KEY)"
+            echo "DB_URL=$(read_var DB_URL)"
+          } >> "$GITHUB_ENV"
+          password="$(openssl rand -hex 16)"
+          echo "::add-mask::$password"
+          echo "E2E_ADMIN_PASSWORD=$password" >> "$GITHUB_ENV"
+      - name: Testes de banco (RLS, Storage e reordenação)
+        run: bash scripts/testar-banco-local.sh
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Testes de ponta a ponta
+        run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

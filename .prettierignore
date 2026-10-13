@@ -12,3 +12,5 @@ supabase
 Salgae_Lanchonete_Obsidian
 .claude
 tsconfig.json
+playwright-report
+test-results
