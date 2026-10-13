@@ -45,6 +45,7 @@ O responsável pediu um novo visual para o cardápio e para o painel, com a logo
 | Painel: esconder a barra na edição e criar "Precisam de atenção" | Sim, os dois |
 | Esperar fotos reais dos produtos | Não; começar sem as fotos, que entram depois pelo painel |
 | Cardápio em lista vertical | Não (revisão 2) |
+| Melhorias novas da revisão de UX no celular | Todas as 12 |
 
 ## Como será entregue
 
@@ -60,7 +61,7 @@ Em 2026-10-12 o responsável pediu também uma revisão de design e UX voltada a
 
 **Como foi feita:** cardápio do stage em 390×844 e 360×640; painel do stage por dentro (Resumo, Produtos, edição e novo produto), com o responsável logado e sem alterar nada. Categorias, Destaques e Loja foram avaliadas só pelo código, porque a navegação nessas telas não foi liberada na sessão.
 
-**Melhorias novas apontadas, por prioridade** (ainda **não aprovadas**; o responsável escolhe quais entram):
+**Melhorias novas apontadas, por prioridade** — **todas as 12 aprovadas pelo responsável em 2026-10-12**:
 
 | # | Melhoria | Gravidade | Esforço |
 | --- | --- | --- | --- |
@@ -77,7 +78,9 @@ Em 2026-10-12 o responsável pediu também uma revisão de design e UX voltada a
 | 11 | Textos do painel sem termos técnicos; destino do destaque como escolha em vez de endereço digitado | média | pequeno + médio |
 | 12 | Organizar a ordem por categoria; filtros "Indisponíveis / Sem foto / Desativados" | média | médio |
 
-Acabamentos rápidos listados à parte: resposta visual ao toque, contorno de foco mais forte, mostrar a senha no login, categoria de um item sem linha vazia e tela inicial da busca com atalhos.
+**Onde cada uma entra:** as do cardápio do cliente (2, 3, 8 e 10) vão junto com o novo visual do cardápio e o carrossel; as do painel (1, 4, 5, 6, 7, 9, 11 e 12) vão no pacote do painel.
+
+Acabamentos rápidos listados à parte, que entram junto: resposta visual ao toque, contorno de foco mais forte, mostrar a senha no login, categoria de um item sem linha vazia e tela inicial da busca com atalhos.
 
 ## O que não muda
 
