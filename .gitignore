@@ -16,3 +16,4 @@ Salgae_Lanchonete_Obsidian/.obsidian/workspace.json
 # Saídas do Playwright
 playwright-report/
 test-results/
+lib/supabase/database.types.local.ts
