@@ -14,5 +14,5 @@ export default async function AdminPanelLayout({ children }: Readonly<{ children
   if (!admin) return <UnauthorizedAccess />;
   const settings = await getStoreSettings();
   const storeOpen = settings ? getStoreStatus(settings, new Date()).isOpen : null;
-  return <AdminShell name={admin.name} storeOpen={storeOpen}>{children}</AdminShell>;
+  return <AdminShell name={admin.name} statusOverride={settings?.status_override ?? null} storeOpen={storeOpen}>{children}</AdminShell>;
 }
