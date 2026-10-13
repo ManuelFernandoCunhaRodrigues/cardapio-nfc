@@ -45,6 +45,7 @@ O responsável pediu um novo visual para o cardápio e para o painel, com a logo
 | Painel: esconder a barra na edição e criar "Precisam de atenção" | Sim, os dois |
 | Esperar fotos reais dos produtos | Não; começar sem as fotos, que entram depois pelo painel |
 | Cardápio em lista vertical | Não (revisão 2) |
+| Melhorias novas da revisão de UX no celular | Todas as 12 |
 
 ## Como será entregue
 
@@ -56,7 +57,30 @@ Cada pacote passa pelos testes cruzados ([[11-Agentes-de-IA]]) e vai para o stag
 
 ## Revisão de UX no celular
 
-Em 2026-10-12 o responsável pediu também uma revisão de design e UX voltada ao celular, olhando o cardápio e o painel no navegador, para apontar o que ainda pode melhorar. O resultado será registrado em `docs/design/revisao-ux-mobile-2026-10.md` e resumido aqui.
+Em 2026-10-12 o responsável pediu também uma revisão de design e UX voltada ao celular, olhando o cardápio e o painel no navegador, para apontar o que ainda pode melhorar. O relatório completo está em `docs/design/revisao-ux-mobile-2026-10.md`.
+
+**Como foi feita:** cardápio do stage em 390×844 e 360×640; painel do stage por dentro (Resumo, Produtos, edição e novo produto), com o responsável logado e sem alterar nada. Categorias, Destaques e Loja foram avaliadas só pelo código, porque a navegação nessas telas não foi liberada na sessão.
+
+**Melhorias novas apontadas, por prioridade** — **todas as 12 aprovadas pelo responsável em 2026-10-12**:
+
+| # | Melhoria | Gravidade | Esforço |
+| --- | --- | --- | --- |
+| 1 | Produto com foto e vídeo em um passo só, com andamento visível e botão travado até terminar | alta | médio |
+| 2 | "Aberta/Fechada" calculado na hora em que a tela abre (hoje pode aparecer "Aberta" com a loja fechada) | alta | pequeno a médio |
+| 3 | Voltar do produto para o mesmo lugar; busca que lembra o termo | alta | pequeno |
+| 4 | Avisos visíveis no painel: salvou, deu erro, sair sem salvar | alta | pequeno |
+| 5 | Horários da loja em uma linha por dia, com "copiar para todos os dias" | alta | médio |
+| 6 | Categorias e Destaques com editor que sobe de baixo; cartão de produto inteiro abre a edição | alta | médio |
+| 7 | Abrir ou fechar a loja em dois toques pelo topo do painel | média | médio |
+| 8 | Banner sem cortar o botão; preço visível na tela inicial em celular pequeno | média | pequeno |
+| 9 | Uma situação só por produto: No cardápio · Em falta hoje · Escondido | média | médio |
+| 10 | "Mais desta categoria" no detalhe; indisponíveis no fim de cada faixa; busca pelo nome da categoria | média | médio |
+| 11 | Textos do painel sem termos técnicos; destino do destaque como escolha em vez de endereço digitado | média | pequeno + médio |
+| 12 | Organizar a ordem por categoria; filtros "Indisponíveis / Sem foto / Desativados" | média | médio |
+
+**Onde cada uma entra:** as do cardápio do cliente (2, 3, 8 e 10) vão junto com o novo visual do cardápio e o carrossel; as do painel (1, 4, 5, 6, 7, 9, 11 e 12) vão no pacote do painel.
+
+Acabamentos rápidos listados à parte, que entram junto: resposta visual ao toque, contorno de foco mais forte, mostrar a senha no login, categoria de um item sem linha vazia e tela inicial da busca com atalhos.
 
 ## O que não muda
 

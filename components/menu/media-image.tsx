@@ -3,20 +3,12 @@
 
 import { useState } from 'react';
 
-type MediaImageProps = {
-  src: string | null;
-  alt: string;
-  name: string;
-  className?: string;
-  priority?: boolean;
-  srcSet?: string;
-  sizes?: string;
-};
+import { CoxinhaArt } from './coxinha-art';
+
+type MediaImageProps = { src: string | null; alt: string; name: string; className?: string; priority?: boolean; srcSet?: string; sizes?: string };
 
 export function MediaImage({ src, alt, name, className = '', priority = false, srcSet, sizes }: Readonly<MediaImageProps>) {
   const [failed, setFailed] = useState(false);
-  if (!src || failed) {
-    return <div aria-label={`Imagem indisponível: ${name}`} className={`grid place-items-center bg-[repeating-linear-gradient(135deg,#2A2019_0,#2A2019_9px,#221A14_9px,#221A14_18px)] p-3 text-center ${className}`} role="img"><span className="max-w-full break-words font-mono text-[10px] uppercase tracking-[0.12em] text-cream/90">{name}</span></div>;
-  }
-  return <img alt={alt} className={`object-cover ${className}`} loading={priority ? 'eager' : 'lazy'} onError={() => setFailed(true)} sizes={sizes} src={src} srcSet={srcSet} />;
+  if (!src || failed) return <div aria-hidden={alt ? undefined : true} aria-label={alt ? `Imagem indisponível: ${name}` : undefined} className={`grid place-items-center overflow-hidden bg-[linear-gradient(180deg,#FFF6E6,#FBE5C8)] ${className}`} role={alt ? 'img' : undefined}><CoxinhaArt className="h-[82%] max-h-44 w-auto" /></div>;
+  return <img alt={alt} className={`object-cover ${className}`} fetchPriority={priority ? 'high' : undefined} loading={priority ? 'eager' : 'lazy'} onError={() => setFailed(true)} sizes={sizes} src={src} srcSet={srcSet} />;
 }
