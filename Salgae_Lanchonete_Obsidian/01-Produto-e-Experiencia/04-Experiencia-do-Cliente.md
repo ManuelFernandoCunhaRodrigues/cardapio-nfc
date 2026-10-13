@@ -4,7 +4,7 @@ area: Produto
 tags:
   - produto
   - experiencia
-atualizado: 2026-10-08
+atualizado: 2026-10-12
 ---
 # Experiência do cliente
 
@@ -34,7 +34,7 @@ Voltar: [[00-Comece-Aqui]] · Relacionado: [[02-Escopo-Atual]]
 ## Estrutura recomendada da página pública
 
 1. Cabeçalho: logo/nome, frase curta e eventual horário.
-2. Destaques: banner ou cards de combos/novidades configurados pelo painel.
+2. Destaques: banner de combos/novidades configurados pelo painel, trocando sozinho em carrossel ([[22-Carrossel-de-Destaques]]).
 3. Navegação de categorias.
 4. Lista de produtos por categoria.
 5. Detalhe do produto em modal ou página própria.
