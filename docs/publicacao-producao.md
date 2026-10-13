@@ -27,6 +27,8 @@ Atualização em 2026-10-11:
 
 ## 1. Banco de produção
 
+> Desde 2026-10-13 existe o workflow **Migrations** do GitHub Actions, que aplica as migrations e reprova o PR para a `main` enquanto a produção não as tiver. Veja `docs/migrations-pelo-ci.md`. Os passos abaixo continuam valendo como conferência e como caminho manual.
+
 1. Aplicar as migrations de `supabase/migrations/` **na ordem**, as mesmas já validadas em homologação:
    - `20261008222757_initial_schema`
    - `20261008225427_harden_rls`

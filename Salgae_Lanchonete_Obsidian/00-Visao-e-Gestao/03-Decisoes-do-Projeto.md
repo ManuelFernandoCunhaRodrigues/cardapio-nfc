@@ -83,6 +83,14 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Impacto:** variáveis em [[09-Ambientes-e-Deploy]]; roteiro em `docs/publicacao-producao.md`.
 - **Revisão:** ao definir o domínio público e ao avaliar a CSP.
 
+### Migrations aplicadas pelo GitHub Actions
+
+- **Data:** 2026-10-13
+- **Contexto:** as migrations eram aplicadas à mão, pelo SQL Editor ou pela ferramenta do Supabase. Em produção, duas ficaram registradas com versão diferente da do repositório, e a ordem "banco antes do código" dependia de alguém lembrar.
+- **Decisão:** o workflow **Migrations** usa a CLI do Supabase. No stage aplica sozinho a cada merge na `develop`. Em produção a aplicação é um passo manual no GitHub (Run workflow), e o PR para a `main` é reprovado enquanto a produção não tiver as migrations.
+- **Por quê:** a versão registrada passa a ser sempre a do arquivo, o histórico fica no GitHub e a produção continua dependendo de uma pessoa decidir.
+- **Impacto:** `.github/workflows/migrations.yml` e `docs/migrations-pelo-ci.md`. Depende de três segredos cadastrados pelo responsável e de um acerto único no histórico de migrations da produção; até lá o workflow só avisa. Migration nova precisa funcionar com o código que já está em produção, porque o banco muda antes.
+- **Revisão:** depois da primeira promoção feita por esse caminho.
 ### Banco local no CI, testes de RLS automáticos e testes de ponta a ponta
 
 - **Data:** 2026-10-13

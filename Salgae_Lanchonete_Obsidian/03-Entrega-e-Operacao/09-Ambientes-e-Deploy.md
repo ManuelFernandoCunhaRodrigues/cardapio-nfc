@@ -60,8 +60,9 @@ Nunca copiar arquivo `.env` de produção para homologação sem revisar cada va
 3. O Vercel de homologação publica automaticamente.
 4. Validar fluxo público, painel, dados e imagens em homologação.
 5. Abrir PR de `develop` para `main`.
-6. Após revisão e aprovação, merge em `main` publica a produção.
-7. Executar checklist pós-publicação e registrar resultado.
+6. Se houver migration nova, aplicá-la em produção pelo workflow **Migrations** do GitHub Actions antes do merge; o PR fica reprovado enquanto a produção não a tiver (`docs/migrations-pelo-ci.md`). No stage a migration é aplicada sozinha no merge na `develop`.
+7. Após revisão e aprovação, merge em `main` publica a produção.
+8. Executar checklist pós-publicação e registrar resultado.
 
 ## Recuperação
 

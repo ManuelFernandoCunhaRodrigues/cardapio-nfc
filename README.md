@@ -142,7 +142,9 @@ Preencha em `.env.local` a URL e a chave anônima/publicável do Supabase. A apl
 
 ## Banco de dados
 
-As migrations ficam em `supabase/migrations/` e **não são aplicadas automaticamente**: primeiro no stage, depois, revisadas, em produção.
+As migrations ficam em `supabase/migrations/` e são aplicadas pelo GitHub Actions, com a CLI do Supabase: no stage, a cada merge na `develop`; em produção, por um passo manual antes da promoção, e o PR para a `main` é reprovado enquanto a produção não tiver a migration. O passo a passo e a configuração dos segredos estão em [Migrations pelo CI](docs/migrations-pelo-ci.md).
+
+O mesmo comando funciona à mão, se for preciso:
 
 ```bash
 npx supabase login
@@ -213,5 +215,6 @@ O `ffmpeg` vem do pacote `ffmpeg-static` e roda como programa separado; o binár
 
 - [Guia da equipe](docs/guia-da-equipe.md) — como usar o painel no dia a dia.
 - [Publicação em produção](docs/publicacao-producao.md) — passo a passo de migrations, variáveis e conferência.
+- [Migrations pelo CI](docs/migrations-pelo-ci.md) — como o GitHub Actions aplica as migrations no stage e na produção.
 - [Resultados de testes](docs/testes/) — planos e medições de cada entrega.
 - `Salgae_Lanchonete_Obsidian/` — visão do produto, decisões, modelo de dados e identidade visual, em notas do Obsidian.
