@@ -34,8 +34,8 @@ Faltava, portanto, só o comportamento do carrossel. Tabela, permissões e envio
 
 - O banner troca de destaque sozinho a cada **6 segundos**. Depois do último, volta ao primeiro.
 - Pausa quando a pessoa toca ou arrasta o banner, passa o mouse, navega pelo teclado, troca de aba ou rola a página até o banner sair da tela. Retoma quando isso acaba.
-- Os pontinhos acompanham o destaque da vez e são clicáveis ("Ir para destaque 2 de 4"). Com mais de 5 destaques ativos, no lugar dos pontinhos aparece um contador ("3 de 9"), porque eles não cabem ao lado do botão de pausar.
-- Há um botão pequeno de **pausar/retomar** no banner. A escolha vale enquanto a página estiver aberta.
+- Os pontinhos ficam embaixo, no centro do banner, como na referência; acompanham o destaque da vez e são clicáveis ("Ir para destaque 2 de 4"). Com mais de 8 destaques ativos, no lugar dos pontinhos aparece um contador ("3 de 9").
+- **Não há botão de pausar** (decisão de 2026-10-13, abaixo). O banner continua pausando sozinho enquanto a pessoa toca, arrasta, passa o mouse ou navega pelo teclado.
 - Setas de anterior e próximo só no computador. No celular valem o dedo e os pontinhos.
 - Com a opção do aparelho de reduzir animações ligada, o banner **não troca sozinho**.
 - Com um destaque só: banner parado, sem pontinhos nem botão. Sem nenhum destaque: o banner padrão da casa.
@@ -58,8 +58,17 @@ A faixa "Em destaque" abaixo de "Mais pedidos". Com o carrossel, ela só repetir
 | --- | --- |
 | Tempo entre as trocas | 6 segundos |
 | Tirar a faixa repetida do segundo destaque | Sim |
-| Botão de pausar no banner | Sim |
+| Botão de pausar no banner | Sim em 2026-10-12; **retirado em 2026-10-13** |
 | Executar o plano | Sim |
+
+### Ajuste pedido em 2026-10-13
+
+Depois de ver o stage, o responsável mandou três imagens (os cards e o banner como estavam no celular dele e uma referência) e pediu:
+
+- **Banner maior**, como o da referência: 240 px de altura em qualquer celular, com título em duas linhas, frase e botão. Antes, em telas baixas ele encolhia para 148 px e escondia a frase.
+- **Pontinhos embaixo, no centro**, como na referência.
+- **Sem o botão de pausar**: o carrossel é automático. Isso revê a resposta de 2026-10-12. Consequência registrada: a regra de acessibilidade para conteúdo que se move sozinho (WCAG 2.2.2) pede um jeito de pausar; ficam as pausas por toque, mouse e teclado, e o carrossel segue parado para quem pede menos animação no aparelho.
+- **Cards no primeiro tamanho** (em pé, com foto, descrição e preço) em qualquer celular. Antes, em telas baixas eles encolhiam para o preço caber na primeira tela; com o banner maior e o card inteiro, em celular pequeno o preço fica abaixo da primeira tela.
 
 Recomendação registrada: manter de 3 a 6 destaques ativos.
 
@@ -68,7 +77,7 @@ Recomendação registrada: manter de 3 a 6 destaques ativos.
 - Sem migration, sem biblioteca nova, sem rota nova.
 - O servidor continua entregando todos os destaques em uma faixa com encaixe (`scroll-snap`). Uma pequena parte interativa no navegador cuida do índice, do temporizador, da pausa e da rolagem. Sem JavaScript, a faixa segue rolável com o dedo e cada banner continua sendo um link.
 - Desempenho: altura fixa do banner; só a imagem do primeiro destaque carrega com prioridade, as demais sob demanda.
-- Acessibilidade: região com rótulo "Destaques da casa" e descrição de carrossel; cada item informa a posição; nenhuma leitura automática a cada troca (anúncio só quando o usuário troca pelo ponto ou pela seta); os controles ficam fora do link do banner; alvos de toque de 44 px; atende ao critério 2.2.2 do WCAG (conteúdo que se move sozinho por mais de 5 segundos precisa de pausa).
+- Acessibilidade: região com rótulo "Destaques da casa" e descrição de carrossel; cada item informa a posição; nenhuma leitura automática a cada troca (anúncio só quando o usuário troca pelo ponto ou pela seta); os controles ficam fora do link do banner; pontos com alvo de toque de 24×32 px. Sem o botão de pausar, o critério 2.2.2 do WCAG (conteúdo que se move sozinho por mais de 5 segundos precisa de pausa) fica atendido só em parte.
 - Testes: lógica de avanço e pausa com temporizador simulado; ordem e filtro de ativos; contador e aviso do painel em 8 e 9 ativos; no navegador, toque, pontos, teclado, troca de aba, redução de movimento e 0, 1 e muitos destaques.
 
 ## Em aberto
