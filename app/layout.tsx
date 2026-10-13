@@ -5,8 +5,16 @@ import { getSiteEnv, getSiteUrl } from '@/lib/env';
 
 import './globals.css';
 
-const poppins = Poppins({ variable: '--font-poppins', subsets: ['latin'], weight: ['500', '600', '700'] });
-const nunito = Nunito_Sans({ variable: '--font-nunito', subsets: ['latin'], weight: ['400', '700'] });
+const poppins = Poppins({
+  variable: '--font-poppins',
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+});
+const nunito = Nunito_Sans({
+  variable: '--font-nunito',
+  subsets: ['latin'],
+  weight: ['400', '700'],
+});
 const siteEnv = getSiteEnv();
 const siteUrl = getSiteUrl();
 
@@ -23,5 +31,9 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="pt-BR" className={`${poppins.variable} ${nunito.variable}`}><body>{children}</body></html>;
+  return (
+    <html lang="pt-BR" className={`${poppins.variable} ${nunito.variable}`}>
+      <body>{children}</body>
+    </html>
+  );
 }

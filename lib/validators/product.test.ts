@@ -21,8 +21,16 @@ describe('productSchema', () => {
   });
 
   it('exige imagem de capa quando há vídeo', () => {
-    expect(productSchema.safeParse({ ...product, video_path: 'products/coxinha.mp4' }).success).toBe(false);
-    expect(productSchema.safeParse({ ...product, image_path: 'products/coxinha.jpg', video_path: 'products/coxinha.mp4' }).success).toBe(true);
+    expect(
+      productSchema.safeParse({ ...product, video_path: 'products/coxinha.mp4' }).success,
+    ).toBe(false);
+    expect(
+      productSchema.safeParse({
+        ...product,
+        image_path: 'products/coxinha.jpg',
+        video_path: 'products/coxinha.mp4',
+      }).success,
+    ).toBe(true);
   });
 
   it('aceita somente os badges previstos', () => {
@@ -32,7 +40,27 @@ describe('productSchema', () => {
   });
 
   it('valida os campos editáveis do formulário', () => {
-    expect(productFormSchema.safeParse({ name: 'Coxinha', description: '', price: '8,90', category_id: product.category_id, badge: 'novo', is_active: true, is_available: true }).success).toBe(true);
-    expect(productFormSchema.safeParse({ name: '', description: '', price: '', category_id: 'inválido', badge: 'promo', is_active: true, is_available: true }).success).toBe(false);
+    expect(
+      productFormSchema.safeParse({
+        name: 'Coxinha',
+        description: '',
+        price: '8,90',
+        category_id: product.category_id,
+        badge: 'novo',
+        is_active: true,
+        is_available: true,
+      }).success,
+    ).toBe(true);
+    expect(
+      productFormSchema.safeParse({
+        name: '',
+        description: '',
+        price: '',
+        category_id: 'inválido',
+        badge: 'promo',
+        is_active: true,
+        is_available: true,
+      }).success,
+    ).toBe(false);
   });
 });

@@ -6,7 +6,13 @@ import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const base = (process.argv[2] ?? 'https://salgae-homologacao.vercel.app').replace(/\/$/, '');
-const routes = ['/', '/cardapio', '/produto/35fadaf3-79c3-444d-a50f-b0a604d709a1', '/info', '/admin/login'];
+const routes = [
+  '/',
+  '/cardapio',
+  '/produto/35fadaf3-79c3-444d-a50f-b0a604d709a1',
+  '/info',
+  '/admin/login',
+];
 const publicRoutes = new Set(routes.filter((route) => !route.startsWith('/admin')));
 const RUNS = 3;
 const outDir = path.resolve('docs', 'testes', 'lighthouse');
@@ -18,10 +24,23 @@ const median = (values) => [...values].sort((a, b) => a - b)[Math.floor(values.l
 const quote = (value) => (process.platform === 'win32' ? `"${value}"` : value);
 
 async function runOnce(url, file) {
-  execFileSync(npx, ['-y', 'lighthouse@13.5.0', quote(url), '--form-factor=mobile', '--screenEmulation.mobile',
-    '--throttling-method=simulate', '--only-categories=performance,accessibility,best-practices',
-    '--output=json', quote(`--output-path=${file}`), '--quiet', quote('--chrome-flags=--headless=new')],
-  { stdio: ['ignore', 'ignore', 'inherit'], shell: process.platform === 'win32' });
+  execFileSync(
+    npx,
+    [
+      '-y',
+      'lighthouse@13.5.0',
+      quote(url),
+      '--form-factor=mobile',
+      '--screenEmulation.mobile',
+      '--throttling-method=simulate',
+      '--only-categories=performance,accessibility,best-practices',
+      '--output=json',
+      quote(`--output-path=${file}`),
+      '--quiet',
+      quote('--chrome-flags=--headless=new'),
+    ],
+    { stdio: ['ignore', 'ignore', 'inherit'], shell: process.platform === 'win32' },
+  );
   const report = JSON.parse(await readFile(file, 'utf8'));
   return {
     performance: Math.round(report.categories.performance.score * 100),
@@ -35,19 +54,38 @@ async function runOnce(url, file) {
 
 await mkdir(outDir, { recursive: true });
 // Evidência sempre da execução atual: apaga relatórios brutos anteriores.
-for (const name of await readdir(outDir)) if (/-\d\.json$/.test(name)) await rm(path.join(outDir, name));
+for (const name of await readdir(outDir))
+  if (/-\d\.json$/.test(name)) await rm(path.join(outDir, name));
 const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD']).toString().trim();
 // A própria pasta de evidências (execucao.log, relatórios) não conta como alteração de código.
-const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no', '--', '.', ':!docs/testes/lighthouse']).toString().trim() !== '';
+const dirty =
+  execFileSync('git', [
+    'status',
+    '--porcelain',
+    '--untracked-files=no',
+    '--',
+    '.',
+    ':!docs/testes/lighthouse',
+  ])
+    .toString()
+    .trim() !== '';
 const summary = [];
 let failed = false;
 for (const route of routes) {
   const runs = [];
   for (let i = 1; i <= RUNS; i += 1) {
-    const slug = route === '/' ? 'home' : route.replace(/^\//, '').replace(/[^a-z0-9]+/gi, '-').slice(0, 40);
+    const slug =
+      route === '/'
+        ? 'home'
+        : route
+            .replace(/^\//, '')
+            .replace(/[^a-z0-9]+/gi, '-')
+            .slice(0, 40);
     runs.push(await runOnce(`${base}${route}`, path.join(outDir, `${slug}-${i}.json`)));
   }
-  const result = Object.fromEntries(Object.keys(runs[0]).map((key) => [key, median(runs.map((run) => run[key]))]));
+  const result = Object.fromEntries(
+    Object.keys(runs[0]).map((key) => [key, median(runs.map((run) => run[key]))]),
+  );
   const failures = [];
   if (result.accessibility < 90) failures.push(`acessibilidade ${result.accessibility} < 90`);
   if (result.bestPractices < 90) failures.push(`boas práticas ${result.bestPractices} < 90`);
@@ -61,5 +99,8 @@ for (const route of routes) {
   summary.push({ route, ...result, status: failures.length ? 'FALHOU' : 'OK', failures });
   console.log(`${failures.length ? 'FALHOU' : 'OK'} ${route}`, result, failures.join('; '));
 }
-await writeFile(path.join(outDir, 'resumo.json'), `${JSON.stringify({ base, generatedAt: new Date().toISOString(), commit: dirty ? `${commit}+alterações locais` : commit, runs: RUNS, summary }, null, 2)}\n`);
+await writeFile(
+  path.join(outDir, 'resumo.json'),
+  `${JSON.stringify({ base, generatedAt: new Date().toISOString(), commit: dirty ? `${commit}+alterações locais` : commit, runs: RUNS, summary }, null, 2)}\n`,
+);
 process.exit(failed ? 1 : 0);

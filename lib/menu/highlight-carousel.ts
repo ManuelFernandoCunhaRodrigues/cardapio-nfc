@@ -17,15 +17,25 @@ export function previousHighlightIndex(current: number, count: number) {
   return count > 0 ? (current - 1 + count) % count : 0;
 }
 
-export function getRelativeSlideOffsets(trackOffsetLeft: number, slideOffsetLefts: readonly number[]): number[] {
+export function getRelativeSlideOffsets(
+  trackOffsetLeft: number,
+  slideOffsetLefts: readonly number[],
+): number[] {
   return slideOffsetLefts.map((offsetLeft) => offsetLeft - trackOffsetLeft);
 }
 
-export function getClosestHighlightIndex(scrollLeft: number, slideOffsets: readonly number[]): number {
+export function getClosestHighlightIndex(
+  scrollLeft: number,
+  slideOffsets: readonly number[],
+): number {
   if (slideOffsets.length === 0) return 0;
-  return slideOffsets.reduce((closest, offset, index) => (
-    Math.abs(offset - scrollLeft) < Math.abs(slideOffsets[closest] - scrollLeft) ? index : closest
-  ), 0);
+  return slideOffsets.reduce(
+    (closest, offset, index) =>
+      Math.abs(offset - scrollLeft) < Math.abs(slideOffsets[closest] - scrollLeft)
+        ? index
+        : closest,
+    0,
+  );
 }
 
 export function shouldAutoAdvance(count: number, paused: CarouselPauseState) {
@@ -37,9 +47,20 @@ export type CarouselTimer = Pick<typeof globalThis, 'setTimeout' | 'clearTimeout
 export class HighlightCarouselController {
   private timeout: ReturnType<typeof setTimeout> | undefined;
   private index = 0;
-  private paused: CarouselPauseState = { explicit: false, pointer: false, focus: false, hidden: false, offscreen: false, reducedMotion: false };
+  private paused: CarouselPauseState = {
+    explicit: false,
+    pointer: false,
+    focus: false,
+    hidden: false,
+    offscreen: false,
+    reducedMotion: false,
+  };
 
-  constructor(private readonly count: number, private readonly onAdvance: (index: number) => void, private readonly timer: CarouselTimer = globalThis) {
+  constructor(
+    private readonly count: number,
+    private readonly onAdvance: (index: number) => void,
+    private readonly timer: CarouselTimer = globalThis,
+  ) {
     this.restart();
   }
 
@@ -65,7 +86,9 @@ export class HighlightCarouselController {
     }, HIGHLIGHT_ROTATION_MS);
   }
 
-  destroy() { this.clear(); }
+  destroy() {
+    this.clear();
+  }
 
   private clear() {
     if (this.timeout !== undefined) this.timer.clearTimeout(this.timeout);

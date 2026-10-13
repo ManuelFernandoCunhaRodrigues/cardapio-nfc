@@ -5,25 +5,33 @@ export type ProductFilter = 'all' | 'unavailable' | 'without-image' | 'hidden';
 export type AttentionReason = 'unavailable' | 'without-image';
 export type HighlightTargetKind = 'menu' | 'category' | 'product' | 'custom';
 
-export function productSituationFromFields(product: Pick<AdminProduct, 'is_active' | 'is_available'>): ProductSituation {
+export function productSituationFromFields(
+  product: Pick<AdminProduct, 'is_active' | 'is_available'>,
+): ProductSituation {
   if (!product.is_active) return 'hidden';
   return product.is_available ? 'menu' : 'unavailable';
 }
 
-export function fieldsFromProductSituation(situation: ProductSituation): Pick<AdminProduct, 'is_active' | 'is_available'> {
+export function fieldsFromProductSituation(
+  situation: ProductSituation,
+): Pick<AdminProduct, 'is_active' | 'is_available'> {
   if (situation === 'menu') return { is_active: true, is_available: true };
   if (situation === 'unavailable') return { is_active: true, is_available: false };
   return { is_active: false, is_available: false };
 }
 
-export function attentionReasons(product: Pick<AdminProduct, 'is_active' | 'is_available' | 'image_path'>): AttentionReason[] {
+export function attentionReasons(
+  product: Pick<AdminProduct, 'is_active' | 'is_available' | 'image_path'>,
+): AttentionReason[] {
   const reasons: AttentionReason[] = [];
   if (product.is_active && !product.is_available) reasons.push('unavailable');
   if (!product.image_path) reasons.push('without-image');
   return reasons;
 }
 
-export function productsNeedingAttention<T extends Pick<AdminProduct, 'is_active' | 'is_available' | 'image_path'>>(products: T[]) {
+export function productsNeedingAttention<
+  T extends Pick<AdminProduct, 'is_active' | 'is_available' | 'image_path'>,
+>(products: T[]) {
   return products.flatMap((product) => {
     const reasons = attentionReasons(product);
     return reasons.length ? [{ product, reasons }] : [];
@@ -31,7 +39,11 @@ export function productsNeedingAttention<T extends Pick<AdminProduct, 'is_active
 }
 
 function normalize(value: string): string {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+    .trim();
 }
 
 export function filterAdminProducts<T extends AdminProduct>(
@@ -42,7 +54,8 @@ export function filterAdminProducts<T extends AdminProduct>(
   return products.filter((product) => {
     if (options.categoryId && product.category_id !== options.categoryId) return false;
     if (term && !normalize(product.name).includes(term)) return false;
-    if (options.filter === 'unavailable' && (product.is_available || !product.is_active)) return false;
+    if (options.filter === 'unavailable' && (product.is_available || !product.is_active))
+      return false;
     if (options.filter === 'without-image' && product.image_path) return false;
     if (options.filter === 'hidden' && product.is_active) return false;
     return true;
@@ -75,22 +88,49 @@ export function buildOpeningHours(values: Record<string, string | boolean>): Ope
   }));
 }
 
-export function copyOpeningHourToEveryDay(hours: OpeningHourInput[], sourceDay: number): OpeningHourInput[] {
+export function copyOpeningHourToEveryDay(
+  hours: OpeningHourInput[],
+  sourceDay: number,
+): OpeningHourInput[] {
   const source = hours.find((hour) => hour.day === sourceDay);
   if (!source) return hours;
-  return Array.from({ length: 7 }, (_, day) => ({ day, closed: source.closed, open: source.open, close: source.close }));
+  return Array.from({ length: 7 }, (_, day) => ({
+    day,
+    closed: source.closed,
+    open: source.open,
+    close: source.close,
+  }));
 }
 
 export type CreationStage = 'product' | 'image' | 'video' | 'done';
 export type CreationProgressStatus = 'pending' | 'current' | 'complete' | 'failed';
-export type CreationProgressStep = { value: Exclude<CreationStage, 'done'>; status: CreationProgressStatus };
+export type CreationProgressStep = {
+  value: Exclude<CreationStage, 'done'>;
+  status: CreationProgressStatus;
+};
 
-export function creationProgressSteps(options: { hasImage: boolean; hasVideo: boolean; stage: CreationStage | null; failedStep?: Exclude<CreationStage, 'done'> | null }): CreationProgressStep[] {
+export function creationProgressSteps(options: {
+  hasImage: boolean;
+  hasVideo: boolean;
+  stage: CreationStage | null;
+  failedStep?: Exclude<CreationStage, 'done'> | null;
+}): CreationProgressStep[] {
   const values: Array<Exclude<CreationStage, 'done'>> = ['product'];
   if (options.hasImage) values.push('image');
   if (options.hasVideo) values.push('video');
-  const current = options.stage === 'done' ? values.length : options.stage ? values.indexOf(options.stage) : -1;
-  return values.map((value, index) => ({ value, status: options.failedStep === value ? 'failed' : index < current ? 'complete' : index === current ? 'current' : 'pending' }));
+  const current =
+    options.stage === 'done' ? values.length : options.stage ? values.indexOf(options.stage) : -1;
+  return values.map((value, index) => ({
+    value,
+    status:
+      options.failedStep === value
+        ? 'failed'
+        : index < current
+          ? 'complete'
+          : index === current
+            ? 'current'
+            : 'pending',
+  }));
 }
 export type CreationFlowResult = {
   productId: string;
@@ -110,11 +150,19 @@ export async function runProductCreationFlow(options: {
   let video: CreationFlowResult['video'] = options.uploadVideo ? 'success' : 'skipped';
   if (options.uploadImage) {
     options.onStage?.('image');
-    try { await options.uploadImage(productId); } catch { image = 'error'; }
+    try {
+      await options.uploadImage(productId);
+    } catch {
+      image = 'error';
+    }
   }
   if (options.uploadVideo && image !== 'error') {
     options.onStage?.('video');
-    try { await options.uploadVideo(productId); } catch { video = 'error'; }
+    try {
+      await options.uploadVideo(productId);
+    } catch {
+      video = 'error';
+    }
   } else if (options.uploadVideo) {
     video = 'skipped';
   }
@@ -122,11 +170,15 @@ export async function runProductCreationFlow(options: {
   return { productId, image, video };
 }
 
-export function singleFlight<TArgs extends unknown[], TResult>(task: (...args: TArgs) => Promise<TResult>) {
+export function singleFlight<TArgs extends unknown[], TResult>(
+  task: (...args: TArgs) => Promise<TResult>,
+) {
   let current: Promise<TResult> | null = null;
   return (...args: TArgs): Promise<TResult> => {
     if (current) return current;
-    current = task(...args).finally(() => { current = null; });
+    current = task(...args).finally(() => {
+      current = null;
+    });
     return current;
   };
 }

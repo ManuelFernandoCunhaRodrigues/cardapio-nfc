@@ -4,7 +4,9 @@ import { loginSchema } from '@/lib/validators/auth';
 
 describe('loginSchema', () => {
   it('aceita credenciais preenchidas', () => {
-    expect(loginSchema.safeParse({ email: 'admin@salgae.com', password: 'segredo' }).success).toBe(true);
+    expect(loginSchema.safeParse({ email: 'admin@salgae.com', password: 'segredo' }).success).toBe(
+      true,
+    );
   });
 
   it('rejeita e-mail inválido e senha vazia', () => {

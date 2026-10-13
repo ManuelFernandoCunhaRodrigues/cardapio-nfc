@@ -11,7 +11,7 @@ export function formatItemCount(count: number): string {
 }
 
 export function getProductCardWidth(viewportWidth: number, margin = 16, gap = 12): number {
-  return (viewportWidth - margin - (2 * gap)) / 2.5;
+  return (viewportWidth - margin - 2 * gap) / 2.5;
 }
 
 export function formatStoreStatusTime(date: Date, includeWeekday = false): string {
@@ -22,11 +22,18 @@ export function formatStoreStatusTime(date: Date, includeWeekday = false): strin
     hourCycle: 'h23',
   }).format(date);
   if (!includeWeekday) return time;
-  const weekday = new Intl.DateTimeFormat('pt-BR', { timeZone: STORE_TIME_ZONE, weekday: 'long' }).format(date).replace('-feira', '');
+  const weekday = new Intl.DateTimeFormat('pt-BR', { timeZone: STORE_TIME_ZONE, weekday: 'long' })
+    .format(date)
+    .replace('-feira', '');
   return `${weekday} às ${time}`;
 }
 
 export function getSaoPauloWeekday(date: Date): number {
-  const value = new Intl.DateTimeFormat('en-US', { timeZone: STORE_TIME_ZONE, weekday: 'short' }).format(date);
-  return ({ Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 } as Record<string, number>)[value];
+  const value = new Intl.DateTimeFormat('en-US', {
+    timeZone: STORE_TIME_ZONE,
+    weekday: 'short',
+  }).format(date);
+  return ({ Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 } as Record<string, number>)[
+    value
+  ];
 }

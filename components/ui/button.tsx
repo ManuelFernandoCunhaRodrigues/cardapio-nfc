@@ -13,7 +13,10 @@ const variants: Record<ButtonVariant, string> = {
   danger: 'border border-danger bg-transparent text-danger hover:bg-danger hover:text-white',
 };
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({ className = '', variant = 'primary', type = 'button', ...props }, ref) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { className = '', variant = 'primary', type = 'button', ...props },
+  ref,
+) {
   return (
     <button
       className={`inline-flex min-h-11 items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition-colors focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}

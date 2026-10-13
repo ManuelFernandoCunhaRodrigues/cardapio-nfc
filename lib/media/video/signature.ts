@@ -6,11 +6,13 @@ export type VideoContainer = {
 };
 
 function isEbmlHeader(bytes: Uint8Array): boolean {
-  return bytes.length >= 4
-    && bytes[0] === 0x1a
-    && bytes[1] === 0x45
-    && bytes[2] === 0xdf
-    && bytes[3] === 0xa3;
+  return (
+    bytes.length >= 4 &&
+    bytes[0] === 0x1a &&
+    bytes[1] === 0x45 &&
+    bytes[2] === 0xdf &&
+    bytes[3] === 0xa3
+  );
 }
 
 function hasWebmDocType(bytes: Uint8Array): boolean {
@@ -19,7 +21,9 @@ function hasWebmDocType(bytes: Uint8Array): boolean {
     const sizeByte = bytes[index + 2];
     if ((sizeByte & 0x80) === 0) continue;
     const size = sizeByte & 0x7f;
-    const value = Buffer.from(bytes.subarray(index + 3, index + 3 + size)).toString('ascii').toLowerCase();
+    const value = Buffer.from(bytes.subarray(index + 3, index + 3 + size))
+      .toString('ascii')
+      .toLowerCase();
     if (value === 'webm') return true;
   }
   return false;
@@ -34,4 +38,3 @@ export function detectVideoContainer(bytes: Uint8Array): VideoContainer {
   if (isEbmlHeader(bytes) && hasWebmDocType(bytes)) return { kind: 'webm', demuxer: 'matroska' };
   throw new VideoCompressionError('video_invalid');
 }
-

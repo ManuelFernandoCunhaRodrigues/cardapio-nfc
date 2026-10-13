@@ -16,7 +16,9 @@ export function isAcceptedVideoType(type: string): type is (typeof acceptedVideo
   return (acceptedVideoTypes as readonly string[]).includes(type);
 }
 
-export function resolveVideoMimeType(file: Pick<File, 'name' | 'type'>): AcceptedVideoMimeType | null {
+export function resolveVideoMimeType(
+  file: Pick<File, 'name' | 'type'>,
+): AcceptedVideoMimeType | null {
   if (isAcceptedVideoType(file.type)) return file.type;
   if (file.type && file.type !== 'video/x-m4v') return null;
   const extension = file.name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
@@ -26,11 +28,14 @@ export function resolveVideoMimeType(file: Pick<File, 'name' | 'type'>): Accepte
   return null;
 }
 
-export async function validateVideoForUpload(file: File): Promise<{ duration: number | null; mimeType: AcceptedVideoMimeType }> {
+export async function validateVideoForUpload(
+  file: File,
+): Promise<{ duration: number | null; mimeType: AcceptedVideoMimeType }> {
   const mimeType = resolveVideoMimeType(file);
   if (!mimeType) throw new Error('Escolha um vídeo MP4, MOV ou WebM.');
   if (file.size <= 0) throw new Error('Este arquivo de vídeo está vazio.');
-  if (file.size > VIDEO_MAX_BYTES) throw new Error('O vídeo deve ter no máximo 50 MB. Grave em Full HD (1080p), não em 4K.');
+  if (file.size > VIDEO_MAX_BYTES)
+    throw new Error('O vídeo deve ter no máximo 50 MB. Grave em Full HD (1080p), não em 4K.');
   const objectUrl = URL.createObjectURL(file);
   try {
     const duration = await new Promise<number | null>((resolve) => {
@@ -52,8 +57,12 @@ export async function validateVideoForUpload(file: File): Promise<{ duration: nu
       video.onerror = () => finish(null);
       video.src = objectUrl;
     });
-    if (duration !== null && Number.isFinite(duration) && duration > VIDEO_MAX_DURATION_SECONDS) throw new Error('O vídeo deve durar no máximo 15 segundos.');
-    return { duration: duration !== null && Number.isFinite(duration) && duration > 0 ? duration : null, mimeType };
+    if (duration !== null && Number.isFinite(duration) && duration > VIDEO_MAX_DURATION_SECONDS)
+      throw new Error('O vídeo deve durar no máximo 15 segundos.');
+    return {
+      duration: duration !== null && Number.isFinite(duration) && duration > 0 ? duration : null,
+      mimeType,
+    };
   } finally {
     URL.revokeObjectURL(objectUrl);
   }

@@ -14,7 +14,9 @@ export type AdminAuthorization =
 
 export async function getAdminAuthorization(): Promise<AdminAuthorization> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { status: 'unauthenticated' };
 
   const { data: profile } = await supabase
@@ -27,7 +29,9 @@ export async function getAdminAuthorization(): Promise<AdminAuthorization> {
 }
 
 /** Centraliza a autorização da interface e das Server Actions do painel. */
-export async function requireAdmin(options: { redirectUnauthenticated?: boolean } = {}): Promise<AdminSession | null> {
+export async function requireAdmin(
+  options: { redirectUnauthenticated?: boolean } = {},
+): Promise<AdminSession | null> {
   const authorization = await getAdminAuthorization();
   if (authorization.status === 'unauthenticated') {
     if (options.redirectUnauthenticated ?? true) redirect('/admin/login');

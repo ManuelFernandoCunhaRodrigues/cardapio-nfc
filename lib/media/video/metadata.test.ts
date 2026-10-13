@@ -31,8 +31,14 @@ describe('parser do texto de ffmpeg -i', () => {
 
   it('aceita Duration N/A, detecta PQ e recusa ausência de vídeo', () => {
     const webm = `Duration: N/A\n  Stream #0:0: Video: vp9, yuv420p10le(tv, bt2020nc/bt2020/smpte2084), 1920x1080, 24 fps`;
-    expect(parseFfmpegMetadata(webm)).toMatchObject({ duration: null, transfer: 'smpte2084', codec: 'vp9' });
-    expect(() => parseFfmpegMetadata('Duration: 00:00:01.00\n Stream #0:0: Audio: aac')).toThrow('video_invalid');
+    expect(parseFfmpegMetadata(webm)).toMatchObject({
+      duration: null,
+      transfer: 'smpte2084',
+      codec: 'vp9',
+    });
+    expect(() => parseFfmpegMetadata('Duration: 00:00:01.00\n Stream #0:0: Audio: aac')).toThrow(
+      'video_invalid',
+    );
   });
 
   it('mantém a fronteira 15,5 legível e separa dimensão excessiva', () => {
@@ -41,4 +47,3 @@ describe('parser do texto de ffmpeg -i', () => {
     expect(() => validateInputMetadata(extreme)).toThrow('video_dimensions_unsupported');
   });
 });
-

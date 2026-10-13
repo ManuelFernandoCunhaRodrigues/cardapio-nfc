@@ -1,8 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getClosestHighlightIndex, getRelativeSlideOffsets, HIGHLIGHT_ROTATION_MS, HighlightCarouselController, highlightSummary, nextHighlightIndex, shouldAutoAdvance } from './highlight-carousel';
+import {
+  getClosestHighlightIndex,
+  getRelativeSlideOffsets,
+  HIGHLIGHT_ROTATION_MS,
+  HighlightCarouselController,
+  highlightSummary,
+  nextHighlightIndex,
+  shouldAutoAdvance,
+} from './highlight-carousel';
 
-const unpaused = { explicit: false, pointer: false, focus: false, hidden: false, offscreen: false, reducedMotion: false };
+const unpaused = {
+  explicit: false,
+  pointer: false,
+  focus: false,
+  hidden: false,
+  offscreen: false,
+  reducedMotion: false,
+};
 
 describe('carrossel de destaques', () => {
   it('avança em 6 segundos e volta ao primeiro', () => {
@@ -26,19 +41,22 @@ describe('carrossel de destaques', () => {
     vi.useRealTimers();
   });
 
-  it.each(['pointer', 'focus', 'hidden', 'offscreen', 'reducedMotion'] as const)('pausa e retoma por %s', (reason) => {
-    vi.useFakeTimers();
-    const callback = vi.fn();
-    const controller = new HighlightCarouselController(2, callback);
-    controller.setPause(reason, true);
-    vi.advanceTimersByTime(HIGHLIGHT_ROTATION_MS);
-    expect(callback).not.toHaveBeenCalled();
-    controller.setPause(reason, false);
-    vi.advanceTimersByTime(HIGHLIGHT_ROTATION_MS);
-    expect(callback).toHaveBeenCalledWith(1);
-    controller.destroy();
-    vi.useRealTimers();
-  });
+  it.each(['pointer', 'focus', 'hidden', 'offscreen', 'reducedMotion'] as const)(
+    'pausa e retoma por %s',
+    (reason) => {
+      vi.useFakeTimers();
+      const callback = vi.fn();
+      const controller = new HighlightCarouselController(2, callback);
+      controller.setPause(reason, true);
+      vi.advanceTimersByTime(HIGHLIGHT_ROTATION_MS);
+      expect(callback).not.toHaveBeenCalled();
+      controller.setPause(reason, false);
+      vi.advanceTimersByTime(HIGHLIGHT_ROTATION_MS);
+      expect(callback).toHaveBeenCalledWith(1);
+      controller.destroy();
+      vi.useRealTimers();
+    },
+  );
 
   it('não retoma depois de pausa explícita enquanto outra pausa acaba', () => {
     vi.useFakeTimers();
@@ -64,7 +82,7 @@ describe('carrossel de destaques', () => {
     { count: 4, scrollLeft: 630, expected: 2 },
     { count: 5, scrollLeft: 1_245, expected: 4 },
   ])('encontra o slide mais proximo entre $count destaques', ({ count, scrollLeft, expected }) => {
-    const offsets = Array.from({ length: count }, (_, index) => 9 + (index * 312));
+    const offsets = Array.from({ length: count }, (_, index) => 9 + index * 312);
     const relativeOffsets = getRelativeSlideOffsets(9, offsets);
     expect(relativeOffsets).toEqual(Array.from({ length: count }, (_, index) => index * 312));
     expect(getClosestHighlightIndex(scrollLeft, relativeOffsets)).toBe(expected);
@@ -81,7 +99,15 @@ describe('carrossel de destaques', () => {
   });
 
   it('mostra o aviso do painel somente a partir de nove ativos', () => {
-    expect(highlightSummary(Array.from({ length: 8 }, () => ({ is_active: true })))).toMatchObject({ active: 8, total: 8, showWarning: false });
-    expect(highlightSummary(Array.from({ length: 9 }, () => ({ is_active: true })))).toMatchObject({ active: 9, total: 9, showWarning: true });
+    expect(highlightSummary(Array.from({ length: 8 }, () => ({ is_active: true })))).toMatchObject({
+      active: 8,
+      total: 8,
+      showWarning: false,
+    });
+    expect(highlightSummary(Array.from({ length: 9 }, () => ({ is_active: true })))).toMatchObject({
+      active: 9,
+      total: 9,
+      showWarning: true,
+    });
   });
 });

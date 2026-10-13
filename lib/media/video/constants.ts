@@ -13,10 +13,6 @@ export const VIDEO_FINALIZATION_RESERVE_MS = 20_000;
 export const VIDEO_MAX_SIDE = 4_096;
 export const VIDEO_MAX_PIXELS = 8_847_360;
 
-export const ACCEPTED_VIDEO_MIME_TYPES = [
-  'video/mp4',
-  'video/quicktime',
-  'video/webm',
-] as const;
+export const ACCEPTED_VIDEO_MIME_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'] as const;
 
 export type AcceptedVideoMimeType = (typeof ACCEPTED_VIDEO_MIME_TYPES)[number];

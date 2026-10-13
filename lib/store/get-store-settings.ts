@@ -6,12 +6,16 @@ type StoreSettingsClient = {
   from: (table: 'store_settings') => ReturnType<Awaited<ReturnType<typeof createClient>>['from']>;
 };
 
-export async function getStoreSettings(client?: StoreSettingsClient): Promise<StoreSettings | null> {
+export async function getStoreSettings(
+  client?: StoreSettingsClient,
+): Promise<StoreSettings | null> {
   try {
-    const supabase = client ?? await createClient();
+    const supabase = client ?? (await createClient());
     const { data, error } = await supabase
       .from('store_settings')
-      .select('id, name, tagline, address, maps_url, phone, whatsapp, instagram, opening_hours, status_override, notice, updated_at')
+      .select(
+        'id, name, tagline, address, maps_url, phone, whatsapp, instagram, opening_hours, status_override, notice, updated_at',
+      )
       .eq('id', true)
       .maybeSingle();
 

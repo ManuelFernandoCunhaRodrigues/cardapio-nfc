@@ -16,7 +16,11 @@ export function Input({ id, label, error, className = '', ...props }: InputProps
         aria-describedby={error ? `${inputId}-error` : undefined}
         {...props}
       />
-      {error ? <p className="text-sm text-danger" id={`${inputId}-error`}>{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-danger" id={`${inputId}-error`}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

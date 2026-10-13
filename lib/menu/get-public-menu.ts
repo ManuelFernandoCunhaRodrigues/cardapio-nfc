@@ -26,7 +26,9 @@ export async function getPublicProducts(): Promise<PublicDataResult<MenuProduct[
   try {
     const { data, error } = await createPublicClient()
       .from('products')
-      .select('id, category_id, name, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available')
+      .select(
+        'id, category_id, name, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available',
+      )
       .eq('is_active', true)
       .order('sort_order');
     if (error) throw error;
@@ -56,7 +58,9 @@ export async function getPublicHighlights(): Promise<PublicDataResult<MenuHighli
 
 export async function getPublicMenu() {
   const [categories, products, highlights] = await Promise.all([
-    getPublicCategories(), getPublicProducts(), getPublicHighlights(),
+    getPublicCategories(),
+    getPublicProducts(),
+    getPublicHighlights(),
   ]);
   return { categories, products, highlights };
 }

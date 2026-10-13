@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatItemCount, formatStoreStatusTime, getProductCardWidth, getSaoPauloWeekday, splitLastWord } from './presentation';
+import {
+  formatItemCount,
+  formatStoreStatusTime,
+  getProductCardWidth,
+  getSaoPauloWeekday,
+  splitLastWord,
+} from './presentation';
 
 describe('apresentação do cardápio', () => {
   it('separa somente a última palavra do título', () => {

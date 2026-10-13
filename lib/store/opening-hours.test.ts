@@ -14,30 +14,52 @@ const hours = [
 
 describe('getStoreStatus', () => {
   it('indica que está aberta e informa o fechamento durante o horário', () => {
-    const status = getStoreStatus({ opening_hours: [...hours], status_override: 'auto' }, new Date('2026-10-05T14:00:00Z'));
+    const status = getStoreStatus(
+      { opening_hours: [...hours], status_override: 'auto' },
+      new Date('2026-10-05T14:00:00Z'),
+    );
     expect(status).toMatchObject({ isOpen: true, reason: 'within-hours' });
     expect(status.closesAt?.toISOString()).toBe('2026-10-05T21:00:00.000Z');
   });
 
   it('indica a próxima abertura fora do horário', () => {
-    const status = getStoreStatus({ opening_hours: [...hours], status_override: 'auto' }, new Date('2026-10-05T22:00:00Z'));
+    const status = getStoreStatus(
+      { opening_hours: [...hours], status_override: 'auto' },
+      new Date('2026-10-05T22:00:00Z'),
+    );
     expect(status).toMatchObject({ isOpen: false, reason: 'outside-hours' });
     expect(status.opensNext?.toISOString()).toBe('2026-10-06T11:00:00.000Z');
   });
 
   it('respeita dia fechado e encontra a próxima abertura', () => {
-    const status = getStoreStatus({ opening_hours: [...hours], status_override: 'auto' }, new Date('2026-10-04T15:00:00Z'));
+    const status = getStoreStatus(
+      { opening_hours: [...hours], status_override: 'auto' },
+      new Date('2026-10-04T15:00:00Z'),
+    );
     expect(status).toMatchObject({ isOpen: false, reason: 'closed-today' });
     expect(status.opensNext?.toISOString()).toBe('2026-10-05T11:00:00.000Z');
   });
 
   it('faz o override manual prevalecer', () => {
-    expect(getStoreStatus({ opening_hours: [...hours], status_override: 'open' }, new Date('2026-10-04T15:00:00Z'))).toMatchObject({ isOpen: true, reason: 'override-open' });
-    expect(getStoreStatus({ opening_hours: [...hours], status_override: 'closed' }, new Date('2026-10-05T14:00:00Z'))).toMatchObject({ isOpen: false, reason: 'override-closed' });
+    expect(
+      getStoreStatus(
+        { opening_hours: [...hours], status_override: 'open' },
+        new Date('2026-10-04T15:00:00Z'),
+      ),
+    ).toMatchObject({ isOpen: true, reason: 'override-open' });
+    expect(
+      getStoreStatus(
+        { opening_hours: [...hours], status_override: 'closed' },
+        new Date('2026-10-05T14:00:00Z'),
+      ),
+    ).toMatchObject({ isOpen: false, reason: 'override-closed' });
   });
 
   it('calcula usando São Paulo, não UTC', () => {
-    const status = getStoreStatus({ opening_hours: [...hours], status_override: 'auto' }, new Date('2026-10-05T22:00:00Z'));
+    const status = getStoreStatus(
+      { opening_hours: [...hours], status_override: 'auto' },
+      new Date('2026-10-05T22:00:00Z'),
+    );
     expect(status).toMatchObject({ isOpen: false, reason: 'outside-hours' });
   });
 });

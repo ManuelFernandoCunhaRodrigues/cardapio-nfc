@@ -46,7 +46,9 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
   if (error) return [];
 
   return (data ?? []).map((category) => {
-    const row = category as unknown as Omit<AdminCategory, 'product_count'> & { products: Array<{ count: number }> };
+    const row = category as unknown as Omit<AdminCategory, 'product_count'> & {
+      products: Array<{ count: number }>;
+    };
     return { ...row, product_count: row.products?.[0]?.count ?? 0 };
   });
 }
@@ -55,7 +57,9 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('products')
-    .select('id, category_id, name, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available, category:categories(name, slug)')
+    .select(
+      'id, category_id, name, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available, category:categories(name, slug)',
+    )
     .order('sort_order')
     .order('name');
   if (error) return [];
@@ -64,6 +68,10 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
 
 export async function getAdminHighlights(): Promise<AdminHighlight[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from('highlights').select('id, title, description, image_path, target, sort_order, is_active').order('sort_order').order('title');
-  return error ? [] : (data ?? []) as AdminHighlight[];
+  const { data, error } = await supabase
+    .from('highlights')
+    .select('id, title, description, image_path, target, sort_order, is_active')
+    .order('sort_order')
+    .order('title');
+  return error ? [] : ((data ?? []) as AdminHighlight[]);
 }

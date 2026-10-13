@@ -14,13 +14,15 @@ export function parseTopLevelMp4Boxes(bytes: Uint8Array): Mp4Box[] {
     if (size === 1) {
       if (buffer.length - offset < 16) throw new VideoCompressionError('video_invalid');
       const extended = buffer.readBigUInt64BE(offset + 8);
-      if (extended > BigInt(Number.MAX_SAFE_INTEGER)) throw new VideoCompressionError('video_invalid');
+      if (extended > BigInt(Number.MAX_SAFE_INTEGER))
+        throw new VideoCompressionError('video_invalid');
       size = Number(extended);
       headerSize = 16;
     } else if (size === 0) {
       size = buffer.length - offset;
     }
-    if (size < headerSize || offset + size > buffer.length) throw new VideoCompressionError('video_invalid');
+    if (size < headerSize || offset + size > buffer.length)
+      throw new VideoCompressionError('video_invalid');
     boxes.push({ type, start: offset, end: offset + size });
     offset += size;
   }
@@ -33,4 +35,3 @@ export function hasFastStart(bytes: Uint8Array): boolean {
   const mdat = boxes.find((box) => box.type === 'mdat');
   return Boolean(moov && mdat && moov.end <= mdat.start);
 }
-

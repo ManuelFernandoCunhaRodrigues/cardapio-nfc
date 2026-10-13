@@ -10,10 +10,7 @@ const appDirectory = path.resolve('app');
 const background = { r: 255, g: 255, b: 255, alpha: 1 };
 
 async function icon(size) {
-  return sharp(source)
-    .resize(size, size, { fit: 'contain', background })
-    .png()
-    .toBuffer();
+  return sharp(source).resize(size, size, { fit: 'contain', background }).png().toBuffer();
 }
 
 function icoFromPng(png, size) {
