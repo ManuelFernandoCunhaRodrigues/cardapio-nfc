@@ -26,7 +26,7 @@ Voltar: [[00-Comece-Aqui]] · Segurança: [[12-Seguranca-e-Qualidade]]
 - Valor monetário deve ser salvo em formato sem ambiguidade: inteiro em centavos ou `numeric` com precisão definida; não usar `float`.
 - `slug` deve ser único por categoria quando ele fizer parte de URL.
 - `sort_order` precisa ter padrão previsível para evitar itens em ordem aleatória.
-- Trocar dois itens de posição é uma operação só no banco: as funções `swap_product_sort_orders`, `swap_category_sort_orders` e `swap_highlight_sort_orders` (migration `20261013151000_atomic_sort_order_swap`) trocam os dois `sort_order` em uma única instrução, ou não trocam nenhum. Rodam com a permissão de quem chama, então o RLS continua decidindo: só administrador ativo consegue. Produtos só trocam dentro da mesma categoria.
+- Trocar dois itens de posição é uma operação só no banco: as funções `swap_product_sort_orders`, `swap_category_sort_orders` e `swap_highlight_sort_orders` (migration `20261013151000_atomic_sort_order_swap`) trocam os dois `sort_order` em uma única instrução, ou não trocam nenhum. Rodam com a permissão de quem chama, então o RLS continua decidindo: só administrador ativo consegue. Produtos só trocam dentro da mesma categoria. Em produção desde 2026-10-13.
 - A categoria de um produto não deve ser removida enquanto houver produtos vinculados, salvo em transação/migração segura.
 - Uma imagem ou vídeo só deve ser apagado quando nenhum registro ainda o referenciar.
 - Produto com `video_path` precisa ter `image_path`, usada como capa do vídeo e fallback.
