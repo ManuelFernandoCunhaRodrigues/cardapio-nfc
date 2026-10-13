@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildHighlightTarget,
   buildOpeningHours,
+  creationProgressSteps,
   copyOpeningHourToEveryDay,
   fieldsFromProductSituation,
   filterAdminProducts,
@@ -58,6 +59,12 @@ describe('regras do painel', () => {
 });
 
 describe('criação com mídia', () => {
+  it('mostra somente as etapas escolhidas e seus estados reais', () => {
+    expect(creationProgressSteps({ hasImage: false, hasVideo: false, stage: 'product' })).toEqual([{ value: 'product', status: 'current' }]);
+    expect(creationProgressSteps({ hasImage: true, hasVideo: true, stage: 'image' })).toEqual([{ value: 'product', status: 'complete' }, { value: 'image', status: 'current' }, { value: 'video', status: 'pending' }]);
+    expect(creationProgressSteps({ hasImage: true, hasVideo: false, stage: 'image', failedStep: 'image' })).toEqual([{ value: 'product', status: 'complete' }, { value: 'image', status: 'failed' }]);
+  });
+
   it('executa produto, foto e vídeo nessa ordem', async () => {
     const stages: string[] = [];
     const result = await runProductCreationFlow({

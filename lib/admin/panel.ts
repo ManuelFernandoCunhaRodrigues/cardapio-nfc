@@ -82,6 +82,16 @@ export function copyOpeningHourToEveryDay(hours: OpeningHourInput[], sourceDay: 
 }
 
 export type CreationStage = 'product' | 'image' | 'video' | 'done';
+export type CreationProgressStatus = 'pending' | 'current' | 'complete' | 'failed';
+export type CreationProgressStep = { value: Exclude<CreationStage, 'done'>; status: CreationProgressStatus };
+
+export function creationProgressSteps(options: { hasImage: boolean; hasVideo: boolean; stage: CreationStage | null; failedStep?: Exclude<CreationStage, 'done'> | null }): CreationProgressStep[] {
+  const values: Array<Exclude<CreationStage, 'done'>> = ['product'];
+  if (options.hasImage) values.push('image');
+  if (options.hasVideo) values.push('video');
+  const current = options.stage === 'done' ? values.length : options.stage ? values.indexOf(options.stage) : -1;
+  return values.map((value, index) => ({ value, status: options.failedStep === value ? 'failed' : index < current ? 'complete' : index === current ? 'current' : 'pending' }));
+}
 export type CreationFlowResult = {
   productId: string;
   image: 'skipped' | 'success' | 'error';

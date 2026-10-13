@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { initialStoreSettingsActionState } from '@/app/admin/(painel)/loja/action-state';
@@ -16,11 +16,12 @@ function ConfirmStatusButton({ storeOpen }: Readonly<{ storeOpen: boolean | null
 
 export function StoreStatusControl({ storeOpen, override, compact = false }: Readonly<{ storeOpen: boolean | null; override: 'auto' | 'open' | 'closed' | null; compact?: boolean }>) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [state, action] = useActionState(updateStoreStatusOverride, initialStoreSettingsActionState);
   const label = storeOpen === null ? 'Indisponível' : storeOpen ? 'Aberta' : 'Fechada';
   return <>
-    <button aria-haspopup="dialog" className={`inline-flex min-h-11 items-center gap-1.5 rounded-full font-[family-name:var(--font-poppins)] text-xs font-semibold ${storeOpen ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'} ${compact ? 'px-3' : 'px-3.5'}`} onClick={() => setOpen(true)} type="button"><span aria-hidden="true" className="size-2 rounded-full bg-current" />{label}</button>
-    <AdminSheet onClose={() => setOpen(false)} open={open} title="Estado da loja">
+    <button aria-haspopup="dialog" className={`inline-flex min-h-11 items-center gap-1.5 rounded-full font-[family-name:var(--font-poppins)] text-xs font-semibold ${storeOpen ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'} ${compact ? 'px-3' : 'px-3.5'}`} onClick={() => setOpen(true)} ref={triggerRef} type="button"><span aria-hidden="true" className="size-2 rounded-full bg-current" />{label}</button>
+    <AdminSheet onClose={() => setOpen(false)} open={open} returnFocusRef={triggerRef} title="Estado da loja">
       <p className="text-sm leading-6 text-body">A loja está <strong>{label.toLocaleLowerCase('pt-BR')}</strong>. A mudança manual vale até você voltar a seguir os horários.</p>
       <form action={action} className="mt-5 space-y-3">
         <input name="status_override" type="hidden" value={storeOpen ? 'closed' : 'open'} />
