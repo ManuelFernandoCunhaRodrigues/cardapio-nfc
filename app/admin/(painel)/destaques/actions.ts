@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { swapSortOrders } from '@/lib/admin/reorder';
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { reportServerError } from '@/lib/observability';
+import type { Json } from '@/lib/supabase/database.types';
 import { createClient } from '@/lib/supabase/server';
 import { highlightFormSchema } from '@/lib/validators/highlight';
 
@@ -27,12 +28,7 @@ function refreshHighlights() {
   revalidatePath('/admin');
   revalidatePath('/admin/destaques');
 }
-async function audit(
-  actorId: string,
-  action: string,
-  entityId: string,
-  metadata: Record<string, unknown>,
-) {
+async function audit(actorId: string, action: string, entityId: string, metadata: Json) {
   const supabase = await createClient();
   const { error } = await supabase
     .from('audit_logs')

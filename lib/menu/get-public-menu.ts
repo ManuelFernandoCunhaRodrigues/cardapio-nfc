@@ -15,7 +15,7 @@ export async function getPublicCategories(): Promise<PublicDataResult<MenuCatego
       .eq('is_active', true)
       .order('sort_order');
     if (error) throw error;
-    return { data: (data ?? []) as MenuCategory[], error: false };
+    return { data: data ?? [], error: false };
   } catch (error) {
     reportServerError('public_categories_read_failed', error);
     return { data: null, error: true };
@@ -49,7 +49,7 @@ export async function getPublicHighlights(): Promise<PublicDataResult<MenuHighli
       .eq('is_active', true)
       .order('sort_order');
     if (error) throw error;
-    return { data: (data ?? []) as MenuHighlight[], error: false };
+    return { data: data ?? [], error: false };
   } catch (error) {
     reportServerError('public_highlights_read_failed', error);
     return { data: null, error: true };

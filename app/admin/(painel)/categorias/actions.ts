@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { swapSortOrders } from '@/lib/admin/reorder';
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { reportServerError } from '@/lib/observability';
+import type { Json } from '@/lib/supabase/database.types';
 import { createClient } from '@/lib/supabase/server';
 import { categoryFormSchema } from '@/lib/validators/category';
 
@@ -31,7 +32,7 @@ async function audit(
   actorId: string,
   action: 'create' | 'update' | 'delete' | 'reorder',
   entityId: string,
-  metadata: Record<string, unknown>,
+  metadata: Json,
 ) {
   const supabase = await createClient();
   const { error } = await supabase
