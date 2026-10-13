@@ -7,9 +7,15 @@ import { MediaVideo } from '@/components/menu/media-video';
 import { ProductCard } from '@/components/menu/product-card';
 import { ProductRow } from '@/components/menu/product-row';
 import { getBadgeLabel } from '@/lib/menu/badges';
-import { getPublicCategories, getPublicProducts } from '@/lib/menu/get-public-menu';
+import {
+  getPublicProduct,
+  getPublicProductCategory,
+  getPublicProductsByCategory,
+  getPublicSitemapProducts,
+} from '@/lib/menu/get-public-menu';
 import { sortProductsByAvailability } from '@/lib/menu/sort';
 import { getPublicImageVariantUrl, getPublicMediaUrl } from '@/lib/media';
+import { getProductMetadata } from '@/lib/seo/product-metadata';
 import { formatPriceBRL } from '@/lib/utils/format-price';
 
 export const revalidate = 60;
@@ -18,36 +24,48 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { id } = await params;
-  if (!UUID_PATTERN.test(id)) return { title: 'Produto | Salgaê' };
-  const result = await getPublicProducts();
-  const product = result.data?.find((item) => item.id === id);
-  return { title: product ? `${product.name} | Salgaê` : 'Produto | Salgaê' };
+  if (!UUID_PATTERN.test(id)) return getProductMetadata(null, null);
+  const result = await getPublicProduct(id);
+  return getProductMetadata(
+    result.data,
+    getPublicImageVariantUrl('product-images', result.data?.image_path, 'detail'),
+  );
+}
+
+export async function generateStaticParams(): Promise<{ id: string }[]> {
+  const result = await getPublicSitemapProducts();
+  return result.data?.map(({ id }) => ({ id })) ?? [];
+}
+
+function ReadError() {
+  return (
+    <main className="p-4 pt-6">
+      <section className="rounded-card bg-white p-5">
+        <h1 className="disp text-xl font-bold text-ink">Não foi possível abrir este item</h1>
+        <p className="mt-2 text-sm leading-6 text-muted">Tente novamente em instantes.</p>
+        <BackToMenu />
+      </section>
+    </main>
+  );
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
   if (!UUID_PATTERN.test(id)) notFound();
-  const [productsResult, categoriesResult] = await Promise.all([
-    getPublicProducts(),
-    getPublicCategories(),
-  ]);
-  if (productsResult.error || categoriesResult.error)
-    return (
-      <main className="p-4 pt-6">
-        <section className="rounded-card bg-white p-5">
-          <h1 className="disp text-xl font-bold text-ink">Não foi possível abrir este item</h1>
-          <p className="mt-2 text-sm leading-6 text-muted">Tente novamente em instantes.</p>
-          <BackToMenu />
-        </section>
-      </main>
-    );
-  const product = productsResult.data.find((item) => item.id === id);
+  const productResult = await getPublicProduct(id);
+  if (productResult.error) return <ReadError />;
+  const product = productResult.data;
   if (!product) notFound();
-  const category = categoriesResult.data.find((item) => item.id === product.category_id);
+
+  const [categoryResult, categoryProductsResult] = await Promise.all([
+    getPublicProductCategory(product.category_id),
+    getPublicProductsByCategory(product.category_id),
+  ]);
+  if (categoryResult.error || categoryProductsResult.error) return <ReadError />;
+
+  const category = categoryResult.data;
   const related = sortProductsByAvailability(
-    productsResult.data.filter(
-      (item) => item.category_id === product.category_id && item.id !== product.id,
-    ),
+    categoryProductsResult.data.filter((item) => item.id !== product.id),
   );
   const badge = getBadgeLabel(product.badge);
   const cardImage = getPublicImageVariantUrl('product-images', product.image_path, 'card');

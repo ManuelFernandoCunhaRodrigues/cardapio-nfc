@@ -83,6 +83,15 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Impacto:** variáveis em [[09-Ambientes-e-Deploy]]; roteiro em `docs/publicacao-producao.md`.
 - **Revisão:** ao definir o domínio público e ao avaliar a CSP.
 
+### Página de produto com leitura própria, prévia de link e sitemap
+
+- **Data:** 2026-10-13
+- **Contexto:** a página de um produto lia o cardápio inteiro para achar um item, o link compartilhado (WhatsApp, redes) saía sem descrição nem foto e os buscadores não tinham a lista de páginas.
+- **Decisão:** a página lê só o produto pedido, a categoria dele e os outros itens da mesma categoria. Cada produto ganha título, descrição, endereço canônico e dados de prévia de link (Open Graph), com a foto quando houver. As páginas dos produtos ativos são geradas no build e continuam se atualizando sozinhas. O `sitemap.xml` lista início, cardápio, informações e produtos, e só existe em produção; em stage fica vazio, como o `robots.txt` já bloqueia tudo.
+- **Por quê:** menos dados trafegados a cada visita, link que se apresenta bem quando alguém compartilha e produção encontrável sem expor o stage.
+- **Impacto:** `lib/menu/get-public-menu.ts`, `lib/seo/`, `app/sitemap.ts` e `app/robots.ts`. Se o banco estiver lento no build, as páginas de produto passam a ser geradas na primeira visita em vez de derrubar o build. O endereço do produto continua sendo o identificador; trocar por um nome legível exige migration e fica como ideia.
+- **Revisão:** ao definir o domínio público.
+
 ### Refatoração de design do cardápio e do painel
 
 - **Data:** 2026-10-12
