@@ -81,6 +81,14 @@ Sobreposição conferida em 390 e 360 px com 4 e 6 destaques: pontos/contador n�
 - Busca: voltar do produto apagava o termo; texto "Nenhum resultados".
 - **Sem JavaScript o cardápio mostrava só a barra inferior** — defeito antigo, também no stage de hoje: o `loading.tsx` das listas fazia o conteúdo vir escondido. Arquivo removido; a busca voltou a ser página estática lendo o termo no navegador.
 
+## Ajuste de 2026-10-13 — banner maior, pontos no centro, sem botão de pausar
+
+Pedido do responsável depois de ver o stage (nota 22 do vault). Mudou: banner com 240 px em qualquer altura de tela (antes 208 px, ou 148 px em telas com menos de 700 px de altura); pontos embaixo no centro, até 8 (contador acima disso); sem botão de pausar; cards sempre em 242 px de altura (sai a versão encolhida para telas baixas).
+
+Com isso deixam de valer, nas tabelas acima: K3 (botão de pausar), o limite de 5 pontos de K7 e K12, a altura de 208/148 px e a linha da melhoria nº 8 sobre o preço visível em 360×640.
+
+Conferido no servidor de desenvolvimento em 390×844 e 360×640: banner de 240 px; "Conferir" termina 33 px antes do fim do banner; pontos (8 px, alvo de 24×32) centrados embaixo, sem encostar no botão; frase visível nos dois tamanhos; nenhum botão de pausar; card 140×242 (128×242 em 360); sem rolagem lateral; troca automática em 6 s continua.
+
 ## Não testado ou em aberto
 
 - C20 (Lighthouse): não rodado.
