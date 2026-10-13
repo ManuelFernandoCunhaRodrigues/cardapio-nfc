@@ -34,6 +34,19 @@ test.describe('cardápio público', () => {
     await expect(page.getByText('Disponível agora')).toBeVisible();
     await expect(page.getByText('Consulta apenas. Faça seu pedido com o atendente.')).toBeVisible();
     await expect(page).toHaveTitle('Coxinha de frango | Salgaê');
+    // Prévia de link: o que WhatsApp e redes leem ao receber o endereço do produto.
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      'content',
+      'Frango cremoso em massa crocante.',
+    );
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+      'content',
+      'Coxinha de frango | Salgaê',
+    );
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      /\/produto\/[0-9a-f-]{36}$/,
+    );
     await expect(
       page.getByRole('navigation', { name: mainNav }).getByRole('link', { name: 'Cardápio' }),
     ).toHaveAttribute('aria-current', 'page');
@@ -84,6 +97,13 @@ test.describe('cardápio público', () => {
     const robots = await request.get('/robots.txt');
     expect(robots.ok()).toBe(true);
     expect(await robots.text()).toMatch(/Disallow: \/\s*$/m);
+
+    // Fora da produção o sitemap existe, mas não lista nenhuma página.
+    const sitemap = await request.get('/sitemap.xml');
+    expect(sitemap.ok()).toBe(true);
+    const xml = await sitemap.text();
+    expect(xml).toContain('<urlset');
+    expect(xml).not.toContain('<url>');
   });
 
   test('as páginas saem com os cabeçalhos de segurança', async ({ request }) => {
