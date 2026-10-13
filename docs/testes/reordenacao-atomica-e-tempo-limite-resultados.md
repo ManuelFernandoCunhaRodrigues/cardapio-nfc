@@ -46,3 +46,13 @@ O teste roda dentro de uma transação desfeita no fim; conferido depois: nenhum
 ## Produção
 
 A migration `20261013151000_atomic_sort_order_swap` precisa ser aplicada em SALGAE-PRODUCTION **antes** de promover este código para a `main`. Sem ela, reordenar no painel de produção devolve "Não foi possível alterar a ordem agora"; o resto do sistema não é afetado.
+
+**Feito em 2026-10-13**, com a autorização do responsável no chat:
+
+1. Migration aplicada em SALGAE-PRODUCTION e conferida por leitura: as três funções existem, rodam com a permissão de quem chama, com `search_path` vazio, sem execução para `anon` e com execução para `authenticated`. O aviso de segurança do Supabase continua sendo só o de proteção contra senha vazada, que já existia.
+2. `develop` promovida para a `main` (PR #38). `main` e `develop` ficaram sem diferença de arquivos.
+3. Deploy de produção concluído e site conferido: `/`, `/cardapio`, `/busca`, `/info` e `/admin/login` respondem 200; `/admin` sem sessão leva ao login; a rota de envio de vídeo segue no ar.
+
+Não testado em produção: reordenar pelo painel, que exige o login do responsável.
+
+Pendência pequena: no banco de produção a migration ficou registrada com a versão `20261013214047`, diferente da do repositório (o mesmo já tinha acontecido com a de vídeo). Só importa se alguém usar `supabase db push`; a migration pode ser rodada de novo sem efeito.
