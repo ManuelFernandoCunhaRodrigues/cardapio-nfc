@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-10-10
+atualizado: 2026-10-12
 ---
 # Decisões do projeto
 
@@ -83,6 +83,24 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Impacto:** variáveis em [[09-Ambientes-e-Deploy]]; roteiro em `docs/publicacao-producao.md`.
 - **Revisão:** ao definir o domínio público e ao avaliar a CSP.
 
+### Refatoração de design do cardápio e do painel
+
+- **Data:** 2026-10-12
+- **Contexto:** o responsável pediu um novo visual, com a logo centralizada, a partir de uma nova referência; depois pediu os produtos em cards em pé, em faixa horizontal.
+- **Decisão:** aprovado o desenho descrito em [[23-Refatoracao-de-Design-2026-10]]: cabeçalho com situação da loja, logo centralizada e informações; fundo creme com cartões brancos; banner escuro com título em duas cores; Poppins e Nunito Sans (saem a Anton e a JetBrains Mono, o que **revê** a decisão "Layout da home do cardápio" de 2026-10-08); verde da marca para Aberta/Disponível/NOVO; cards em pé em faixa horizontal; barra inferior com 4 abas. No painel: lista "Precisam de atenção" no resumo e edição de produto sem a barra inferior. O desenvolvimento começa sem esperar fotos reais dos produtos.
+- **Por quê:** pedido do responsável; o produto é vitrine para apresentar a clientes e o visual pesa nessa apresentação.
+- **Impacto:** [[17-Design-System-UI]] e [[19-Referencia-Layout-Cardapio]] passam a valer com as mudanças da nota 23; sem mudança em banco, rotas ou regras de acesso. Entrega em pacotes: cardápio do cliente, carrossel de destaques e painel.
+- **Revisão:** depois de o responsável conferir no stage. A ida para a produção acontece junto com a compactação de vídeo, quando ele autorizar.
+
+### Carrossel automático de destaques
+
+- **Data:** 2026-10-12
+- **Contexto:** o responsável quer cadastrar quantos destaques quiser e vê-los rolando sozinhos no cardápio. Já não havia limite de quantidade; faltava a troca automática.
+- **Decisão:** conforme [[22-Carrossel-de-Destaques]]: troca a cada 6 segundos, em ciclo, com pausa ao interagir, pontinhos clicáveis, botão de pausar e sem troca automática quando o aparelho pede menos animação. Sai a faixa que repetia o segundo destaque. O painel ganha contador de ativos e aviso acima de 8 ativos, sem limite.
+- **Por quê:** dá visibilidade a todos os destaques sem exigir que o cliente arraste; o botão de pausar atende à regra de acessibilidade para conteúdo que se move sozinho.
+- **Impacto:** tela inicial do cardápio e `/admin/destaques`; sem migration e sem biblioteca nova.
+- **Revisão:** depois do uso em stage; rever o tempo de 6 segundos se o responsável quiser mudar.
+
 ## Modelo de registro para próximas decisões
 
 ### Título da decisão
@@ -100,6 +118,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - Onde hospedar os vídeos: Supabase Storage (padrão proposto) ou serviço de vídeo dedicado, conforme o consumo de tráfego no plano Free.
 - Se destaques também poderão ter vídeo (os limites de vídeo de produto foram fechados em "Compactação automática de vídeo").
 - Política visual: identidade, cores, fotos, tamanhos e textos.
+- Imagens nos destaques dos alimentos: o responsável mencionou a possibilidade em 2026-10-12; falta ele detalhar o que quer além da foto que cada destaque já aceita ([[22-Carrossel-de-Destaques]]).
 - Fotos das categorias na home: foto própria por categoria ou emoji como fallback ([[19-Referencia-Layout-Cardapio]]).
 - Papéis de acesso do painel.
 - Controle de estoque e status "Promoção" do protótipo do painel: ficaram fora do Épico 3 (não estão no escopo nem no banco); decidir se entram.

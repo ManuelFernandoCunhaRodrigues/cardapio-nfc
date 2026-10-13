@@ -5,11 +5,13 @@ tags:
   - design
   - ui
   - produto
-atualizado: 2026-10-08
+atualizado: 2026-10-12
 ---
 # Referência de layout do cardápio
 
 Voltar: [[_Indice-04-Design-e-Identidade-Visual]] · Relacionado: [[17-Design-System-UI]] · [[18-Prototipos-e-Telas]] · [[04-Experiencia-do-Cliente]]
+
+> **Atualização de 2026-10-12:** o visual foi revisto em [[23-Refatoracao-de-Design-2026-10]] (logo centralizada, banner escuro, sem a fonte Anton, cards em pé em faixa horizontal). Onde as duas notas divergirem, vale a 23.
 
 A tela inicial do cardápio público segue o **layout, o design, a organização dos cards e a tipografia** desta referência. Ela substitui a L01 do protótipo como base visual da home. A identidade (cores, logo, tom de voz) continua sendo a da Salgaê.
 
