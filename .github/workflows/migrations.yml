@@ -1,0 +1,111 @@
+name: Migrations
+
+# Aplica `supabase/migrations/` nos bancos do Supabase, sem ninguém colar SQL à mão.
+#
+# - push na develop  -> aplica no stage.
+# - pull request para a main -> só confere: falha se a produção ainda não tem as migrations.
+# - "Run workflow" com ambiente = producao -> aplica na produção (é o passo manual, antes do merge).
+# - push na main -> confere de novo e aplica o que faltar.
+#
+# Segredos do repositório: SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD_STAGE e
+# SUPABASE_DB_PASSWORD_PRODUCAO. Sem eles o job avisa e termina sem fazer nada.
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+    paths:
+      - supabase/migrations/**
+      - .github/workflows/migrations.yml
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      ambiente:
+        description: Onde aplicar as migrations
+        type: choice
+        required: true
+        options:
+          - stage
+          - producao
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrations-${{ github.event_name == 'workflow_dispatch' && inputs.ambiente || github.base_ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  migrations:
+    name: migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      EVENT_NAME: ${{ github.event_name }}
+      REF_NAME: ${{ github.ref_name }}
+      CHOSEN: ${{ inputs.ambiente }}
+    steps:
+      - name: Escolhe o ambiente
+        id: alvo
+        env:
+          STAGE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_STAGE }}
+          PRODUCAO_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PRODUCAO }}
+        run: |
+          case "$EVENT_NAME" in
+            workflow_dispatch) ambiente="$CHOSEN"; modo=aplicar ;;
+            pull_request) ambiente=producao; modo=conferir ;;
+            *) if [ "$REF_NAME" = main ]; then ambiente=producao; else ambiente=stage; fi; modo=aplicar ;;
+          esac
+          if [ "$ambiente" = producao ]; then
+            project_ref=gqwtjrdfnkfitslolofg
+            db_password="$PRODUCAO_DB_PASSWORD"
+          else
+            project_ref=csirmtmerqpbhatruzaf
+            db_password="$STAGE_DB_PASSWORD"
+          fi
+          {
+            echo "ambiente=$ambiente"
+            echo "modo=$modo"
+            echo "project_ref=$project_ref"
+          } >> "$GITHUB_OUTPUT"
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$db_password" ]; then
+            echo "::warning::Segredos do Supabase não configurados para $ambiente; nenhuma migration foi conferida nem aplicada."
+            echo "pronto=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "SUPABASE_DB_PASSWORD=$db_password" >> "$GITHUB_ENV"
+            echo "pronto=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.alvo.outputs.pronto == 'true'
+      - uses: supabase/setup-cli@v1
+        if: steps.alvo.outputs.pronto == 'true'
+        with:
+          version: 2.120.0
+      - name: Liga ao projeto (${{ steps.alvo.outputs.ambiente }})
+        if: steps.alvo.outputs.pronto == 'true'
+        run: supabase link --project-ref "${{ steps.alvo.outputs.project_ref }}"
+      - name: Situação das migrations
+        if: steps.alvo.outputs.pronto == 'true'
+        run: supabase migration list
+      - name: O que falta aplicar
+        id: pendentes
+        if: steps.alvo.outputs.pronto == 'true'
+        run: |
+          supabase db push --dry-run 2>&1 | tee "$RUNNER_TEMP/dry-run.txt"
+          if grep -q "Remote database is up to date" "$RUNNER_TEMP/dry-run.txt"; then
+            echo "ha_pendentes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ha_pendentes=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Produção precisa das migrations antes do merge
+        if: steps.alvo.outputs.pronto == 'true' && steps.alvo.outputs.modo == 'conferir' && steps.pendentes.outputs.ha_pendentes == 'true'
+        run: |
+          echo "::error::Há migrations que a produção ainda não tem. Rode este workflow em Actions > Migrations > Run workflow (branch develop, ambiente producao) e depois reexecute esta verificação."
+          exit 1
+      - name: Aplica as migrations
+        if: steps.alvo.outputs.pronto == 'true' && steps.alvo.outputs.modo == 'aplicar' && steps.pendentes.outputs.ha_pendentes == 'true'
+        run: supabase db push
