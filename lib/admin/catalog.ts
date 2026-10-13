@@ -36,6 +36,10 @@ export type AdminHighlight = {
   is_active: boolean;
 };
 
+function normalizeBadge(badge: string | null): AdminProduct['badge'] {
+  return badge === 'mais_pedido' || badge === 'novo' || badge === 'quentinho' ? badge : null;
+}
+
 export async function getAdminCategories(): Promise<AdminCategory[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -45,12 +49,10 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
     .order('name');
   if (error) return [];
 
-  return (data ?? []).map((category) => {
-    const row = category as unknown as Omit<AdminCategory, 'product_count'> & {
-      products: Array<{ count: number }>;
-    };
-    return { ...row, product_count: row.products?.[0]?.count ?? 0 };
-  });
+  return (data ?? []).map(({ products, ...category }) => ({
+    ...category,
+    product_count: products[0]?.count ?? 0,
+  }));
 }
 
 export async function getAdminProducts(): Promise<AdminProduct[]> {
@@ -63,7 +65,7 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
     .order('sort_order')
     .order('name');
   if (error) return [];
-  return (data ?? []) as unknown as AdminProduct[];
+  return (data ?? []).map((product) => ({ ...product, badge: normalizeBadge(product.badge) }));
 }
 
 export async function getAdminHighlights(): Promise<AdminHighlight[]> {
@@ -73,5 +75,5 @@ export async function getAdminHighlights(): Promise<AdminHighlight[]> {
     .select('id, title, description, image_path, target, sort_order, is_active')
     .order('sort_order')
     .order('title');
-  return error ? [] : ((data ?? []) as AdminHighlight[]);
+  return error ? [] : (data ?? []);
 }

@@ -157,6 +157,8 @@ npx supabase db push
 
 `supabase/seed.sql` traz dados de exemplo para ambiente local ou stage. Não execute o seed em produção.
 
+Os tipos do banco usados pelo código ficam em `lib/supabase/database.types.ts`. O arquivo é gerado pelo Supabase a partir do esquema; depois de uma migration nova, gere de novo (`npx supabase gen types typescript --project-id <ref-do-projeto> > lib/supabase/database.types.ts`) em vez de editar à mão. Os três clientes (`lib/supabase/client.ts`, `server.ts` e `public.ts`) recebem esse tipo, então um nome de tabela, coluna ou função errado vira erro no `npm run typecheck`.
+
 ### Primeiro administrador
 
 1. Crie o usuário em **Authentication > Users** no Supabase.

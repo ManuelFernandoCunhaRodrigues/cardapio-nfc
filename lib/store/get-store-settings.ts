@@ -1,13 +1,12 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+
 import { reportServerError } from '@/lib/observability';
+import type { Database } from '@/lib/supabase/database.types';
 import { createClient } from '@/lib/supabase/server';
 import { storeSettingsSchema, type StoreSettings } from '@/lib/validators/store-settings';
 
-type StoreSettingsClient = {
-  from: (table: 'store_settings') => ReturnType<Awaited<ReturnType<typeof createClient>>['from']>;
-};
-
 export async function getStoreSettings(
-  client?: StoreSettingsClient,
+  client?: SupabaseClient<Database>,
 ): Promise<StoreSettings | null> {
   try {
     const supabase = client ?? (await createClient());

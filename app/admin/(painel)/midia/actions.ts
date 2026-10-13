@@ -7,9 +7,10 @@ import { z } from 'zod';
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { compressImageToWebp } from '@/lib/media/compress';
 import { ACCEPTED_VIDEO_MIME_TYPES, VIDEO_RAW_MAX_BYTES } from '@/lib/media/video/constants';
-import { cleanupVideoOrphans, type VideoCleanupClient } from '@/lib/media/video/storage-cleanup';
+import { cleanupVideoOrphans } from '@/lib/media/video/storage-cleanup';
 import { commitStagedMedia, isMediaUnreferenced, mediaObjectPaths } from '@/lib/media/workflow';
 import { reportServerError } from '@/lib/observability';
+import type { Json } from '@/lib/supabase/database.types';
 import { createClient } from '@/lib/supabase/server';
 
 import type { MediaActionState } from './action-state';
@@ -36,7 +37,7 @@ async function audit(
   action: string,
   entity: 'product' | 'highlight',
   entityId: string,
-  metadata: Record<string, unknown>,
+  metadata: Json,
 ) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -293,7 +294,7 @@ export async function createProductVideoUpload(
     .eq('id', productId.data)
     .single();
   if (error || !product?.image_path) return fail('Salve uma foto de capa antes de enviar o vídeo.');
-  await cleanupVideoOrphans(supabase as unknown as VideoCleanupClient, {
+  await cleanupVideoOrphans(supabase, {
     cleanupUploads: true,
     productId: productId.data,
     onError: reportServerError,
@@ -349,7 +350,7 @@ export async function removeProductVideo(
       .remove([product.video_path]);
     if (removeError) reportServerError('media_video_cleanup_failed', removeError);
   }
-  await cleanupVideoOrphans(supabase as unknown as VideoCleanupClient, {
+  await cleanupVideoOrphans(supabase, {
     productId: productId.data,
     onError: reportServerError,
   });

@@ -57,7 +57,7 @@ describe('faxina segura de vídeos órfãos', () => {
           }),
         }),
       }),
-    } as unknown as VideoCleanupClient;
+    } satisfies VideoCleanupClient;
 
     await cleanupVideoOrphans(client, { cleanupUploads: true, productId, now, pageSize: 2 });
     expect(removed).toContainEqual({
@@ -82,7 +82,7 @@ describe('faxina segura de vídeos órfãos', () => {
         from: () => ({ list: async () => ({ data: null, error: new Error('sem lista') }), remove }),
       },
       from: vi.fn(),
-    } as unknown as VideoCleanupClient;
+    } satisfies VideoCleanupClient;
     await cleanupVideoOrphans(client, { cleanupUploads: true, productId, now, onError });
     expect(remove).not.toHaveBeenCalled();
     expect(onError).toHaveBeenCalledTimes(2);
@@ -105,7 +105,7 @@ describe('faxina segura de vídeos órfãos', () => {
           }),
         }),
       }),
-    } as unknown as VideoCleanupClient;
+    } satisfies VideoCleanupClient;
     await cleanupVideoOrphans(client, { productId, now });
     expect(remove).toHaveBeenCalledWith([`products/${productId}/orfao.mp4`]);
   });
@@ -127,7 +127,7 @@ describe('faxina segura de vídeos órfãos', () => {
           }),
         }),
       }),
-    } as unknown as VideoCleanupClient;
+    } satisfies VideoCleanupClient;
     await cleanupVideoOrphans(client, { productId, now });
     expect(remove).not.toHaveBeenCalled();
   });
