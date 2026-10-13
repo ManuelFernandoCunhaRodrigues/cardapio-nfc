@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSyncExternalStore } from 'react';
 
 import { Icon, type IconName } from './icons';
 
@@ -12,9 +13,14 @@ const items: { href: string; label: string; icon: IconName; matches: (pathname: 
   { href: '/info', label: 'Info', icon: 'info', matches: (path) => path === '/info' },
 ];
 
+const subscribe = () => () => {};
+
 export function PublicNav() {
   const pathname = usePathname();
-  return <nav aria-label="Navegação principal" className="fixed inset-x-0 bottom-0 z-30"><div className="mx-auto grid min-h-[calc(72px+env(safe-area-inset-bottom))] max-w-[480px] grid-cols-4 rounded-t-[24px] bg-white px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_16px_rgba(23,17,13,0.08)]">{items.map((item) => {
+  // Na Vercel a página inicial é gerada com outro caminho e sai sem aba ativa. O React não corrige
+  // atributos na hidratação, então a barra é remontada uma vez no navegador com o caminho real.
+  const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
+  return <nav aria-label="Navegação principal" className="fixed inset-x-0 bottom-0 z-30"><div className="mx-auto grid min-h-[calc(72px+env(safe-area-inset-bottom))] max-w-[480px] grid-cols-4 rounded-t-[24px] bg-white px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_16px_rgba(23,17,13,0.08)]" key={hydrated ? 'navegador' : 'servidor'}>{items.map((item) => {
     const active = item.matches(pathname);
     return <Link aria-current={active ? 'page' : undefined} className={`flex min-h-16 flex-col items-center justify-center gap-1 font-[family-name:var(--font-poppins)] text-[11px] font-medium focus-visible:rounded-xl focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20 ${active ? 'text-brand-strong' : 'text-muted'}`} href={item.href} key={item.href}><span className={`grid h-[30px] w-14 place-items-center rounded-full ${active ? 'bg-peach' : ''}`}><Icon name={item.icon} /></span><span>{item.label}</span></Link>;
   })}</div></nav>;
