@@ -41,6 +41,7 @@ Voltar: [[00-Comece-Aqui]] · Dados: [[07-Modelo-de-Dados-Supabase]]
 | Lint | Sim |
 | Typecheck | Sim, se a aplicação usar TypeScript |
 | Testes automatizados | Para regras de negócio, acesso e regressões críticas |
+| Migrations do zero, testes de RLS e ponta a ponta (job "banco local e ponta a ponta" do CI) | Sim, roda sozinho em todo PR |
 | Build de produção | Sim |
 | Teste manual em celular | Sim, para alteração de interface pública |
 | Revisão de permissões/RLS | Para tabelas, Storage, Auth ou painel |
