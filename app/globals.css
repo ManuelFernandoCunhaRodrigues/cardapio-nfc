@@ -40,3 +40,12 @@ button, input { font: inherit; }
 .disp { font-family: var(--font-poppins), sans-serif; letter-spacing: -0.02em; }
 .display { font-family: var(--font-poppins), sans-serif; font-weight: 700; letter-spacing: -0.02em; }
 .lbl { font-family: var(--font-poppins), sans-serif; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.public-shell :where(a, button, input):focus-visible {
+  outline: 2px solid #c2491a !important;
+  outline-offset: 2px;
+}
+
+@media (hover: none) {
+  .public-shell :where(a, button):active { filter: brightness(0.92); }
+}

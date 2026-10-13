@@ -1,9 +1,10 @@
 import { PublicHeader } from '@/components/menu/public-header';
 import { getPublicStoreSettings } from '@/lib/menu/get-public-menu';
-import { getStoreStatus } from '@/lib/store/opening-hours';
+import { selectPublicStoreStatusSettings } from '@/lib/store/client-status';
 
 export default async function PublicListsLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const settings = await getPublicStoreSettings();
-  const status = settings ? getStoreStatus(settings, new Date()) : null;
-  return <><PublicHeader status={status} />{children}</>;
+  const initialNow = new Date().toISOString();
+  const publicSettings = settings ? selectPublicStoreStatusSettings(settings) : null;
+  return <><PublicHeader initialNow={initialNow} settings={publicSettings} />{children}</>;
 }

@@ -17,6 +17,17 @@ export function previousHighlightIndex(current: number, count: number) {
   return count > 0 ? (current - 1 + count) % count : 0;
 }
 
+export function getRelativeSlideOffsets(trackOffsetLeft: number, slideOffsetLefts: readonly number[]): number[] {
+  return slideOffsetLefts.map((offsetLeft) => offsetLeft - trackOffsetLeft);
+}
+
+export function getClosestHighlightIndex(scrollLeft: number, slideOffsets: readonly number[]): number {
+  if (slideOffsets.length === 0) return 0;
+  return slideOffsets.reduce((closest, offset, index) => (
+    Math.abs(offset - scrollLeft) < Math.abs(slideOffsets[closest] - scrollLeft) ? index : closest
+  ), 0);
+}
+
 export function shouldAutoAdvance(count: number, paused: CarouselPauseState) {
   return count > 1 && !Object.values(paused).some(Boolean);
 }
@@ -38,7 +49,9 @@ export class HighlightCarouselController {
   }
 
   setIndex(index: number) {
-    this.index = Math.max(0, Math.min(index, this.count - 1));
+    const nextIndex = Math.max(0, Math.min(index, this.count - 1));
+    if (nextIndex === this.index) return;
+    this.index = nextIndex;
     this.restart();
   }
 
