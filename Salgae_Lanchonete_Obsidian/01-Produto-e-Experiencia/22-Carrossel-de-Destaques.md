@@ -5,13 +5,13 @@ tags:
   - produto
   - experiencia
   - aprovado
-atualizado: 2026-10-12
+atualizado: 2026-10-13
 ---
 # Carrossel automático de destaques
 
 Voltar: [[00-Comece-Aqui]] · Relacionado: [[04-Experiencia-do-Cliente]] · [[05-Painel-Administrativo]] · [[23-Refatoracao-de-Design-2026-10]]
 
-> **Status: aprovado para desenvolvimento em 2026-10-12.** Planejado entre o Claude Code e o Codex, apresentado ao responsável e aprovado por ele no mesmo dia. Entra logo depois do novo visual do cardápio do cliente.
+> **Status: desenvolvido e no stage desde 2026-10-13.** Planejado entre o Claude Code e o Codex, apresentado ao responsável e aprovado por ele em 2026-10-12. Ainda não está na produção.
 
 ## O que foi pedido (2026-10-12)
 
@@ -34,7 +34,7 @@ Faltava, portanto, só o comportamento do carrossel. Tabela, permissões e envio
 
 - O banner troca de destaque sozinho a cada **6 segundos**. Depois do último, volta ao primeiro.
 - Pausa quando a pessoa toca ou arrasta o banner, passa o mouse, navega pelo teclado, troca de aba ou rola a página até o banner sair da tela. Retoma quando isso acaba.
-- Os pontinhos acompanham o destaque da vez e são clicáveis ("Ir para destaque 2 de 4").
+- Os pontinhos acompanham o destaque da vez e são clicáveis ("Ir para destaque 2 de 4"). Com mais de 5 destaques ativos, no lugar dos pontinhos aparece um contador ("3 de 9"), porque eles não cabem ao lado do botão de pausar.
 - Há um botão pequeno de **pausar/retomar** no banner. A escolha vale enquanto a página estiver aberta.
 - Setas de anterior e próximo só no computador. No celular valem o dedo e os pontinhos.
 - Com a opção do aparelho de reduzir animações ligada, o banner **não troca sozinho**.
@@ -73,5 +73,5 @@ Recomendação registrada: manter de 3 a 6 destaques ativos.
 
 ## Em aberto
 
-- **Imagens nos destaques dos alimentos (2026-10-12):** o responsável mencionou a possibilidade de a pessoa colocar imagens nos destaques dos alimentos. Hoje cada destaque já aceita uma foto enviada pelo painel. Falta ele explicar o que quer acrescentar (por exemplo, escolher um produto do cardápio e usar a foto dele). Nada disso está em desenvolvimento.
+- **Imagens nos destaques dos alimentos (2026-10-12):** o responsável mencionou a possibilidade de a pessoa colocar imagens nos destaques dos alimentos. Cada destaque já aceita uma foto enviada pelo painel ("Foto do banner") e, com o painel novo, o destino do destaque pode ser um produto escolhido em uma lista. O que **não** existe é o destaque usar sozinho a foto do produto escolhido. Falta ele dizer se é isso que quer.
 - Se destaques também poderão ter vídeo (pendência antiga de [[03-Decisoes-do-Projeto]]).

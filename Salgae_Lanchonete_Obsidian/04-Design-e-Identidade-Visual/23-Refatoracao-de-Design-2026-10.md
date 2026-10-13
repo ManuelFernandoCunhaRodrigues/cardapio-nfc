@@ -5,13 +5,13 @@ tags:
   - design
   - ui
   - aprovado
-atualizado: 2026-10-12
+atualizado: 2026-10-13
 ---
 # Refatoração de design (outubro de 2026)
 
 Voltar: [[_Indice-04-Design-e-Identidade-Visual]] · Relacionado: [[17-Design-System-UI]] · [[19-Referencia-Layout-Cardapio]] · [[22-Carrossel-de-Destaques]]
 
-> **Status: desenho aprovado em 2026-10-12; desenvolvimento em andamento.** Esta nota resume o que foi aprovado. O detalhe completo (medidas, cores, componentes, impacto no código) fica em `docs/design/refatoracao/especificacao.md`, com as telas em `docs/design/refatoracao/telas/` — esses arquivos sobem ao repositório junto com o código do novo visual.
+> **Status: desenho aprovado em 2026-10-12. Cardápio do cliente e carrossel no stage desde 2026-10-13; painel testado e a caminho do stage. Nada foi para a produção.** Esta nota resume o que foi aprovado. O detalhe completo (medidas, cores, componentes, impacto no código) fica em `docs/design/refatoracao/especificacao.md`, com as telas em `docs/design/refatoracao/telas/` — esses arquivos sobem ao repositório junto com o código do novo visual.
 
 ## De onde veio
 
@@ -49,9 +49,15 @@ O responsável pediu um novo visual para o cardápio e para o painel, com a logo
 
 ## Como será entregue
 
-1. **Pacote A — cardápio do cliente** e base visual (cores, letras, cabeçalho).
-2. **Carrossel automático de destaques** — [[22-Carrossel-de-Destaques]].
-3. **Pacote B — painel.**
+1. **Pacote A — cardápio do cliente** e base visual (cores, letras, cabeçalho). **No stage desde 2026-10-13**, junto com o carrossel e as melhorias 2, 3, 8 e 10.
+2. **Carrossel automático de destaques** — [[22-Carrossel-de-Destaques]]. **No stage desde 2026-10-13.**
+3. **Pacote B — painel**, com as melhorias 1, 4, 5, 6, 7, 9, 11 e 12. Testado em 2026-10-13 com o responsável logado.
+
+Resultados dos testes: `docs/testes/redesign-cliente-resultados.md` e `docs/testes/redesign-painel-resultados.md`.
+
+Defeitos antigos corrigidos no caminho: a aba "Início" não ficava marcada na tela inicial publicada (também na produção), e sem JavaScript o cardápio mostrava só a barra inferior.
+
+Falta o responsável conferir: enviar foto e vídeo de um produto em um passo só (não deu para testar pelo navegador automatizado), o aviso de sair sem salvar e o uso em celular real.
 
 Cada pacote passa pelos testes cruzados ([[11-Agentes-de-IA]]) e vai para o stage ao entrar na `develop`. A ida para a produção acontece junto com a compactação de vídeo, depois que o responsável conferir no stage e autorizar ([[03-Decisoes-do-Projeto]]).
 
