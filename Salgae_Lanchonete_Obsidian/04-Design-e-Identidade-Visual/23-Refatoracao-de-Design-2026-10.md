@@ -11,7 +11,7 @@ atualizado: 2026-10-13
 
 Voltar: [[_Indice-04-Design-e-Identidade-Visual]] · Relacionado: [[17-Design-System-UI]] · [[19-Referencia-Layout-Cardapio]] · [[22-Carrossel-de-Destaques]]
 
-> **Status: desenho aprovado em 2026-10-12. Cardápio do cliente e carrossel no stage desde 2026-10-13; painel testado e a caminho do stage. Nada foi para a produção.** Esta nota resume o que foi aprovado. O detalhe completo (medidas, cores, componentes, impacto no código) fica em `docs/design/refatoracao/especificacao.md`, com as telas em `docs/design/refatoracao/telas/` — esses arquivos sobem ao repositório junto com o código do novo visual.
+> **Status: em produção desde 2026-10-13** (https://salgae-producao.vercel.app), junto com a compactação de vídeo. Desenho aprovado em 2026-10-12; cardápio, carrossel e painel passaram pelo stage antes. Esta nota resume o que foi aprovado. O detalhe completo (medidas, cores, componentes, impacto no código) fica em `docs/design/refatoracao/especificacao.md`, com as telas em `docs/design/refatoracao/telas/` — esses arquivos sobem ao repositório junto com o código do novo visual.
 
 ## De onde veio
 
@@ -56,6 +56,10 @@ O responsável pediu um novo visual para o cardápio e para o painel, com a logo
 Resultados dos testes: `docs/testes/redesign-cliente-resultados.md` e `docs/testes/redesign-painel-resultados.md`.
 
 Defeitos antigos corrigidos no caminho: a aba "Início" não ficava marcada na tela inicial publicada (também na produção), e sem JavaScript o cardápio mostrava só a barra inferior.
+
+**Ida para a produção (2026-10-13):** o responsável autorizou no chat. A migration de vídeo (`20261011003026_video_compression_storage`) foi rodada por ele no SQL Editor do projeto SALGAE-PRODUCTION e conferida no banco; depois a `develop` foi promovida para a `main`. Conferido no site de produção: páginas respondendo, abas marcadas, banner novo, login novo do painel, painel protegido sem sessão e rota de envio de vídeo no ar. Pendência pequena: no banco de produção a migration ficou registrada com a versão `20261013114751`, diferente da do repositório; só importa se alguém usar `supabase db push`.
+
+A produção ainda tem pouco conteúdo (3 produtos, 1 categoria, nenhum destaque); os destaques de exemplo existem só no stage.
 
 Falta o responsável conferir: enviar foto e vídeo de um produto em um passo só (não deu para testar pelo navegador automatizado), o aviso de sair sem salvar e o uso em celular real.
 
