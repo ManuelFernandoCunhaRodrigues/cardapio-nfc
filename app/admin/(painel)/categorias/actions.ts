@@ -44,7 +44,7 @@ export async function createCategory(_previous: CategoryActionState, formData: F
     const { data: last } = await supabase.from('categories').select('sort_order').order('sort_order', { ascending: false }).limit(1).maybeSingle();
     const { data, error } = await supabase.from('categories').insert({ ...parsed.data, sort_order: (last?.sort_order ?? -1) + 1 }).select('id').single();
     if (error) {
-      if (error.code === '23505') return { status: 'error', message: 'Esse slug já está em uso. Escolha outro.', fieldErrors: { slug: ['Esse slug já está em uso.'] } };
+      if (error.code === '23505') return { status: 'error', message: 'Esse endereço curto já está em uso. Escolha outro.', fieldErrors: { slug: ['Esse endereço curto já está em uso.'] } };
       reportServerError('category_create_failed', error);
       return { status: 'error', message: 'Não foi possível criar a categoria agora. Tente novamente.' };
     }
@@ -67,7 +67,7 @@ export async function updateCategory(_previous: CategoryActionState, formData: F
     const supabase = await createClient();
     const { error } = await supabase.from('categories').update(parsed.data).eq('id', id.data);
     if (error) {
-      if (error.code === '23505') return { status: 'error', message: 'Esse slug já está em uso. Escolha outro.', fieldErrors: { slug: ['Esse slug já está em uso.'] } };
+      if (error.code === '23505') return { status: 'error', message: 'Esse endereço curto já está em uso. Escolha outro.', fieldErrors: { slug: ['Esse endereço curto já está em uso.'] } };
       reportServerError('category_update_failed', error);
       return { status: 'error', message: 'Não foi possível salvar a categoria agora. Tente novamente.' };
     }
