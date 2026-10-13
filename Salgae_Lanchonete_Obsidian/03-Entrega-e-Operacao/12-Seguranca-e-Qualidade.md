@@ -78,3 +78,16 @@ Verificado em `https://salgae-homologacao.vercel.app` + `SALGAE-STAGING` (Épico
 Pacote pré-lançamento testado em build de produção local (evidências em `docs/testes/epico-6-resultados.md`): ícones e favicon, manifest, `robots.txt` por ambiente, painel sempre `noindex`, cabeçalhos de segurança e trava de envio duplicado no login. Roteiro de publicação em `docs/publicacao-producao.md` e orientação da equipe em `docs/guia-da-equipe.md`.
 
 Ainda dependem do responsável: teste em celular real (H6), projeto Vercel de produção, endereço público, administrador de produção e conteúdo real.
+
+### Status em produção (2026-10-10)
+
+Publicado em `https://salgae-producao.vercel.app` com o banco `SALGAE-PRODUCTION`. Detalhes em `docs/publicacao-producao.md`.
+
+| Item do checklist | Produção |
+| --- | --- |
+| URL do QR Code aponta para produção | ✅ QR gerado e verificado (NFC fica para uma fase posterior) |
+| Produção só com credenciais de produção | ✅ variáveis próprias; banco conferido por hash contra a homologação |
+| Visitante não acessa o painel | ✅ `/admin` → login. Entrada do administrador: ⏳ falta criar o usuário |
+| Produto ativo/inativo, indisponibilidade, troca de foto, vídeo | ⏳ depende do cadastro do conteúdo real |
+| Abre bem em celular com rede móvel | ⏳ teste em aparelho real |
+| Procedimento de rollback conhecido | ✅ |

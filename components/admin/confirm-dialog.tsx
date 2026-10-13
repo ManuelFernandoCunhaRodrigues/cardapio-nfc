@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useActionState, useCallback, useEffect, useId, useRef, useState, type RefObject } from 'react';
 import { useFormStatus } from 'react-dom';
 import { createPortal } from 'react-dom';
 
@@ -14,7 +14,7 @@ function ConfirmButton() {
   return <Button disabled={pending} type="submit" variant="danger">{pending ? 'Excluindo…' : 'Excluir de vez'}</Button>;
 }
 
-export function ConfirmDialog({ action, entityId, title, description, triggerLabel = 'Excluir', fieldName = 'id', onSuccess }: Readonly<{ action: ConfirmAction; entityId: string; title: string; description: string; triggerLabel?: string; fieldName?: string; onSuccess?: () => void }>) {
+export function ConfirmDialog({ action, entityId, title, description, triggerLabel = 'Excluir', fieldName = 'id', onSuccess, disabled = false, returnFocusRef }: Readonly<{ action: ConfirmAction; entityId: string; title: string; description: string; triggerLabel?: string; fieldName?: string; onSuccess?: () => void; disabled?: boolean; returnFocusRef?: RefObject<HTMLElement | null> }>) {
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -23,9 +23,9 @@ export function ConfirmDialog({ action, entityId, title, description, triggerLab
   const [state, formAction] = useActionState(action, { status: 'idle' });
 
   const restoreTriggerFocus = useCallback(() => {
-    const trigger = triggerRef.current ?? document.getElementById(triggerId) as HTMLButtonElement | null;
+    const trigger = returnFocusRef?.current ?? triggerRef.current ?? document.getElementById(triggerId) as HTMLButtonElement | null;
     trigger?.focus();
-  }, [triggerId]);
+  }, [returnFocusRef, triggerId]);
 
   const closeDialog = useCallback(() => {
     // Foca antes e depois de desmontar o portal: cobre clique, Escape e um
@@ -59,7 +59,7 @@ export function ConfirmDialog({ action, entityId, title, description, triggerLab
     return () => window.clearTimeout(timeout);
   }, [closeDialog, onSuccess, open, state.status]);
 
-  const dialog = open ? <div aria-labelledby={`dialog-${entityId}`} aria-modal="true" className="fixed inset-0 z-50 grid place-items-center bg-ink/55 p-4" role="dialog">
+  const dialog = open ? <div aria-labelledby={`dialog-${entityId}`} aria-modal="true" className="fixed inset-0 z-[100] grid place-items-center bg-ink/55 p-4" role="dialog">
       <div className="w-full max-w-md rounded-card bg-cream p-6 shadow-2xl" ref={dialogRef}>
         <p className="lbl text-danger">Ação irreversível</p>
         <h2 className="disp mt-2 text-2xl font-extrabold text-ink" id={`dialog-${entityId}`}>{title}</h2>
@@ -74,7 +74,7 @@ export function ConfirmDialog({ action, entityId, title, description, triggerLab
     </div> : null;
 
   return <>
-    <Button aria-haspopup="dialog" id={triggerId} onClick={() => setOpen(true)} ref={triggerRef} variant="danger">{triggerLabel}</Button>
+    <Button aria-haspopup="dialog" disabled={disabled} id={triggerId} onClick={() => setOpen(true)} ref={triggerRef} variant="danger">{triggerLabel}</Button>
     {dialog && typeof document !== 'undefined' ? createPortal(dialog, document.body) : null}
   </>;
 }

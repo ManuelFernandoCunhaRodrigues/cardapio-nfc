@@ -2,7 +2,7 @@ import type { OpeningHour } from '@/lib/validators/store-settings';
 
 const STORE_TIME_ZONE = 'America/Sao_Paulo';
 
-type StatusSettings = {
+export type StatusSettings = {
   opening_hours: OpeningHour[];
   status_override: 'auto' | 'open' | 'closed';
 };

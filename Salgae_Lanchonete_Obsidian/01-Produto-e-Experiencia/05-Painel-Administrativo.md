@@ -4,7 +4,7 @@ area: Produto
 tags:
   - produto
   - experiencia
-atualizado: 2026-10-09
+atualizado: 2026-10-13
 ---
 # Painel administrativo
 
@@ -47,7 +47,21 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 
 - cadastrar arte, título, texto opcional, destino e ordem de exibição;
 - ativar/desativar sem apagar o histórico;
-- validar tamanho e formato da imagem para não prejudicar a página pública.
+- validar tamanho e formato da imagem para não prejudicar a página pública;
+- sem limite de quantidade; contador de destaques ativos e aviso acima de 8 ativos ([[22-Carrossel-de-Destaques]]);
+- destino do destaque como escolha: cardápio inteiro, uma categoria, um produto ou um endereço próprio.
+
+### Painel novo (outubro de 2026)
+
+Resumo de [[23-Refatoracao-de-Design-2026-10]], para quem opera:
+
+- **Resumo** com a lista "Precisam de atenção" (produtos em falta ou sem foto); cada número leva à lista já filtrada.
+- **Uma situação por produto:** No cardápio · Em falta hoje · Escondido.
+- **Produto com foto e vídeo em um passo só:** a pessoa escolhe os dois antes de salvar e acompanha o andamento.
+- **Abrir ou fechar a loja em dois toques**, pela pílula no topo do painel; "Voltar a seguir os horários" desfaz.
+- **Horários** em uma linha por dia, com "Copiar para todos os dias".
+- **Editar categoria ou destaque** abre uma folha na frente, sem sair da lista.
+- **Avisos** de "salvou" e "deu erro" visíveis em cada ação.
 
 ### Dados da loja
 

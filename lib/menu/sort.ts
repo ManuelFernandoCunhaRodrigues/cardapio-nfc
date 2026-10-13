@@ -6,3 +6,14 @@ export function sortProductsForHome(products: MenuProduct[]): MenuProduct[] {
     return badgeDifference || a.sort_order - b.sort_order || a.name.localeCompare(b.name, 'pt-BR');
   });
 }
+
+export function sortProductsByAvailability(products: readonly MenuProduct[]): MenuProduct[] {
+  return products
+    .map((product, originalIndex) => ({ product, originalIndex }))
+    .sort((a, b) => (
+      Number(b.product.is_available) - Number(a.product.is_available)
+      || a.product.sort_order - b.product.sort_order
+      || a.originalIndex - b.originalIndex
+    ))
+    .map(({ product }) => product);
+}

@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-10-09
+atualizado: 2026-10-10
 ---
 # Agentes de IA: Claude Code e Codex
 
@@ -59,6 +59,26 @@ Toda entrega passa por testes validados pelos dois agentes:
 4. **Corrigir e repetir** até tudo bater; só então PR e merge.
 
 Subagentes extras apenas quando realmente necessário, para economizar tokens.
+
+## Escolha do modelo do Codex
+
+Regra definida pelo responsável em 2026-10-10: antes de delegar, o Claude Code avalia a tarefa por **dois critérios — complexidade e economia de tokens** — e escolhe o modelo e o esforço de raciocínio do Codex. A meta é o nível mais econômico que resolve bem a tarefa. **O único modelo proibido é o `gpt-6-astra`.**
+
+| Complexidade | Exemplos | Modelo | Esforço |
+| --- | --- | --- | --- |
+| Simples | ajuste em um arquivo, texto, documentação, rodar lint/testes, pequenas correções | `gpt-5.6-luna` | `low` |
+| Média | funcionalidade em uma área, testes novos, validação de plano de testes, bug localizado | `gpt-5.6-terra` | `medium` |
+| Alta | várias áreas ao mesmo tempo, banco/RLS/migrations, segurança, mídia, depuração difícil | `gpt-5.6-sol` | `medium` (subir para `high` se envolver RLS ou dados) |
+| Crítica | arquitetura, planejamento de mudança de escopo, revisão adversarial antes de produção | `gpt-5.6-sol` | `high` (`xhigh` só quando um erro custa caro: segurança e produção) |
+
+Como equilibrar os dois critérios:
+
+- **Começar pelo degrau mais barato que dá conta.** Só subir um nível se o resultado vier incompleto ou errado — e registrar que subiu.
+- **O esforço pesa tanto quanto o modelo.** Subir o esforço de um modelo menor costuma sair mais barato que trocar de modelo.
+- **Economia também está no pedido:** escopo fechado, arquivos indicados, critério de aceite claro, continuar a mesma conversa do Codex em vez de abrir outra, e relatório final curto.
+- **Não economizar onde o erro é caro:** permissões do banco, dados de produção e segurança ficam sempre em `gpt-5.6-sol`.
+- **Modelos disponíveis:** a conta ChatGPT ligada ao Codex nesta máquina aceita `gpt-5.6-sol`, `gpt-5.6-terra` e `gpt-5.6-luna`. A família `gpt-6` é recusada pela conta (testado em 2026-10-10). Se a conta mudar, rever a tabela.
+- O modelo e o esforço são passados explicitamente em cada tarefa (`--model` e `--effort`) e entram no registro dos testes da entrega.
 
 ## Revisões
 

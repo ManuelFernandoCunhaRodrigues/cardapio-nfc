@@ -4,7 +4,7 @@ area: Design
 tags:
   - moc
   - design
-atualizado: 2026-10-08
+atualizado: 2026-10-12
 ---
 # Índice — Design e Identidade Visual
 
@@ -14,5 +14,6 @@ Contexto visual do projeto, extraído da prototipação **"Design MVP de deliver
 - [[17-Design-System-UI]] — tokens de cor, tipografia, componentes e layout.
 - [[18-Prototipos-e-Telas]] — telas prototipadas, fluxos, lacunas e divergências.
 - [[19-Referencia-Layout-Cardapio]] — referência de layout, cards e tipografia da home do cardápio.
+- [[23-Refatoracao-de-Design-2026-10]] — novo visual do cardápio e do painel, aprovado em 2026-10-12.
 
 Voltar: [[Home]]

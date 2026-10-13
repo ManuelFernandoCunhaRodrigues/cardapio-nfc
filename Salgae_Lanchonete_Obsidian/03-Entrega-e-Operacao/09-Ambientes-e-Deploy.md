@@ -12,6 +12,8 @@ Voltar: [[00-Comece-Aqui]] · Fluxo de código: [[10-Git-e-Fluxo-de-Entrega]]
 
 ## Separação obrigatória
 
+> **Nomes dos ambientes (2026-10-10):** o projeto passa a usar três nomes — **desenvolvimento** (a máquina de quem programa, com `npm run dev`, apontando para o banco de stage), **stage** (antes chamado de "homologação": Supabase `SALGAE-STAGING` + projeto Vercel `salgae-homologacao`, branch `develop`; cada PR gera um deploy de preview) e **produção** (Supabase `SALGAE-PRODUCTION` + projeto Vercel `salgae-producao`, branch `main`). Onde este vault disser "homologação", leia "stage".
+
 O projeto terá dois ambientes reais e isolados, cada um com seu projeto Vercel e seu projeto Supabase.
 
 | Ambiente | Branch principal | Projeto Vercel | Projeto Supabase | Finalidade |

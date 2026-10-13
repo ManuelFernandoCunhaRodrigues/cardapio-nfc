@@ -6,6 +6,8 @@ import { z } from 'zod';
 
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { compressImageToWebp } from '@/lib/media/compress';
+import { ACCEPTED_VIDEO_MIME_TYPES, VIDEO_RAW_MAX_BYTES } from '@/lib/media/video/constants';
+import { cleanupVideoOrphans, type VideoCleanupClient } from '@/lib/media/video/storage-cleanup';
 import { commitStagedMedia, isMediaUnreferenced, mediaObjectPaths } from '@/lib/media/workflow';
 import { reportServerError } from '@/lib/observability';
 import { createClient } from '@/lib/supabase/server';
@@ -13,7 +15,8 @@ import { createClient } from '@/lib/supabase/server';
 import type { MediaActionState } from './action-state';
 
 const idSchema = z.string().uuid();
-const videoTypeSchema = z.enum(['video/mp4', 'video/webm']);
+const videoTypeSchema = z.enum(ACCEPTED_VIDEO_MIME_TYPES);
+const videoSizeSchema = z.coerce.number().int().positive().max(VIDEO_RAW_MAX_BYTES);
 
 function fail(message: string): MediaActionState { return { status: 'error', message }; }
 function refreshMediaPaths(productId?: string) {
@@ -38,6 +41,13 @@ async function canDeleteImagePath(path: string, exclude: { table: 'products' | '
     supabase.from('highlights').select('id').eq('image_path', path).neq('id', exclude.table === 'highlights' ? exclude.id : '00000000-0000-0000-0000-000000000000').limit(1),
     supabase.from('categories').select('id').eq('image_path', path).limit(1),
   ]);
+  const checks = [products, highlights, categories];
+  for (const check of checks) {
+    if (check.error || check.data === null) {
+      reportServerError('media_image_reference_check_failed', check.error ?? new Error('media_image_reference_data_missing'));
+      return false;
+    }
+  }
   return isMediaUnreferenced([Boolean(products.data?.length), Boolean(highlights.data?.length), Boolean(categories.data?.length)]);
 }
 async function cleanupImagePath(bucket: 'product-images' | 'highlight-images', path: string | null, exclude: { table: 'products' | 'highlights'; id: string }) {
@@ -143,48 +153,24 @@ export async function removeHighlightImage(_previous: MediaActionState, formData
 export async function createProductVideoUpload(_previous: MediaActionState, formData: FormData): Promise<MediaActionState> {
   const productId = idSchema.safeParse(formData.get('product_id'));
   const mimeType = videoTypeSchema.safeParse(formData.get('mime_type'));
-  if (!productId.success || !mimeType.success) return fail('Vídeo inválido. Escolha um arquivo MP4 ou WebM.');
+  const size = videoSizeSchema.safeParse(formData.get('size'));
+  if (!productId.success || !mimeType.success) return fail('Vídeo inválido. Escolha um arquivo MP4, MOV ou WebM.');
+  if (!size.success) return fail('O vídeo deve ter no máximo 50 MB. Grave em Full HD (1080p), não em 4K.');
   const admin = await requireAdmin({ redirectUnauthenticated: false });
   if (!admin) return fail('Sua sessão não permite esta alteração. Entre novamente.');
   const supabase = await createClient();
   const { data: product, error } = await supabase.from('products').select('image_path').eq('id', productId.data).single();
   if (error || !product?.image_path) return fail('Salve uma foto de capa antes de enviar o vídeo.');
-  const extension = mimeType.data === 'video/mp4' ? 'mp4' : 'webm';
-  const path = `products/${productId.data}/${randomUUID()}.${extension}`;
-  const { data, error: signedError } = await supabase.storage.from('product-videos').createSignedUploadUrl(path);
+  await cleanupVideoOrphans(supabase as unknown as VideoCleanupClient, {
+    cleanupUploads: true,
+    productId: productId.data,
+    onError: reportServerError,
+  });
+  const extension = mimeType.data === 'video/webm' ? 'webm' : mimeType.data === 'video/quicktime' ? 'mov' : 'mp4';
+  const path = `uploads/${productId.data}_${randomUUID()}.${extension}`;
+  const { data, error: signedError } = await supabase.storage.from('product-video-uploads').createSignedUploadUrl(path);
   if (signedError || !data) { reportServerError('media_video_signed_upload_failed', signedError); return fail('Não foi possível preparar o envio do vídeo. Tente novamente.'); }
   return { status: 'success', path, signedUrl: data.signedUrl, token: data.token };
-}
-
-export async function confirmProductVideoUpload(_previous: MediaActionState, formData: FormData): Promise<MediaActionState> {
-  const productId = idSchema.safeParse(formData.get('product_id'));
-  const path = z.string().regex(/^products\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(mp4|webm)$/).safeParse(formData.get('path'));
-  if (!productId.success || !path.success || !path.data.startsWith(`products/${productId.data}/`)) return fail('Vídeo inválido.');
-  const admin = await requireAdmin({ redirectUnauthenticated: false });
-  if (!admin) return fail('Sua sessão não permite esta alteração. Entre novamente.');
-  const supabase = await createClient();
-  const filename = path.data.split('/').at(-1)!;
-  const { data: objects, error: listError } = await supabase.storage.from('product-videos').list(`products/${productId.data}`, { search: filename });
-  if (listError || !objects?.some((object) => object.name === filename)) return fail('O envio do vídeo não foi concluído. Tente novamente.');
-  const { data: product, error } = await supabase.from('products').select('image_path, video_path').eq('id', productId.data).single();
-  if (error || !product?.image_path) return fail('Uma foto de capa é obrigatória para salvar o vídeo.');
-  try {
-    await commitStagedMedia({
-      commit: async () => { const { error: updateError } = await supabase.from('products').update({ video_path: path.data }).eq('id', productId.data); if (updateError) throw updateError; },
-      rollbackStaged: async () => { const { error: removeError } = await supabase.storage.from('product-videos').remove([path.data]); if (removeError) reportServerError('media_unlinked_video_cleanup_failed', removeError); },
-      cleanupPrevious: async () => {
-        if (!product.video_path || product.video_path === path.data) return;
-        const { data: references } = await supabase.from('products').select('id').eq('video_path', product.video_path).neq('id', productId.data).limit(1);
-        if (!references?.length) { const { error: removeError } = await supabase.storage.from('product-videos').remove([product.video_path]); if (removeError) reportServerError('media_old_video_cleanup_failed', removeError); }
-      },
-    });
-  } catch (error) {
-    reportServerError('media_video_record_update_failed', error);
-    return fail('O vídeo foi enviado, mas não pôde ser vinculado ao produto. Tente novamente.');
-  }
-  await audit(admin.userId, 'media_video_replace', 'product', productId.data, { video_path: path.data });
-  refreshMediaPaths(productId.data);
-  return { status: 'success', message: 'Vídeo salvo com sucesso.', path: path.data };
 }
 
 export async function removeProductVideo(_previous: MediaActionState, formData: FormData): Promise<MediaActionState> {
@@ -195,13 +181,19 @@ export async function removeProductVideo(_previous: MediaActionState, formData: 
   const supabase = await createClient();
   const { data: product, error } = await supabase.from('products').select('video_path').eq('id', productId.data).single();
   if (error || !product?.video_path) return fail('Este produto já não tem vídeo.');
-  const { error: updateError } = await supabase.from('products').update({ video_path: null }).eq('id', productId.data);
-  if (updateError) return fail('Não foi possível remover o vídeo agora.');
-  const { data: references } = await supabase.from('products').select('id').eq('video_path', product.video_path).neq('id', productId.data).limit(1);
-  if (!references?.length) {
+  const { data: updated, error: updateError } = await supabase.from('products').update({ video_path: null }).eq('id', productId.data).select('id');
+  if (updateError || updated?.length !== 1) return fail('Não foi possível remover o vídeo agora.');
+  const { data: references, error: referenceError } = await supabase.from('products').select('id').eq('video_path', product.video_path).neq('id', productId.data).limit(1);
+  if (referenceError || references === null) {
+    reportServerError('media_video_reference_check_failed', referenceError ?? new Error('media_video_reference_data_missing'));
+  } else if (references.length === 0) {
     const { error: removeError } = await supabase.storage.from('product-videos').remove([product.video_path]);
     if (removeError) reportServerError('media_video_cleanup_failed', removeError);
   }
+  await cleanupVideoOrphans(supabase as unknown as VideoCleanupClient, {
+    productId: productId.data,
+    onError: reportServerError,
+  });
   await audit(admin.userId, 'media_video_remove', 'product', productId.data, {});
   refreshMediaPaths(productId.data);
   return { status: 'success', message: 'Vídeo removido.' };

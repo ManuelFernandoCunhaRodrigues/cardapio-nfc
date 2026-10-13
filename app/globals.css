@@ -11,26 +11,40 @@
   --color-border: #E0D6BC;
   --color-surface-inner: #F5F0E5;
   --color-border-inner: #E8E0CF;
-  --color-positive: #A8441B;
+  --color-green: #02432D;
+  --color-green-soft: #E3EFE8;
   /* AA: danger sobre danger/10 ≥ 4,90:1 em qualquer fundo do app (pior caso: sand). */
   --color-danger: #983F22;
+  --color-danger-soft: #F5E6E0;
   --color-amber: #F9A436;
+  --color-amber-soft: #FDEFD8;
+  --color-peach: #FFE0C9;
   --color-muted: #6B5F4A;
   --color-body: #3D3527;
   --color-placeholder: #6F6450;
   --radius-card: 1.25rem;
   --radius-product: 1rem;
-  --shadow-card: 0 2px 8px rgba(23, 17, 13, 0.06);
+  --shadow-card: 0 2px 10px rgba(23, 17, 13, 0.07);
   --shadow-brand: 0 4px 12px rgba(230, 95, 42, 0.35);
-  --font-display: var(--font-anton);
+  --font-display: var(--font-poppins);
   --font-sans: var(--font-nunito);
+  --font-mono: var(--font-poppins);
 }
 
-:root { color: #17110d; background: #f0e9d8; }
+:root { color: #17110d; background: #faf7ef; }
 * { box-sizing: border-box; }
 html { min-width: 320px; }
-body { min-height: 100vh; margin: 0; background: linear-gradient(180deg, #f0e9d8 0%, #eddfc1 100%); color: #3d3527; font-family: var(--font-nunito), sans-serif; }
+body { min-height: 100vh; margin: 0; background: #faf7ef; color: #3d3527; font-family: var(--font-nunito), sans-serif; }
 button, input { font: inherit; }
 .disp { font-family: var(--font-poppins), sans-serif; letter-spacing: -0.02em; }
-.display { font-family: var(--font-anton), sans-serif; letter-spacing: 0.01em; }
-.lbl { font-family: var(--font-mono), monospace; font-size: 0.625rem; letter-spacing: 0.18em; text-transform: uppercase; }
+.display { font-family: var(--font-poppins), sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+.lbl { font-family: var(--font-poppins), sans-serif; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.public-shell :where(a, button, input):focus-visible {
+  outline: 2px solid #c2491a !important;
+  outline-offset: 2px;
+}
+
+@media (hover: none) {
+  .public-shell :where(a, button):active { filter: brightness(0.92); }
+}
