@@ -42,8 +42,9 @@ test.describe('painel administrativo', () => {
     await signIn(page);
     await page.goto('/admin/produtos/novo');
 
-    await page.getByLabel('Nome do produto').fill(productName);
-    await page.getByLabel('Preço').fill('12,34');
+    // A prévia do cartão repete o nome no rótulo do link; por isso o campo é buscado pelo papel.
+    await page.getByRole('textbox', { name: 'Nome do produto' }).fill(productName);
+    await page.getByRole('textbox', { name: 'Preço' }).fill('12,34');
     await page.getByRole('button', { name: 'Coxinhas', exact: true }).click();
     await page.getByRole('button', { name: 'Criar produto' }).click();
 
