@@ -13,7 +13,7 @@ Voltar: [[_Indice-04-Design-e-Identidade-Visual]] · Relacionado: [[17-Design-Sy
 
 ## Origem desta documentação
 
-Tudo aqui foi extraído da prototipação **"Design MVP de delivery"** (arquivo `Design MVP de delivery.zip`, na raiz da pasta do projeto, ao lado deste vault). O pacote contém seis páginas HTML interativas — índice, design system e três protótipos navegáveis — mais os arquivos do logotipo e as referências visuais usadas como inspiração.
+Tudo aqui foi extraído da prototipação **"Design MVP de delivery"** (arquivo `Design MVP de delivery.zip`, em `docs/design/` na pasta do projeto). O pacote contém seis páginas HTML interativas — índice, design system e três protótipos navegáveis — mais os arquivos do logotipo e as referências visuais usadas como inspiração.
 
 Esta é a fonte visual do projeto. Quando o código divergir dela, ou ela divergir do escopo escrito, vale registrar a decisão em [[03-Decisoes-do-Projeto]].
 

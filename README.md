@@ -1,72 +1,194 @@
-# Salgaê Lanchonete
+# Salgaê Lanchonete — cardápio digital
 
-Fundação do cardápio digital **local/presencial** da Salgaê Lanchonete. Este repositório não inclui delivery, carrinho, checkout ou pagamento.
+Cardápio digital de **consulta no local** para uma lanchonete: o cliente aponta a câmera para um QR Code na mesa, vê os produtos com foto, vídeo curto, preço e disponibilidade, e faz o pedido com o atendente. A equipe mantém tudo por um painel administrativo feito para o celular.
 
-## Requisitos
+**Demonstração:** <https://salgae-producao.vercel.app> · **Stage (com conteúdo de exemplo):** <https://salgae-homologacao.vercel.app>
 
-- Node.js 22 ou superior
-- npm
-- Um projeto Supabase configurado para o ambiente desejado
+![Telas do cardápio no celular: início, cardápio, produto, informações e entrada do painel](docs/readme/telas.jpg)
+
+> Este repositório não inclui delivery, carrinho, checkout nem pagamento. O cardápio é só de consulta: _"Consulta apenas. Faça seu pedido com o atendente."_
+
+## O que o sistema faz
+
+**Para o cliente**
+
+- Início com carrossel de destaques, atalhos de categoria e os mais pedidos.
+- Cardápio completo por categoria, com selos (`MAIS PEDIDO`, `NOVO`, `QUENTINHO`) e itens indisponíveis sinalizados.
+- Página do produto com foto, vídeo curto sem som e outros itens da mesma categoria.
+- Busca por nome, ingrediente ou categoria, sem depender de acento ou maiúscula.
+- Situação da loja (aberta ou fechada) calculada a partir dos horários, com horários e contatos.
+
+**Para a equipe**
+
+- Produtos, categorias e destaques: criar, editar, ordenar, ativar e desativar.
+- Situação única por produto: no cardápio, indisponível ou oculto.
+- Envio de foto e de vídeo com otimização automática.
+- Dados e horários da loja, com abrir ou fechar manualmente em dois toques.
+- Registro de auditoria das alterações feitas no painel.
+
+## Tecnologias
+
+| Camada | Tecnologia |
+| --- | --- |
+| Aplicação | Next.js 16 (App Router, Server Components e Server Actions), React 19, TypeScript estrito |
+| Estilo | Tailwind CSS 4 |
+| Dados | Supabase: PostgreSQL com Row Level Security, Auth e Storage |
+| Validação | Zod, no formulário e no servidor |
+| Mídia | `sharp` (WebP) e `ffmpeg` (H.264) |
+| Qualidade | Vitest, ESLint, Prettier, GitHub Actions |
+| Hospedagem | Vercel, um projeto por ambiente |
+
+## Arquitetura
+
+```mermaid
+flowchart LR
+  Cliente["Cliente<br/>QR Code"] --> Publico
+  Equipe[Equipe] --> Painel
+
+  subgraph Next["Next.js na Vercel"]
+    Publico["Páginas públicas<br/>estáticas, revalidadas a cada 60 s"]
+    Painel["Painel /admin<br/>dinâmico, exige sessão"]
+    Actions["Server Actions<br/>validação + autorização"]
+    Video["Rota de vídeo<br/>ffmpeg"]
+    Painel --> Actions
+    Painel --> Video
+  end
+
+  subgraph Supa["Supabase"]
+    Banco[(PostgreSQL + RLS)]
+    Auth[Auth]
+    Storage[Storage]
+  end
+
+  Publico -- chave pública, só leitura --> Banco
+  Actions -- sessão do admin --> Banco
+  Actions --> Storage
+  Video --> Storage
+  Painel --> Auth
+  Actions -. revalidatePath .-> Publico
+```
+
+Organização das pastas:
+
+- `app/(public)` — páginas do cardápio; `app/admin` — painel, Server Actions e a rota de vídeo.
+- `components/menu` e `components/admin` — interface de cada lado; `components/ui` — peças comuns.
+- `lib` — regras sem interface (ordenação, busca, horários, mídia, validadores), onde ficam os testes.
+- `supabase/migrations` — esquema, políticas e funções; `supabase/tests` — testes de RLS em SQL.
+
+## Rotas
+
+| Rota | O que é |
+| --- | --- |
+| `/` | Início: destaques, categorias e mais pedidos. |
+| `/cardapio` | Lista completa por categoria. |
+| `/produto/[id]` | Detalhe do item, com vídeo opcional. |
+| `/busca` | Busca por nome, ingrediente ou categoria. |
+| `/info` | Situação da loja, horários e contatos. |
+| `/admin` | Resumo do painel e itens que precisam de atenção. |
+| `/admin/produtos`, `/admin/categorias`, `/admin/destaques` | Cadastro, situação e ordenação. |
+| `/admin/loja` | Dados e horários da loja. |
+
+## Decisões técnicas
+
+**A autorização final é do banco.** Toda ação do painel confere o administrador na aplicação (`requireAdmin`) e de novo no PostgreSQL, por políticas de RLS que consultam `private.is_admin()` — uma função fora do esquema exposto pela API. A aplicação usa só a chave pública; a `service_role` não existe no projeto. Se uma verificação da aplicação for esquecida, o banco ainda recusa a escrita.
+
+**Páginas públicas estáticas, painel dinâmico.** O cardápio é gerado estaticamente e revalidado a cada 60 segundos; qualquer alteração no painel chama `revalidatePath` e aparece na hora. O visitante nunca espera o banco, e o cliente Supabase das páginas públicas não usa cookies, para que elas continuem podendo ser guardadas em cache. O "aberta ou fechada" é recalculado no navegador, porque uma página em cache não sabe que horas são.
+
+**Leituras com tempo limite.** As leituras públicas são abortadas depois de 10 segundos e caem em um estado de erro com mensagem amigável. Sem isso, uma lentidão do banco travava a geração das páginas até derrubar a publicação.
+
+**Fotos em duas variantes.** O navegador reduz a foto antes de enviar; o servidor valida pelo conteúdo, remove metadados e gera WebP `card` (até 640 px, meta de 80 KB) e `detail` (até 1600 px, meta de 300 KB). O banco guarda só a base do caminho e a interface escolhe a variante.
+
+**Vídeo sempre leve.** O arquivo bruto vai direto do navegador para um bucket privado por URL assinada. Uma rota do servidor confere o tipo real pela assinatura do arquivo, compacta com `ffmpeg` (H.264, até 720p, sem áudio, `faststart`) e publica o resultado, tipicamente de dezenas de megabytes para 1 a 3 MB. O bruto e os temporários são apagados sempre, com sucesso ou com erro.
+
+**Troca de mídia sem deixar item quebrado.** O arquivo novo é enviado, o registro passa a apontar para ele e só então o antigo é apagado — e apenas se nenhum outro registro o usar. Se a gravação falhar, o arquivo novo é removido e o item continua como estava (`lib/media/workflow.ts`).
+
+**Reordenação atômica.** Trocar dois itens de posição é uma única instrução no banco, por uma função SQL. Ou as duas posições mudam, ou nenhuma.
+
+**Preço em centavos.** O preço é um inteiro (`price_cents`), sem ponto flutuante; a conversão de e para "R$ 8,90" fica em duas funções testadas.
+
+## Qualidade
+
+- 169 testes unitários e de integração com Vitest (`npm test`), concentrados nas regras de `lib/` e na rota de vídeo.
+- Testes de RLS em SQL (`supabase/tests/`), que rodam dentro de uma transação desfeita no fim e conferem o que visitante, usuário comum e administrador conseguem ler e escrever.
+- CI no GitHub Actions a cada PR: formatação, lint, typecheck, testes e build.
+- Acessibilidade tratada como requisito: navegação por teclado, rótulos para leitor de tela e respeito a movimento reduzido. No Lighthouse móvel do stage, acessibilidade 100 e desempenho de 94 a 98 nas rotas públicas (medição de 2026-10-09, anterior ao redesign).
+- Cabeçalhos de segurança (`HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) e páginas de stage fora dos buscadores.
 
 ## Executar localmente
 
+Requisitos: Node.js 22 ou superior e um projeto Supabase.
+
 ```bash
 npm install
-Copy-Item .env.example .env.local
+cp .env.example .env.local
 npm run dev
 ```
 
-Preencha em `.env.local` a URL e a chave anônima/publicável do Supabase. A aplicação valida essas variáveis ao acessar recursos que dependem do Supabase e informa claramente quando estiverem ausentes ou inválidas.
-
-- Homologação (SALGAE-STAGING): `https://csirmtmerqpbhatruzaf.supabase.co`
-- Produção: `https://gqwtjrdfnkfitslolofg.supabase.co`
-
-Não use nem exponha `service_role`: ela não é necessária neste épico e nunca deve ir para variáveis `NEXT_PUBLIC_`.
-
-## Scripts
+Preencha em `.env.local` a URL e a chave anônima/publicável do Supabase. A aplicação valida essas variáveis ao acessar o Supabase e informa claramente quando estiverem ausentes ou inválidas. Nunca coloque uma `service_role` em variáveis `NEXT_PUBLIC_`.
 
 | Comando | Finalidade |
 | --- | --- |
-| `npm run dev` | Inicia o ambiente de desenvolvimento. |
-| `npm run build` | Gera o build de produção. |
-| `npm run start` | Inicia o build de produção. |
-| `npm run lint` | Executa o ESLint. |
-| `npm run typecheck` | Valida o TypeScript estrito sem emitir arquivos. |
-| `npm test` | Executa os testes unitários com Vitest. |
+| `npm run dev` | Ambiente de desenvolvimento. |
+| `npm run build` / `npm run start` | Build de produção e execução dele. |
+| `npm run lint` | ESLint. |
+| `npm run typecheck` | TypeScript estrito, sem emitir arquivos. |
+| `npm test` | Testes com Vitest. |
+| `npm run format` / `npm run format:check` | Formata ou confere a formatação com Prettier. |
 
-## Banco de dados e migrations
+## Banco de dados
 
-As migrations ficam em `supabase/migrations/` e **não são aplicadas automaticamente**. Revise sempre a migration antes de aplicá-la no ambiente correspondente.
-
-Exemplo usando a CLI do Supabase, com o projeto de homologação vinculado:
+As migrations ficam em `supabase/migrations/` e **não são aplicadas automaticamente**: primeiro no stage, depois, revisadas, em produção.
 
 ```bash
 npx supabase login
-npx supabase link --project-ref csirmtmerqpbhatruzaf
+npx supabase link --project-ref <ref-do-projeto>
 npx supabase db push
 ```
 
-Para dados de exemplo, use `supabase/seed.sql` somente em ambiente local ou de homologação. Não execute o seed em produção.
+| Migration | O que faz |
+| --- | --- |
+| `20261008222757_initial_schema` | Categorias, produtos, destaques, perfis e auditoria, com RLS. |
+| `20261008225427_harden_rls` | Move `is_admin()` para um esquema privado e deixa uma política por papel e ação. |
+| `20261008232020_store_settings` | Dados únicos da loja: horários, contatos e aviso. |
+| `20261009103822_product_badge` | Selos do produto. |
+| `20261009121148_media_storage` | Buckets públicos de imagens e vídeos e suas políticas. |
+| `20261011003026_video_compression_storage` | Bucket privado para o vídeo bruto e limite de 4 MB no publicado. |
+| `20261013151000_atomic_sort_order_swap` | Funções de troca de posição em uma única instrução. |
 
-Os dados únicos da loja são criados pela migration `20261008232020_store_settings.sql`. Administradores ativos podem editá-los em `/admin/loja`; visitantes apenas os leem para a futura aba Info e para o status aberto/fechado.
+`supabase/seed.sql` traz dados de exemplo para ambiente local ou stage. Não execute o seed em produção.
 
-A migration `20261009103822_product_badge.sql` acrescenta `products.badge`, usado para os selos públicos `MAIS PEDIDO`, `NOVO` e `QUENTINHO`.
+### Primeiro administrador
 
-A migration `20261009121148_media_storage.sql` cria os buckets públicos `product-images`, `highlight-images` e `product-videos` com suas políticas de Storage. Ela também **não é aplicada automaticamente**. Revise-a e aplique primeiro em homologação.
+1. Crie o usuário em **Authentication > Users** no Supabase.
+2. No SQL Editor, crie o perfil inativo:
 
-A migration `20261011003026_video_compression_storage.sql` cria o bucket **privado** `product-video-uploads` (vídeo bruto, até 50 MB, apagado depois da compactação) e restringe o bucket público `product-videos` a MP4 de até 4 MB. Aplique-a antes de publicar o código que compacta vídeos, primeiro em stage.
+```sql
+insert into public.profiles (id, name, role, is_active)
+values ('UUID_DO_USUARIO', 'Nome do responsável', 'admin', false)
+on conflict (id) do nothing;
+```
 
-## Mídia (Épico 4)
+3. Depois da conferência, ative-o:
 
-O painel reduz a foto no navegador (orientação EXIF aplicada, maior lado de até 2048 px e JPEG 0,92) e o servidor a valida pelo conteúdo com `sharp`. Fotos válidas têm pelo menos 400 px no menor lado e até 15 MB antes da redução. O servidor remove metadados, aplica a rotação EXIF e gera WebP `detail` (até 1600 px, meta de 300 KB) e `card` (até 640 px, meta de 80 KB). A qualidade tenta 82, 76 e 70; nunca fica abaixo de 70.
+```sql
+update public.profiles
+set role = 'admin', is_active = true
+where id = 'UUID_DO_USUARIO';
+```
 
-O banco guarda a base do caminho, por exemplo `products/<id>/<uuid>`, e a interface escolhe `-card.webp` ou `-detail.webp`; caminhos legados com extensão continuam funcionando. Na troca, as duas variantes novas são enviadas e o registro é atualizado antes de apagar a mídia anterior, somente quando não há outra referência.
+Não há trigger que promova alguém automaticamente.
 
-A ação de servidor aceita até 16 MB para acomodar a validação de foto já reduzida no cliente.
+## Ambientes
 
-### Vídeo do produto (compactação automática)
+| Ambiente | Branch | Banco | Endereço |
+| --- | --- | --- | --- |
+| Desenvolvimento | qualquer | stage | `npm run dev` |
+| Stage | `develop` | SALGAE-STAGING | <https://salgae-homologacao.vercel.app> |
+| Produção | `main` | SALGAE-PRODUCTION | <https://salgae-producao.vercel.app> |
 
-Todo vídeo enviado pelo painel é **compactado no servidor** antes de ser publicado. O cliente sempre recebe um arquivo leve, igual para qualquer celular que tenha gravado o original.
+Toda mudança entra por PR na `develop`, é conferida no stage e só então é promovida para a `main`.
+
+## Vídeo: detalhes
 
 | | Entrada (o que o painel aceita) | Saída (o que o cliente baixa) |
 | --- | --- | --- |
@@ -75,68 +197,14 @@ Todo vídeo enviado pelo painel é **compactado no servidor** antes de ser publi
 | Duração | até 15 s (tolerância de 0,5 s) | a mesma |
 | Resolução | até 4K | cabe em 1280×720 ou 720×1280, sem ampliar |
 | Quadros | qualquer | no máximo 30 por segundo |
-| Áudio | qualquer | removido (o vídeo toca mudo) |
-| Extras | HDR, rotação, GPS do celular | convertido para SDR, rotação aplicada, metadados removidos, `faststart` (começa a tocar antes de baixar tudo) |
+| Áudio | qualquer | removido |
+| Extras | HDR, rotação, GPS do celular | SDR, rotação aplicada, metadados removidos, `faststart` |
 
-Como funciona:
+O `ffmpeg` vem do pacote `ffmpeg-static` e roda como programa separado; o binário é distribuído sob GPL. Em servidor próprio também é possível usar o do sistema: `sudo apt install ffmpeg` e `FFMPEG_PATH=/usr/bin/ffmpeg`. Na Vercel, `next.config.ts` inclui o binário no pacote da rota e a rota declara `maxDuration = 180`. A foto continua obrigatória: é a capa do vídeo.
 
-1. o navegador valida tipo, tamanho e duração e envia o bruto direto ao bucket privado `product-video-uploads` por URL assinada (com barra de progresso);
-2. a rota `POST /admin/midia/video` (Node, só administrador ativo, mesma origem) baixa o bruto, confere o tipo real pela assinatura do arquivo, compacta com `ffmpeg`, confere a saída e a envia para `product-videos`;
-3. `products.video_path` só é atualizado depois que o arquivo novo está publicado; o vídeo anterior é apagado em seguida;
-4. o bruto e os arquivos temporários são apagados sempre, com sucesso ou erro. Se a compactação falhar ou demorar demais, o produto fica como estava e o painel mostra uma mensagem clara.
+## Mais documentação
 
-A foto continua obrigatória: é a capa e o fallback. Vídeos já publicados antes desta regra continuam funcionando; para deixá-los leves, basta reenviá-los pelo painel.
-
-O `ffmpeg` vem do pacote `ffmpeg-static` (baixado no `npm install`/`npm ci` para o sistema da máquina) e roda como programa separado; o binário é distribuído sob GPL. Em um servidor próprio (VPS) também é possível usar o ffmpeg do sistema: `sudo apt install ffmpeg` e definir `FFMPEG_PATH=/usr/bin/ffmpeg`. Na Vercel, `next.config.ts` inclui o binário no pacote da rota (`outputFileTracingIncludes`) e a rota declara `maxDuration = 180`.
-
-## Painel administrativo
-
-Depois de promover um administrador ativo, o painel fica disponível nestas rotas:
-
-- `/admin` — resumo do catálogo;
-- `/admin/produtos` — busca, filtros, disponibilidade, ativo/inativo e ordenação;
-- `/admin/produtos/novo` e `/admin/produtos/[id]` — criação e edição com prévia do cardápio;
-- `/admin/categorias` — criação, edição, status e ordenação;
-- `/admin/loja` — dados e horários da loja.
-- `/admin/destaques` — banners, destinos, imagem, status e ordenação.
-
-As ações do painel exigem um perfil `admin` ativo tanto na aplicação quanto no RLS. Categorias com produtos vinculados não podem ser excluídas: mova os produtos para outra categoria ou desative a categoria. No celular, os formulários de produto e destaque mantêm a ação Salvar fixa acima da área segura inferior.
-
-## Rotas públicas
-
-- `/` — início, destaques, categorias e mais pedidos.
-- `/cardapio` — lista completa por categoria.
-- `/produto/[id]` — detalhe do item, com vídeo opcional sob demanda.
-- `/busca` — busca local por nome ou ingrediente.
-- `/info` — situação da loja, horários e contatos configurados no painel.
-
-O cardápio é somente de consulta: **"Consulta apenas. Faça seu pedido com o atendente."**
-
-### Promover o primeiro administrador
-
-1. Crie o usuário em **Authentication > Users** no Supabase.
-2. Pelo SQL Editor, como responsável autorizado, crie o perfil se ele ainda não existir e mantenha-o inativo até a promoção:
-
-```sql
-insert into public.profiles (id, name, role, is_active)
-values ('UUID_DO_USUARIO', 'Nome do responsável', 'admin', false)
-on conflict (id) do nothing;
-```
-
-3. Depois da conferência do responsável, promova-o manualmente:
-
-```sql
-update public.profiles
-set role = 'admin', is_active = true
-where id = 'UUID_DO_USUARIO';
-```
-
-Não há trigger para promover automaticamente nenhum usuário. A autorização é conferida no banco por RLS e pela função interna `private.is_admin()`, que não é exposta pela Data API.
-
-## Fluxo de ambientes
-
-- desenvolvimento → a máquina de quem programa (`npm run dev`), apontando para o banco de stage
-- `develop` → stage, antes chamado de homologação (SALGAE-STAGING + projeto Vercel `salgae-homologacao`)
-- `main` → produção (SALGAE-PRODUCTION + projeto Vercel `salgae-producao`)
-
-Antes de promover, execute lint, typecheck, testes e build. Migrations devem ser aplicadas primeiro em homologação e somente depois, revisadas, em produção.
+- [Guia da equipe](docs/guia-da-equipe.md) — como usar o painel no dia a dia.
+- [Publicação em produção](docs/publicacao-producao.md) — passo a passo de migrations, variáveis e conferência.
+- [Resultados de testes](docs/testes/) — planos e medições de cada entrega.
+- `Salgae_Lanchonete_Obsidian/` — visão do produto, decisões, modelo de dados e identidade visual, em notas do Obsidian.

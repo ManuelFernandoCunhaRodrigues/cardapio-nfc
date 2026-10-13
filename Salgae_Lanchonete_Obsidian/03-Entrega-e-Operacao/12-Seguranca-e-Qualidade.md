@@ -37,6 +37,7 @@ Voltar: [[00-Comece-Aqui]] · Dados: [[07-Modelo-de-Dados-Supabase]]
 
 | Verificação | Obrigatória quando aplicável |
 | --- | --- |
+| Formatação (Prettier, `npm run format:check`) | Sim |
 | Lint | Sim |
 | Typecheck | Sim, se a aplicação usar TypeScript |
 | Testes automatizados | Para regras de negócio, acesso e regressões críticas |
