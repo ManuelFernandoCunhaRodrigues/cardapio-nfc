@@ -7,8 +7,9 @@ import { swapSortOrders } from '@/lib/admin/reorder';
 import { fieldsFromProductSituation } from '@/lib/admin/panel';
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { reportServerError } from '@/lib/observability';
-import { cleanupVideoOrphans, type VideoCleanupClient } from '@/lib/media/video/storage-cleanup';
+import { cleanupVideoOrphans } from '@/lib/media/video/storage-cleanup';
 import { createClient } from '@/lib/supabase/server';
+import type { Json } from '@/lib/supabase/database.types';
 import { parsePriceBRL } from '@/lib/utils/parse-price';
 import { productFormSchema } from '@/lib/validators/product';
 
@@ -67,7 +68,7 @@ async function audit(
   actorId: string,
   action: 'create' | 'update' | 'delete' | 'reorder',
   entityId: string,
-  metadata: Record<string, unknown>,
+  metadata: Json,
 ) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -288,7 +289,7 @@ export async function deleteProduct(
       if (storageError) reportServerError('product_delete_video_cleanup_failed', storageError);
     }
   }
-  await cleanupVideoOrphans(supabase as unknown as VideoCleanupClient, {
+  await cleanupVideoOrphans(supabase, {
     productId: id.data,
     onError: reportServerError,
   });

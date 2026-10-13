@@ -69,6 +69,14 @@ jobs:
           password="$(openssl rand -hex 16)"
           echo "::add-mask::$password"
           echo "E2E_ADMIN_PASSWORD=$password" >> "$GITHUB_ENV"
+      # O arquivo de tipos tem de ser o que a CLI gera a partir das migrations.
+      - name: Tipos do banco em dia com as migrations
+        run: |
+          supabase gen types typescript --local --schema public > "$RUNNER_TEMP/database.types.ts"
+          if ! diff -u lib/supabase/database.types.ts "$RUNNER_TEMP/database.types.ts"; then
+            echo "::error file=lib/supabase/database.types.ts::Os tipos não batem com as migrations. Gere de novo com 'supabase gen types typescript --local --schema public'."
+            exit 1
+          fi
       - name: Testes de banco (RLS, Storage e reordenação)
         run: bash scripts/testar-banco-local.sh
       - run: npm ci
