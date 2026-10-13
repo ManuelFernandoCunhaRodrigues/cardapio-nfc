@@ -29,7 +29,11 @@ export const maxDuration = 180;
 const idSchema = z.string().uuid();
 const bodySchema = z.object({
   productId: idSchema,
-  path: z.string().regex(/^uploads\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(mp4|mov|m4v|webm)$/i),
+  path: z
+    .string()
+    .regex(
+      /^uploads\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(mp4|mov|m4v|webm)$/i,
+    ),
 });
 
 type RoutePayload = {
@@ -72,13 +76,40 @@ function formatMegabytes(bytes: number): string {
 
 function compressionError(error: unknown): Response {
   if (error instanceof VideoCompressionError) {
-    if (error.code === 'video_timeout') return json({ status: 'error', message: 'A compactação demorou mais que o esperado. Tente novamente.' }, 504);
-    if (error.code === 'video_invalid') return json({ status: 'error', message: 'Este arquivo não é um vídeo válido. Escolha outro vídeo.' }, 400);
-    if (error.code === 'video_too_long') return json({ status: 'error', message: 'O vídeo deve ter no máximo 15 segundos.' }, 400);
-    if (error.code === 'video_too_large') return json({ status: 'error', message: 'O vídeo deve ter no máximo 50 MB. Grave em Full HD (1080p), não em 4K.' }, 400);
-    if (error.code === 'video_dimensions_unsupported') return json({ status: 'error', message: 'Grave o vídeo em Full HD (1080p), não em 4K.' }, 400);
+    if (error.code === 'video_timeout')
+      return json(
+        { status: 'error', message: 'A compactação demorou mais que o esperado. Tente novamente.' },
+        504,
+      );
+    if (error.code === 'video_invalid')
+      return json(
+        { status: 'error', message: 'Este arquivo não é um vídeo válido. Escolha outro vídeo.' },
+        400,
+      );
+    if (error.code === 'video_too_long')
+      return json({ status: 'error', message: 'O vídeo deve ter no máximo 15 segundos.' }, 400);
+    if (error.code === 'video_too_large')
+      return json(
+        {
+          status: 'error',
+          message: 'O vídeo deve ter no máximo 50 MB. Grave em Full HD (1080p), não em 4K.',
+        },
+        400,
+      );
+    if (error.code === 'video_dimensions_unsupported')
+      return json(
+        { status: 'error', message: 'Grave o vídeo em Full HD (1080p), não em 4K.' },
+        400,
+      );
   }
-  return json({ status: 'error', message: 'Não foi possível compactar este vídeo. Tente um vídeo mais curto ou gravado em Full HD.' }, 500);
+  return json(
+    {
+      status: 'error',
+      message:
+        'Não foi possível compactar este vídeo. Tente um vídeo mais curto ou gravado em Full HD.',
+    },
+    500,
+  );
 }
 
 function remainingTime(deadline: number): number {
@@ -90,19 +121,28 @@ function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number): Promise<T> 
   return new Promise<T>((resolve, reject) => {
     const timeout = setTimeout(() => reject(new VideoCompressionError('video_timeout')), timeoutMs);
     void Promise.resolve(promise).then(
-      (value) => { clearTimeout(timeout); resolve(value); },
-      (error) => { clearTimeout(timeout); reject(error); },
+      (value) => {
+        clearTimeout(timeout);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      },
     );
   });
 }
 
 export async function POST(request: Request): Promise<Response> {
   const deadline = Date.now() + VIDEO_ROUTE_BUDGET_MS;
-  if (!validSameOrigin(request)) return json({ status: 'error', message: 'Requisição não permitida.' }, 403);
+  if (!validSameOrigin(request))
+    return json({ status: 'error', message: 'Requisição não permitida.' }, 403);
 
   const authorization = await getAdminAuthorization();
-  if (authorization.status === 'unauthenticated') return json({ status: 'error', message: 'Sua sessão expirou. Entre novamente.' }, 401);
-  if (authorization.status !== 'authorized') return json({ status: 'error', message: 'Você não tem permissão para esta alteração.' }, 403);
+  if (authorization.status === 'unauthenticated')
+    return json({ status: 'error', message: 'Sua sessão expirou. Entre novamente.' }, 401);
+  if (authorization.status !== 'authorized')
+    return json({ status: 'error', message: 'Você não tem permissão para esta alteração.' }, 403);
 
   let rawBody: unknown;
   try {
@@ -122,14 +162,26 @@ export async function POST(request: Request): Promise<Response> {
   let stagedOutputPath: string | undefined;
   let outputLinked = false;
   try {
-    const { data: cover, error: coverError } = await supabase.from('products').select('image_path').eq('id', productId).single();
-    if (coverError || !cover?.image_path) return json({ status: 'error', message: 'Salve uma foto de capa antes de enviar o vídeo.' }, 400);
+    const { data: cover, error: coverError } = await supabase
+      .from('products')
+      .select('image_path')
+      .eq('id', productId)
+      .single();
+    if (coverError || !cover?.image_path)
+      return json(
+        { status: 'error', message: 'Salve uma foto de capa antes de enviar o vídeo.' },
+        400,
+      );
 
     const { data: raw, error: downloadError } = await withTimeout(
       supabase.storage.from('product-video-uploads').download(rawPath),
       Math.min(VIDEO_DOWNLOAD_TIMEOUT_MS, remainingTime(deadline)),
     );
-    if (downloadError || !raw) return json({ status: 'error', message: 'O envio do vídeo não foi concluído. Tente novamente.' }, 400);
+    if (downloadError || !raw)
+      return json(
+        { status: 'error', message: 'O envio do vídeo não foi concluído. Tente novamente.' },
+        400,
+      );
     if (raw.size <= 0 || raw.size > VIDEO_RAW_MAX_BYTES) {
       return raw.size > VIDEO_RAW_MAX_BYTES
         ? compressionError(new VideoCompressionError('video_too_large'))
@@ -144,7 +196,11 @@ export async function POST(request: Request): Promise<Response> {
       remainingTime(deadline) - VIDEO_FINALIZATION_RESERVE_MS,
     );
     if (processingTimeoutMs <= 0) throw new VideoCompressionError('video_timeout');
-    compressed = await compressVideoFile({ inputPath, workDir: routeDir, timeoutMs: processingTimeoutMs });
+    compressed = await compressVideoFile({
+      inputPath,
+      workDir: routeDir,
+      timeoutMs: processingTimeoutMs,
+    });
 
     const outputPath = `products/${productId}/${randomUUID()}.mp4`;
     stagedOutputPath = outputPath;
@@ -159,20 +215,42 @@ export async function POST(request: Request): Promise<Response> {
     );
     if (uploadError) {
       reportServerError('media_video_output_upload_failed', uploadError);
-      return json({ status: 'error', message: 'Não foi possível salvar o vídeo compactado. Tente novamente.' }, 500);
+      return json(
+        {
+          status: 'error',
+          message: 'Não foi possível salvar o vídeo compactado. Tente novamente.',
+        },
+        500,
+      );
     }
 
-    const { data: current, error: currentError } = await supabase.from('products').select('video_path').eq('id', productId).single();
+    const { data: current, error: currentError } = await supabase
+      .from('products')
+      .select('video_path')
+      .eq('id', productId)
+      .single();
     if (currentError || !current) {
       await supabase.storage.from('product-videos').remove([outputPath]);
-      return json({ status: 'error', message: 'O vídeo foi compactado, mas não pôde ser vinculado ao produto. Tente novamente.' }, 500);
+      return json(
+        {
+          status: 'error',
+          message:
+            'O vídeo foi compactado, mas não pôde ser vinculado ao produto. Tente novamente.',
+        },
+        500,
+      );
     }
 
     try {
       await commitStagedMedia({
         commit: async () => {
-          const { data: updated, error } = await supabase.from('products').update({ video_path: outputPath }).eq('id', productId).select('id');
-          if (error || updated?.length !== 1) throw error ?? new Error('media_video_product_not_updated');
+          const { data: updated, error } = await supabase
+            .from('products')
+            .update({ video_path: outputPath })
+            .eq('id', productId)
+            .select('id');
+          if (error || updated?.length !== 1)
+            throw error ?? new Error('media_video_product_not_updated');
           outputLinked = true;
         },
         rollbackStaged: async () => {
@@ -182,13 +260,19 @@ export async function POST(request: Request): Promise<Response> {
         cleanupPrevious: async () => {
           try {
             if (!current.video_path || current.video_path === outputPath) return;
-            const { data: references, error: referenceError } = await supabase.from('products').select('id').eq('video_path', current.video_path).limit(1);
+            const { data: references, error: referenceError } = await supabase
+              .from('products')
+              .select('id')
+              .eq('video_path', current.video_path)
+              .limit(1);
             if (referenceError || references === null) {
               reportServerError('media_old_video_reference_check_failed', referenceError);
               return;
             }
             if (references.length === 0) {
-              const { error } = await supabase.storage.from('product-videos').remove([current.video_path]);
+              const { error } = await supabase.storage
+                .from('product-videos')
+                .remove([current.video_path]);
               if (error) reportServerError('media_old_video_cleanup_failed', error);
             }
           } catch (error) {
@@ -198,7 +282,14 @@ export async function POST(request: Request): Promise<Response> {
       });
     } catch (error) {
       reportServerError('media_video_record_update_failed', error);
-      return json({ status: 'error', message: 'O vídeo foi compactado, mas não pôde ser vinculado ao produto. Tente novamente.' }, 500);
+      return json(
+        {
+          status: 'error',
+          message:
+            'O vídeo foi compactado, mas não pôde ser vinculado ao produto. Tente novamente.',
+        },
+        500,
+      );
     }
 
     const { error: auditError } = await supabase.from('audit_logs').insert({
@@ -227,7 +318,9 @@ export async function POST(request: Request): Promise<Response> {
   } catch (error) {
     reportServerError(
       'media_video_compression_failed',
-      error instanceof VideoCompressionError ? { code: error.code, detail: error.message } : { code: 'unexpected', detail: 'Erro inesperado.' },
+      error instanceof VideoCompressionError
+        ? { code: error.code, detail: error.message }
+        : { code: 'unexpected', detail: 'Erro inesperado.' },
     );
     return compressionError(error);
   } finally {

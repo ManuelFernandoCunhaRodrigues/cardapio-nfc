@@ -20,13 +20,24 @@ describe('assinatura real de vídeo', () => {
   it('aceita EBML somente quando DocType é webm', () => {
     const webm = Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x42, 0x82, 0x84, ...Buffer.from('webm')]);
     expect(detectVideoContainer(webm)).toEqual({ kind: 'webm', demuxer: 'matroska' });
-    const matroska = Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x42, 0x82, 0x88, ...Buffer.from('matroska')]);
+    const matroska = Buffer.from([
+      0x1a,
+      0x45,
+      0xdf,
+      0xa3,
+      0x42,
+      0x82,
+      0x88,
+      ...Buffer.from('matroska'),
+    ]);
     expect(() => detectVideoContainer(matroska)).toThrowError(VideoCompressionError);
   });
 
   it('recusa texto, ftyp truncado e ftyp fora da posição', () => {
-    [Buffer.from('não é vídeo'), Buffer.from('ftyp'), Buffer.concat([Buffer.from('xxxx'), mp4Ftyp()])]
-      .forEach((bytes) => expect(() => detectVideoContainer(bytes)).toThrow('video_invalid'));
+    [
+      Buffer.from('não é vídeo'),
+      Buffer.from('ftyp'),
+      Buffer.concat([Buffer.from('xxxx'), mp4Ftyp()]),
+    ].forEach((bytes) => expect(() => detectVideoContainer(bytes)).toThrow('video_invalid'));
   });
 });
-

@@ -45,11 +45,12 @@ export function parseFfmpegMetadata(stderr: string): VideoMetadata {
   const rotateTag = stderr.match(/rotate\s*:\s*(-?[0-9.]+)/i)?.[1];
   const displayMatrix = stderr.match(/rotation(?:\s+of)?\s+(-?[0-9.]+)\s+degrees/i)?.[1];
   const rotation = normalizeRotation(Number(displayMatrix ?? rotateTag ?? 0));
-  const transfer = /arib-std-b67/i.test(primary) || /arib-std-b67/i.test(stderr)
-    ? 'arib-std-b67'
-    : /smpte2084/i.test(primary) || /smpte2084/i.test(stderr)
-      ? 'smpte2084'
-      : null;
+  const transfer =
+    /arib-std-b67/i.test(primary) || /arib-std-b67/i.test(stderr)
+      ? 'arib-std-b67'
+      : /smpte2084/i.test(primary) || /smpte2084/i.test(stderr)
+        ? 'smpte2084'
+        : null;
 
   return {
     duration: parseDuration(stderr),
@@ -66,8 +67,11 @@ export function parseFfmpegMetadata(stderr: string): VideoMetadata {
 }
 
 export function validateInputMetadata(metadata: VideoMetadata): void {
-  if (metadata.width > VIDEO_MAX_SIDE || metadata.height > VIDEO_MAX_SIDE || metadata.width * metadata.height > VIDEO_MAX_PIXELS) {
+  if (
+    metadata.width > VIDEO_MAX_SIDE ||
+    metadata.height > VIDEO_MAX_SIDE ||
+    metadata.width * metadata.height > VIDEO_MAX_PIXELS
+  ) {
     throw new VideoCompressionError('video_dimensions_unsupported');
   }
 }
-

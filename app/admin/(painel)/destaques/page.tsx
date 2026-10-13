@@ -4,6 +4,10 @@ import { getAdminCategories, getAdminHighlights, getAdminProducts } from '@/lib/
 export const dynamic = 'force-dynamic';
 
 export default async function HighlightsPage() {
-  const [highlights, categories, products] = await Promise.all([getAdminHighlights(), getAdminCategories(), getAdminProducts()]);
+  const [highlights, categories, products] = await Promise.all([
+    getAdminHighlights(),
+    getAdminCategories(),
+    getAdminProducts(),
+  ]);
   return <HighlightsManager categories={categories} highlights={highlights} products={products} />;
 }

@@ -83,4 +83,4 @@ Recomendação registrada: manter de 3 a 6 destaques ativos.
 ## Em aberto
 
 - **Imagens nos destaques dos alimentos (2026-10-12):** o responsável mencionou a possibilidade de a pessoa colocar imagens nos destaques dos alimentos. Cada destaque já aceita uma foto enviada pelo painel ("Foto do banner") e, com o painel novo, o destino do destaque pode ser um produto escolhido em uma lista. O que **não** existe é o destaque usar sozinho a foto do produto escolhido. Falta ele dizer se é isso que quer.
-- Se destaques também poderão ter vídeo (pendência antiga de [[03-Decisoes-do-Projeto]]).
+- **Imagem ou vídeo nos destaques e teste das fotos no carrossel (2026-10-13):** planejados em [[24-Planejamento-Midia-em-Categorias-e-Destaques]].

@@ -2,7 +2,9 @@ import { getStoreStatus, type StatusSettings } from '@/lib/store/opening-hours';
 
 export type PublicStoreStatusSettings = StatusSettings;
 
-export function selectPublicStoreStatusSettings(settings: StatusSettings): PublicStoreStatusSettings {
+export function selectPublicStoreStatusSettings(
+  settings: StatusSettings,
+): PublicStoreStatusSettings {
   return {
     opening_hours: settings.opening_hours,
     status_override: settings.status_override,

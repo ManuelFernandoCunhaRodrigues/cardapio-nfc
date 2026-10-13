@@ -46,7 +46,9 @@ describe('metadados de vídeo no navegador', () => {
     vi.useFakeTimers();
     const fake = installVideo('none');
 
-    const pending = validateVideoForUpload(new File([new Uint8Array(1)], 'video.mp4', { type: 'video/mp4' }));
+    const pending = validateVideoForUpload(
+      new File([new Uint8Array(1)], 'video.mp4', { type: 'video/mp4' }),
+    );
     await vi.advanceTimersByTimeAsync(8_000);
 
     await expect(pending).resolves.toEqual({ duration: null, mimeType: 'video/mp4' });
@@ -60,7 +62,9 @@ describe('metadados de vídeo no navegador', () => {
   it('rejeita loadedmetadata com 20 s e limpa o elemento', async () => {
     const fake = installVideo('loadedmetadata', 20);
 
-    await expect(validateVideoForUpload(new File([new Uint8Array(1)], 'video.mp4', { type: 'video/mp4' }))).rejects.toThrow('15 segundos');
+    await expect(
+      validateVideoForUpload(new File([new Uint8Array(1)], 'video.mp4', { type: 'video/mp4' })),
+    ).rejects.toThrow('15 segundos');
     expect(fake.removeAttribute).toHaveBeenCalledWith('src');
     expect(fake.load).toHaveBeenCalledOnce();
   });
@@ -68,7 +72,11 @@ describe('metadados de vídeo no navegador', () => {
   it('trata error como duração desconhecida', async () => {
     const fake = installVideo('error');
 
-    await expect(validateVideoForUpload(new File([new Uint8Array(1)], 'video.mov', { type: 'video/quicktime' }))).resolves.toEqual({
+    await expect(
+      validateVideoForUpload(
+        new File([new Uint8Array(1)], 'video.mov', { type: 'video/quicktime' }),
+      ),
+    ).resolves.toEqual({
       duration: null,
       mimeType: 'video/quicktime',
     });

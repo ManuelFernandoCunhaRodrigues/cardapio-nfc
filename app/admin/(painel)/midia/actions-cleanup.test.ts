@@ -27,11 +27,13 @@ function form() {
 
 type ReferenceResult = { data: Array<{ id: string }> | null; error: Error | null };
 
-function fakeClient(options: {
-  imageReferences?: Partial<Record<'products' | 'highlights' | 'categories', ReferenceResult>>;
-  videoReferences?: ReferenceResult;
-  videoUpdateRows?: Array<{ id: string }>;
-} = {}) {
+function fakeClient(
+  options: {
+    imageReferences?: Partial<Record<'products' | 'highlights' | 'categories', ReferenceResult>>;
+    videoReferences?: ReferenceResult;
+    videoUpdateRows?: Array<{ id: string }>;
+  } = {},
+) {
   const remove = vi.fn(async () => ({ data: null, error: null }));
   const defaultReferences: ReferenceResult = { data: [], error: null };
   const client = {
@@ -49,12 +51,16 @@ function fakeClient(options: {
             const limit = async () => {
               if (columns !== 'id') return defaultReferences;
               if (column === 'video_path') return options.videoReferences ?? defaultReferences;
-              return options.imageReferences?.[table as 'products' | 'highlights' | 'categories'] ?? defaultReferences;
+              return (
+                options.imageReferences?.[table as 'products' | 'highlights' | 'categories'] ??
+                defaultReferences
+              );
             };
             return {
-              single: async () => columns === 'video_path'
-                ? { data: { video_path: videoPath }, error: null }
-                : { data: { image_path: imagePath, video_path: null }, error: null },
+              single: async () =>
+                columns === 'video_path'
+                  ? { data: { video_path: videoPath }, error: null }
+                  : { data: { image_path: imagePath, video_path: null }, error: null },
               maybeSingle: async () => ({ data: { video_path: null }, error: null }),
               neq: () => ({ limit }),
               limit,
@@ -62,9 +68,15 @@ function fakeClient(options: {
           },
         }),
         update: (values: Record<string, unknown>) => ({
-          eq: () => 'video_path' in values
-            ? { select: async () => ({ data: options.videoUpdateRows ?? [{ id: productId }], error: null }) }
-            : Promise.resolve({ error: null }),
+          eq: () =>
+            'video_path' in values
+              ? {
+                  select: async () => ({
+                    data: options.videoUpdateRows ?? [{ id: productId }],
+                    error: null,
+                  }),
+                }
+              : Promise.resolve({ error: null }),
         }),
       };
     },
@@ -83,7 +95,9 @@ describe('remoção segura de vídeo', () => {
     const fake = fakeClient({ videoReferences: { data: null, error: referenceError } });
     mocks.createClient.mockResolvedValue(fake.client);
 
-    await expect(removeProductVideo(initialMediaActionState, form())).resolves.toMatchObject({ status: 'success' });
+    await expect(removeProductVideo(initialMediaActionState, form())).resolves.toMatchObject({
+      status: 'success',
+    });
     expect(fake.remove).not.toHaveBeenCalled();
     expect(mocks.report).toHaveBeenCalledWith('media_video_reference_check_failed', referenceError);
   });
@@ -92,7 +106,9 @@ describe('remoção segura de vídeo', () => {
     const fake = fakeClient({ videoReferences: { data: [{ id: 'outro' }], error: null } });
     mocks.createClient.mockResolvedValue(fake.client);
 
-    await expect(removeProductVideo(initialMediaActionState, form())).resolves.toMatchObject({ status: 'success' });
+    await expect(removeProductVideo(initialMediaActionState, form())).resolves.toMatchObject({
+      status: 'success',
+    });
     expect(fake.remove).not.toHaveBeenCalled();
   });
 
@@ -100,7 +116,9 @@ describe('remoção segura de vídeo', () => {
     const fake = fakeClient({ videoUpdateRows: [] });
     mocks.createClient.mockResolvedValue(fake.client);
 
-    await expect(removeProductVideo(initialMediaActionState, form())).resolves.toMatchObject({ status: 'error' });
+    await expect(removeProductVideo(initialMediaActionState, form())).resolves.toMatchObject({
+      status: 'error',
+    });
     expect(fake.remove).not.toHaveBeenCalled();
   });
 });
@@ -114,16 +132,25 @@ describe('remoção segura de fotos', () => {
     const fake = fakeClient({ imageReferences: { [table]: result } });
     mocks.createClient.mockResolvedValue(fake.client);
 
-    await expect(removeProductImage(initialMediaActionState, form())).resolves.toMatchObject({ status: 'success' });
+    await expect(removeProductImage(initialMediaActionState, form())).resolves.toMatchObject({
+      status: 'success',
+    });
     expect(fake.remove).not.toHaveBeenCalled();
-    expect(mocks.report).toHaveBeenCalledWith('media_image_reference_check_failed', expect.any(Error));
+    expect(mocks.report).toHaveBeenCalledWith(
+      'media_image_reference_check_failed',
+      expect.any(Error),
+    );
   });
 
   it('preserva a foto quando qualquer tabela ainda referencia o caminho', async () => {
-    const fake = fakeClient({ imageReferences: { highlights: { data: [{ id: 'outro' }], error: null } } });
+    const fake = fakeClient({
+      imageReferences: { highlights: { data: [{ id: 'outro' }], error: null } },
+    });
     mocks.createClient.mockResolvedValue(fake.client);
 
-    await expect(removeProductImage(initialMediaActionState, form())).resolves.toMatchObject({ status: 'success' });
+    await expect(removeProductImage(initialMediaActionState, form())).resolves.toMatchObject({
+      status: 'success',
+    });
     expect(fake.remove).not.toHaveBeenCalled();
   });
 });

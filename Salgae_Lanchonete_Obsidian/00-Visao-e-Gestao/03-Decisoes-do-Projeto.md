@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-10-12
+atualizado: 2026-10-13
 ---
 # Decisões do projeto
 
@@ -91,6 +91,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** pedido do responsável; o produto é vitrine para apresentar a clientes e o visual pesa nessa apresentação.
 - **Impacto:** [[17-Design-System-UI]] e [[19-Referencia-Layout-Cardapio]] passam a valer com as mudanças da nota 23; sem mudança em banco, rotas ou regras de acesso. Entrega em pacotes: cardápio do cliente, carrossel de destaques e painel.
 - **Revisão:** depois de o responsável conferir no stage. A ida para a produção acontece junto com a compactação de vídeo, quando ele autorizar.
+- **Em produção desde 2026-10-13**, autorizado pelo responsável no chat, junto com a compactação de vídeo.
 
 ### Carrossel automático de destaques
 
@@ -100,6 +101,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** dá visibilidade a todos os destaques sem exigir que o cliente arraste; o botão de pausar atende à regra de acessibilidade para conteúdo que se move sozinho.
 - **Impacto:** tela inicial do cardápio e `/admin/destaques`; sem migration e sem biblioteca nova.
 - **Revisão:** depois do uso em stage; rever o tempo de 6 segundos se o responsável quiser mudar.
+- **Revisão de 2026-10-13:** depois de ver o stage, o responsável pediu o banner maior (240 px), os pontinhos embaixo no centro e **sem o botão de pausar**. Ficam as pausas por toque, mouse e teclado. Em produção desde 2026-10-13.
 
 ## Modelo de registro para próximas decisões
 
@@ -116,10 +118,10 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 
 - Forma de contato do cliente com a equipe durante a visita.
 - Onde hospedar os vídeos: Supabase Storage (padrão proposto) ou serviço de vídeo dedicado, conforme o consumo de tráfego no plano Free.
-- Se destaques também poderão ter vídeo (os limites de vídeo de produto foram fechados em "Compactação automática de vídeo").
+- Imagem ou vídeo nos destaques: pedido em 2026-10-13 e planejado em [[24-Planejamento-Midia-em-Categorias-e-Destaques]]; faltam as respostas do responsável e a ordem para desenvolver.
 - Política visual: identidade, cores, fotos, tamanhos e textos.
 - Imagens nos destaques dos alimentos: o responsável mencionou a possibilidade em 2026-10-12; falta ele detalhar o que quer além da foto que cada destaque já aceita ([[22-Carrossel-de-Destaques]]).
-- Fotos das categorias na home: foto própria por categoria ou emoji como fallback ([[19-Referencia-Layout-Cardapio]]).
+- Fotos das categorias: o responsável pediu a opção de imagem por categoria em 2026-10-13; planejado em [[24-Planejamento-Midia-em-Categorias-e-Destaques]] (o desenho continua aparecendo quando não houver foto).
 - Papéis de acesso do painel.
 - Controle de estoque e status "Promoção" do protótipo do painel: ficaram fora do Épico 3 (não estão no escopo nem no banco); decidir se entram.
 - Se haverá métricas anônimas desde a primeira versão.

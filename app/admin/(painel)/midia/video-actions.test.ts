@@ -24,7 +24,11 @@ function form(values: Record<string, string>) {
 }
 
 function clientWithCover(hasCover = true) {
-  const signed = vi.fn(async (path: string) => ({ data: { signedUrl: '/object/upload/sign/teste', token: 'token' }, error: null, path }));
+  const signed = vi.fn(async (path: string) => ({
+    data: { signedUrl: '/object/upload/sign/teste', token: 'token' },
+    error: null,
+    path,
+  }));
   const client = {
     storage: {
       from: (bucket: string) => ({
@@ -36,7 +40,13 @@ function clientWithCover(hasCover = true) {
     from: () => ({
       select: (columns: string) => ({
         eq: () => ({
-          single: async () => ({ data: columns === 'image_path' ? { image_path: hasCover ? 'products/capa' : null } : { video_path: null }, error: null }),
+          single: async () => ({
+            data:
+              columns === 'image_path'
+                ? { image_path: hasCover ? 'products/capa' : null }
+                : { video_path: null },
+            error: null,
+          }),
           maybeSingle: async () => ({ data: { video_path: null }, error: null }),
           limit: async () => ({ data: [], error: null }),
         }),
@@ -55,28 +65,47 @@ describe('preparação do upload bruto de vídeo', () => {
   it('aceita MOV de até 50 MiB e assina no bucket privado com caminho plano', async () => {
     const fake = clientWithCover();
     mocks.createClient.mockResolvedValue(fake.client);
-    const result = await createProductVideoUpload(initialMediaActionState, form({
-      product_id: productId,
-      mime_type: 'video/quicktime',
-      size: '52428800',
-    }));
-    expect(result).toMatchObject({ status: 'success', signedUrl: '/object/upload/sign/teste', token: 'token' });
+    const result = await createProductVideoUpload(
+      initialMediaActionState,
+      form({
+        product_id: productId,
+        mime_type: 'video/quicktime',
+        size: '52428800',
+      }),
+    );
+    expect(result).toMatchObject({
+      status: 'success',
+      signedUrl: '/object/upload/sign/teste',
+      token: 'token',
+    });
     expect(result.path).toMatch(new RegExp(`^uploads/${productId}_[0-9a-f-]{36}\\.mov$`));
     expect(fake.signed).toHaveBeenCalledWith(result.path);
   });
 
-  it.each(['0', '52428801'])('recusa tamanho declarado %s antes de autorização/Storage', async (size) => {
-    const result = await createProductVideoUpload(initialMediaActionState, form({ product_id: productId, mime_type: 'video/mp4', size }));
-    expect(result.status).toBe('error');
-    expect(mocks.requireAdmin).not.toHaveBeenCalled();
-    expect(mocks.createClient).not.toHaveBeenCalled();
-  });
+  it.each(['0', '52428801'])(
+    'recusa tamanho declarado %s antes de autorização/Storage',
+    async (size) => {
+      const result = await createProductVideoUpload(
+        initialMediaActionState,
+        form({ product_id: productId, mime_type: 'video/mp4', size }),
+      );
+      expect(result.status).toBe('error');
+      expect(mocks.requireAdmin).not.toHaveBeenCalled();
+      expect(mocks.createClient).not.toHaveBeenCalled();
+    },
+  );
 
   it('exige foto de capa antes de assinar', async () => {
     const fake = clientWithCover(false);
     mocks.createClient.mockResolvedValue(fake.client);
-    const result = await createProductVideoUpload(initialMediaActionState, form({ product_id: productId, mime_type: 'video/webm', size: '1024' }));
-    expect(result).toMatchObject({ status: 'error', message: expect.stringContaining('foto de capa') });
+    const result = await createProductVideoUpload(
+      initialMediaActionState,
+      form({ product_id: productId, mime_type: 'video/webm', size: '1024' }),
+    );
+    expect(result).toMatchObject({
+      status: 'error',
+      message: expect.stringContaining('foto de capa'),
+    });
     expect(fake.signed).not.toHaveBeenCalled();
   });
 });

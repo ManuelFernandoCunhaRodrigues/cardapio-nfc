@@ -27,5 +27,8 @@ export function normalizeQrUrl(input: string | undefined): string {
 
 /** Nome de arquivo estável a partir do host (ex.: salgae-homologacao-vercel-app). */
 export function qrFileSlug(url: string): string {
-  return new URL(url).host.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return new URL(url).host
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }

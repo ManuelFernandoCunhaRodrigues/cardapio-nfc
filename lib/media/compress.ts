@@ -9,7 +9,10 @@ export const WEBP_QUALITY_STEP = 6;
 export type MediaVariant = 'detail' | 'card';
 export type CompressedImage = { detail: Buffer; card: Buffer };
 
-export function fitImageWithin({ width, height }: { width: number; height: number }, maxSide: number) {
+export function fitImageWithin(
+  { width, height }: { width: number; height: number },
+  maxSide: number,
+) {
   const largestSide = Math.max(width, height);
   if (largestSide <= maxSide) return { width, height };
   const scale = maxSide / largestSide;
@@ -52,8 +55,10 @@ export async function compressImageToWebp(input: Buffer): Promise<CompressedImag
     throw new Error('image_invalid');
   }
   const supported = new Set(['jpeg', 'png', 'webp', 'heif']);
-  if (!metadata.format || !supported.has(metadata.format) || !metadata.width || !metadata.height) throw new Error('image_invalid');
-  if (Math.min(metadata.width, metadata.height) < IMAGE_MIN_SIDE) throw new Error('image_too_small');
+  if (!metadata.format || !supported.has(metadata.format) || !metadata.width || !metadata.height)
+    throw new Error('image_invalid');
+  if (Math.min(metadata.width, metadata.height) < IMAGE_MIN_SIDE)
+    throw new Error('image_too_small');
   const [detail, card] = await Promise.all([
     encodeVariant(input, 1600, 300 * 1024),
     encodeVariant(input, 640, 80 * 1024),

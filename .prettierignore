@@ -1,0 +1,14 @@
+.next
+node_modules
+coverage
+package-lock.json
+next-env.d.ts
+
+# Texto e material de apoio: fora da formatação automática
+*.md
+docs
+public
+supabase
+Salgae_Lanchonete_Obsidian
+.claude
+tsconfig.json

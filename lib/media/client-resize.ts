@@ -6,15 +6,31 @@ export const CLIENT_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
 export type ImageDimensions = { width: number; height: number };
 
 /** Calcula o tamanho proporcional sem ampliar imagens pequenas. */
-export function fitImageWithin({ width, height }: ImageDimensions, maxSide = CLIENT_IMAGE_MAX_SIDE): ImageDimensions {
+export function fitImageWithin(
+  { width, height }: ImageDimensions,
+  maxSide = CLIENT_IMAGE_MAX_SIDE,
+): ImageDimensions {
   const largestSide = Math.max(width, height);
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0 || largestSide <= maxSide) return { width, height };
+  if (
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0 ||
+    largestSide <= maxSide
+  )
+    return { width, height };
   const scale = maxSide / largestSide;
   return { width: Math.round(width * scale), height: Math.round(height * scale) };
 }
 
 function canvasBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('canvas_export_failed')), 'image/jpeg', 0.92));
+  return new Promise((resolve, reject) =>
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('canvas_export_failed'))),
+      'image/jpeg',
+      0.92,
+    ),
+  );
 }
 
 /**
@@ -33,7 +49,10 @@ export async function resizeImageForUpload(file: File): Promise<File> {
     if (!context) throw new Error('canvas_unavailable');
     context.drawImage(bitmap, 0, 0, dimensions.width, dimensions.height);
     const blob = await canvasBlob(canvas);
-    return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'imagem'}.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
+    return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'imagem'}.jpg`, {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    });
   } finally {
     bitmap.close();
   }

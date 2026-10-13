@@ -31,11 +31,13 @@ Voltar: [[00-Comece-Aqui]] · Dados: [[07-Modelo-de-Dados-Supabase]]
 - Estados de carregamento, vazio e erro em telas públicas e administrativas.
 - Proteção contra clique duplicado em operações de gravação.
 - Não apagar imagem ou dado antes de confirmar a troca/transação.
+- Leituras públicas do banco têm tempo limite de 10 segundos: se o Supabase demorar, a página mostra o aviso de cardápio indisponível em vez de travar a publicação (em 2026-10-13 uma lentidão derrubou um deploy do stage por falta desse limite).
 
 ## Verificações antes de merge
 
 | Verificação | Obrigatória quando aplicável |
 | --- | --- |
+| Formatação (Prettier, `npm run format:check`) | Sim |
 | Lint | Sim |
 | Typecheck | Sim, se a aplicação usar TypeScript |
 | Testes automatizados | Para regras de negócio, acesso e regressões críticas |

@@ -1,27 +1,27 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme inline {
-  --color-ink: #17110D;
-  --color-brand: #E65F2A;
+  --color-ink: #17110d;
+  --color-brand: #e65f2a;
   /* AA: brand-strong/branco 4,93:1; placeholder/surface-inner 5,11:1; creme/#C2491A do banner 4,60:1. */
-  --color-brand-strong: #C2491A;
-  --color-cream: #FAF7EF;
-  --color-sand: #F0E9D8;
-  --color-sand-dark: #EDDFC1;
-  --color-border: #E0D6BC;
-  --color-surface-inner: #F5F0E5;
-  --color-border-inner: #E8E0CF;
-  --color-green: #02432D;
-  --color-green-soft: #E3EFE8;
+  --color-brand-strong: #c2491a;
+  --color-cream: #faf7ef;
+  --color-sand: #f0e9d8;
+  --color-sand-dark: #eddfc1;
+  --color-border: #e0d6bc;
+  --color-surface-inner: #f5f0e5;
+  --color-border-inner: #e8e0cf;
+  --color-green: #02432d;
+  --color-green-soft: #e3efe8;
   /* AA: danger sobre danger/10 ≥ 4,90:1 em qualquer fundo do app (pior caso: sand). */
-  --color-danger: #983F22;
-  --color-danger-soft: #F5E6E0;
-  --color-amber: #F9A436;
-  --color-amber-soft: #FDEFD8;
-  --color-peach: #FFE0C9;
-  --color-muted: #6B5F4A;
-  --color-body: #3D3527;
-  --color-placeholder: #6F6450;
+  --color-danger: #983f22;
+  --color-danger-soft: #f5e6e0;
+  --color-amber: #f9a436;
+  --color-amber-soft: #fdefd8;
+  --color-peach: #ffe0c9;
+  --color-muted: #6b5f4a;
+  --color-body: #3d3527;
+  --color-placeholder: #6f6450;
   --radius-card: 1.25rem;
   --radius-product: 1rem;
   --shadow-card: 0 2px 10px rgba(23, 17, 13, 0.07);
@@ -31,14 +31,43 @@
   --font-mono: var(--font-poppins);
 }
 
-:root { color: #17110d; background: #faf7ef; }
-* { box-sizing: border-box; }
-html { min-width: 320px; }
-body { min-height: 100vh; margin: 0; background: #faf7ef; color: #3d3527; font-family: var(--font-nunito), sans-serif; }
-button, input { font: inherit; }
-.disp { font-family: var(--font-poppins), sans-serif; letter-spacing: -0.02em; }
-.display { font-family: var(--font-poppins), sans-serif; font-weight: 700; letter-spacing: -0.02em; }
-.lbl { font-family: var(--font-poppins), sans-serif; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+:root {
+  color: #17110d;
+  background: #faf7ef;
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  min-width: 320px;
+}
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: #faf7ef;
+  color: #3d3527;
+  font-family: var(--font-nunito), sans-serif;
+}
+button,
+input {
+  font: inherit;
+}
+.disp {
+  font-family: var(--font-poppins), sans-serif;
+  letter-spacing: -0.02em;
+}
+.display {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.lbl {
+  font-family: var(--font-poppins), sans-serif;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
 .public-shell :where(a, button, input):focus-visible {
   outline: 2px solid #c2491a !important;
@@ -46,5 +75,7 @@ button, input { font: inherit; }
 }
 
 @media (hover: none) {
-  .public-shell :where(a, button):active { filter: brightness(0.92); }
+  .public-shell :where(a, button):active {
+    filter: brightness(0.92);
+  }
 }
