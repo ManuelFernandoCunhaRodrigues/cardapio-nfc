@@ -11,7 +11,7 @@ atualizado: 2026-10-13
 
 Voltar: [[00-Comece-Aqui]] · Relacionado: [[04-Experiencia-do-Cliente]] · [[05-Painel-Administrativo]] · [[23-Refatoracao-de-Design-2026-10]]
 
-> **Status: desenvolvido e no stage desde 2026-10-13.** Planejado entre o Claude Code e o Codex, apresentado ao responsável e aprovado por ele em 2026-10-12. Ainda não está na produção.
+> **Status: em produção desde 2026-10-13.** Planejado entre o Claude Code e o Codex, apresentado ao responsável e aprovado por ele em 2026-10-12. Na produção ainda não há destaques cadastrados, então aparece o banner padrão da casa até o primeiro cadastro.
 
 ## O que foi pedido (2026-10-12)
 
