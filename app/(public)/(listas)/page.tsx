@@ -5,7 +5,6 @@ import { Icon } from '@/components/menu/icons';
 import { MediaImage } from '@/components/menu/media-image';
 import { ProductCard } from '@/components/menu/product-card';
 import { ProductRow } from '@/components/menu/product-row';
-import { SecondaryHighlight } from '@/components/menu/secondary-highlight';
 import { getPublicImageVariantUrl } from '@/lib/media';
 import { getPublicMenu, getPublicStoreSettings } from '@/lib/menu/get-public-menu';
 import { sortProductsForHome } from '@/lib/menu/sort';
@@ -28,7 +27,6 @@ export default async function HomePage() {
       <HighlightBanner highlights={highlights} />
       <nav aria-label="Categorias" className="-mx-4 mt-3 flex gap-3.5 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{(menu.categories.data ?? []).map((category) => <Link className="flex w-[52px] shrink-0 flex-col items-center gap-1.5 text-center font-[family-name:var(--font-poppins)] text-xs font-medium text-ink focus-visible:rounded-lg focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20" href={`/cardapio#${category.slug}`} key={category.id}><span className="grid size-[52px] overflow-hidden rounded-full bg-white shadow-card">{category.image_path ? <MediaImage alt="" className="h-full w-full" name={category.name} src={getPublicImageVariantUrl('product-images', category.image_path, 'card')} /> : <span aria-hidden="true" className="grid place-items-center text-2xl">{categoryEmoji[category.slug] ?? '🍽️'}</span>}</span><span className="line-clamp-1 w-16">{category.name}</span></Link>)}</nav>
       <section className="mt-5" aria-labelledby="mais-pedidos"><div className="flex items-center justify-between gap-3"><h2 className="disp text-lg font-semibold text-ink" id="mais-pedidos">Mais pedidos</h2><Link className="-my-3 inline-flex min-h-11 items-center gap-1 py-3 font-[family-name:var(--font-poppins)] text-sm font-semibold text-brand-strong focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20" href="/cardapio">Ver todos <Icon height={16} name="arrow" width={16} /></Link></div>{featured.length ? <ProductRow ariaLabel="Produtos mais pedidos" className="mt-1">{featured.map((product) => <ProductCard compact key={product.id} product={product} />)}</ProductRow> : <p className="mt-3 rounded-product bg-white p-4 text-sm text-muted">Ainda não há itens disponíveis. Fale com a equipe no balcão.</p>}</section>
-      {highlights[1] ? <SecondaryHighlight highlight={highlights[1]} /> : null}
     </>}
   </main>;
 }

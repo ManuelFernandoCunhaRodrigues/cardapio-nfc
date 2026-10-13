@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react';
 
-export type IconName = 'home' | 'menu' | 'search' | 'info' | 'arrow' | 'arrow-simple' | 'clock' | 'pin' | 'phone' | 'whatsapp' | 'instagram' | 'play' | 'back' | 'check' | 'alert';
+export type IconName = 'home' | 'menu' | 'search' | 'info' | 'arrow' | 'arrow-simple' | 'clock' | 'pin' | 'phone' | 'whatsapp' | 'instagram' | 'play' | 'back' | 'check' | 'alert' | 'pause';
 
 const paths: Record<IconName, React.ReactNode> = {
   home: <><path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 21v-6h6v6" /></>,
@@ -15,6 +15,7 @@ const paths: Record<IconName, React.ReactNode> = {
   whatsapp: <><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.6Z" /><path d="M8.2 8.1c.5 3.2 2.4 5.1 5.6 5.8l1.2-1.4-2-1.1-.9 1c-1.2-.4-2.2-1.3-2.7-2.6l1-1-1.1-2Z" /></>,
   instagram: <><rect height="15" rx="4" width="15" x="4.5" y="4.5" /><circle cx="12" cy="12" r="3.5" /><path d="M17.5 6.8h.01" /></>,
   play: <path d="m9 7 8 5-8 5z" fill="currentColor" stroke="none" />,
+  pause: <><path d="M8 7v10M16 7v10" /></>,
   back: <path d="m15 18-6-6 6-6" />,
   check: <path d="m5 12 4 4L19 6" />,
   alert: <><path d="M12 4 3 20h18Z" /><path d="M12 9v4M12 16h.01" /></>,
