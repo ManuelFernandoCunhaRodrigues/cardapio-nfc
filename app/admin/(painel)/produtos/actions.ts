@@ -136,8 +136,11 @@ export async function reorderProduct(_previous: ProductActionState, formData: Fo
   const { data, error } = await supabase.from('products').select('id, sort_order').eq('category_id', categoryId.data).order('sort_order').order('name');
   const pair = error ? null : swapSortOrders(data ?? [], id.data, direction.data);
   if (!pair) return { status: 'error', message: 'Este produto já está no limite da categoria.' };
-  const results = await Promise.all(pair.map((item) => supabase.from('products').update({ sort_order: item.sort_order }).eq('id', item.id)));
-  if (results.some(({ error: updateError }) => updateError)) return { status: 'error', message: 'Não foi possível alterar a ordem agora.' };
+  const { error: reorderError } = await supabase.rpc('swap_product_sort_orders', { p_source_id: id.data, p_neighbor_id: pair[1].id });
+  if (reorderError) {
+    reportServerError('product_reorder_failed', reorderError);
+    return { status: 'error', message: 'Não foi possível alterar a ordem agora.' };
+  }
   await audit(admin.userId, 'reorder', id.data, { category_id: categoryId.data, direction: direction.data });
   catalogPaths(id.data);
   return { status: 'success', message: 'Ordem do produto atualizada.' };

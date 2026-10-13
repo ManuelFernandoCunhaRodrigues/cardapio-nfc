@@ -104,8 +104,11 @@ export async function reorderCategory(_previous: CategoryActionState, formData: 
   const { data, error } = await supabase.from('categories').select('id, sort_order').order('sort_order').order('name');
   const pair = error ? null : swapSortOrders(data ?? [], id.data, direction.data);
   if (!pair) return { status: 'error', message: 'Esta categoria já está no limite da lista.' };
-  const results = await Promise.all(pair.map((item) => supabase.from('categories').update({ sort_order: item.sort_order }).eq('id', item.id)));
-  if (results.some(({ error: updateError }) => updateError)) return { status: 'error', message: 'Não foi possível alterar a ordem agora.' };
+  const { error: reorderError } = await supabase.rpc('swap_category_sort_orders', { p_source_id: id.data, p_neighbor_id: pair[1].id });
+  if (reorderError) {
+    reportServerError('category_reorder_failed', reorderError);
+    return { status: 'error', message: 'Não foi possível alterar a ordem agora.' };
+  }
   await audit(admin.userId, 'reorder', id.data, { direction: direction.data });
   catalogPaths();
   return { status: 'success', message: 'Ordem da categoria atualizada.' };

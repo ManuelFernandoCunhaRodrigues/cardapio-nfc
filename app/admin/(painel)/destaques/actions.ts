@@ -55,8 +55,8 @@ export async function reorderHighlight(_previous: HighlightActionState, formData
   const id = z.string().uuid().safeParse(formData.get('id')); const direction = z.enum(['up', 'down']).safeParse(formData.get('direction'));
   if (!id.success || !direction.success) return fail('Não foi possível alterar a ordem.'); const admin = await requireAdmin({ redirectUnauthenticated: false }); if (!admin) return fail('Sua sessão não permite esta alteração. Entre novamente.');
   const supabase = await createClient(); const { data, error } = await supabase.from('highlights').select('id, sort_order').order('sort_order').order('title'); const pair = error ? null : swapSortOrders(data ?? [], id.data, direction.data);
-  if (!pair) return fail('Este destaque já está no limite da lista.'); const updates = await Promise.all(pair.map((item) => supabase.from('highlights').update({ sort_order: item.sort_order }).eq('id', item.id)));
-  if (updates.some((result) => result.error)) return fail('Não foi possível alterar a ordem agora.'); await audit(admin.userId, 'reorder', id.data, { direction: direction.data }); refreshHighlights(); return { status: 'success', message: 'Ordem atualizada.' };
+  if (!pair) return fail('Este destaque já está no limite da lista.'); const { error: reorderError } = await supabase.rpc('swap_highlight_sort_orders', { p_source_id: id.data, p_neighbor_id: pair[1].id });
+  if (reorderError) { reportServerError('highlight_reorder_failed', reorderError); return fail('Não foi possível alterar a ordem agora.'); } await audit(admin.userId, 'reorder', id.data, { direction: direction.data }); refreshHighlights(); return { status: 'success', message: 'Ordem atualizada.' };
 }
 
 export async function deleteHighlight(_previous: HighlightActionState, formData: FormData): Promise<HighlightActionState> {
