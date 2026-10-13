@@ -4,13 +4,14 @@ area: Produto
 tags:
   - moc
   - produto
-atualizado: 2026-10-12
+atualizado: 2026-10-13
 ---
 # Índice — Produto e Experiência
 
 - [[04-Experiencia-do-Cliente]] — fluxo do cardápio público.
 - [[05-Painel-Administrativo]] — responsabilidades da gestão.
-- [[22-Carrossel-de-Destaques]] — destaques sem limite, trocando sozinhos no banner (aprovado para desenvolvimento).
+- [[22-Carrossel-de-Destaques]] — destaques sem limite, trocando sozinhos no banner (em produção desde 2026-10-13).
+- [[24-Planejamento-Midia-em-Categorias-e-Destaques]] — imagem nas categorias, teste das fotos dos destaques e imagem ou vídeo nos destaques (planejado; aguardando o responsável).
 
 Ideias registradas no planejamento. O produto continua no básico; cada ideia só entra em desenvolvimento quando o responsável pedir de forma explícita:
 
