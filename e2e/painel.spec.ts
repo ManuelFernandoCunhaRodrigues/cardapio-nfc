@@ -72,7 +72,7 @@ test.describe('painel administrativo', () => {
     await page.goto('/admin/produtos');
     await page
       .getByRole('button', { name: `${moveUp ? 'Subir' : 'Descer'} ${productName}` })
-      .locator('visible=true')
+      .filter({ visible: true })
       .click();
     await expect(page.getByText('Ordem do produto atualizada.')).toBeVisible();
 
@@ -84,7 +84,7 @@ test.describe('painel administrativo', () => {
     await page.goto('/admin/produtos');
     await page
       .getByLabel(`Situação de ${productName}`)
-      .locator('visible=true')
+      .filter({ visible: true })
       .selectOption('unavailable');
     await expect(page.getByText('Situação do produto atualizada.')).toBeVisible();
 
@@ -95,7 +95,7 @@ test.describe('painel administrativo', () => {
 
   test('sair encerra a sessão', async ({ page }) => {
     await signIn(page);
-    await page.getByRole('button', { name: /^Sair/ }).locator('visible=true').first().click();
+    await page.getByRole('button', { name: /^Sair/ }).filter({ visible: true }).first().click();
     await expect(page).toHaveURL(/\/admin\/login$/);
 
     await page.goto('/admin/produtos');
