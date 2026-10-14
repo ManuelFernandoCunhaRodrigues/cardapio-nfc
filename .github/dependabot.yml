@@ -1,0 +1,24 @@
+# Atualizações de dependências chegam como PR para a develop, uma vez por semana, e passam pelo
+# mesmo CI (incluindo o banco local e os testes de ponta a ponta) antes de qualquer merge.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    groups:
+      correcoes-e-melhorias:
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Sao_Paulo

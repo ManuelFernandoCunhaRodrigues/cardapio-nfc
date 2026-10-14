@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { watchCspViolations } from './csp';
+
 // O painel só é testado contra o banco LOCAL, onde `supabase/tests/fixtures/admin_local.sql`
 // cria o administrador. Sem as duas variáveis, o arquivo inteiro é pulado.
 const email = process.env.E2E_ADMIN_EMAIL;
@@ -25,6 +27,15 @@ async function coxinhasOnMenu(page: Page) {
 test.describe('painel administrativo', () => {
   test.describe.configure({ mode: 'serial' });
   test.skip(!email || !password, 'Defina E2E_ADMIN_EMAIL e E2E_ADMIN_PASSWORD (banco local).');
+
+  // Toda página aberta nestes testes também prova que a Content-Security-Policy não bloqueia nada.
+  let cspViolations: string[] = [];
+  test.beforeEach(({ page }) => {
+    cspViolations = watchCspViolations(page);
+  });
+  test.afterEach(() => {
+    expect(cspViolations, 'recursos bloqueados pela CSP').toEqual([]);
+  });
 
   test('senha errada não entra', async ({ page }) => {
     await page.goto('/admin/login');

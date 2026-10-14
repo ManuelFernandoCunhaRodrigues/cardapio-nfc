@@ -114,7 +114,10 @@ Organização das pastas:
 - 12 testes de ponta a ponta com Playwright (`e2e/`): o cardápio no celular e, no painel, entrar, criar produto, reordenar, marcar em falta e sair, conferindo o efeito no cardápio.
 - CI no GitHub Actions a cada PR, em dois jobs. O primeiro confere formatação, lint, typecheck, testes e build. O segundo sobe o Supabase local, aplica todas as migrations em um banco vazio, confere se os tipos versionados batem com esse banco, roda os testes de RLS e depois os de ponta a ponta contra o build de produção.
 - Acessibilidade tratada como requisito: navegação por teclado, rótulos para leitor de tela e respeito a movimento reduzido. No Lighthouse móvel do stage, acessibilidade 100 e desempenho de 94 a 98 nas rotas públicas (medição de 2026-10-09, anterior ao redesign).
-- Cabeçalhos de segurança (`HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) e páginas de stage fora dos buscadores.
+- Cabeçalhos de segurança (`Content-Security-Policy`, `HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) e páginas de stage fora dos buscadores. A CSP (`lib/security/csp.ts`) só aceita scripts do próprio site, libera o Supabase apenas para imagens, vídeos e conexões, e os testes de ponta a ponta falham se alguma página tiver algo bloqueado por ela.
+- Erros do servidor registrados como uma linha JSON (`lib/observability.ts`), com evento e código do erro, para filtrar nos logs da Vercel.
+- Dependabot abre, toda segunda-feira, PRs de atualização para a `develop`; eles passam pelo mesmo CI.
+- A renovação de sessão do Supabase (`proxy.ts`) roda só em `/admin`: as páginas do cardápio não fazem chamada ao Auth.
 
 ## Executar localmente
 

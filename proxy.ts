@@ -6,8 +6,8 @@ export async function proxy(request: NextRequest) {
   return updateSession(request);
 }
 
+// Só o painel usa sessão. O cardápio lê o banco sem cookies (`lib/supabase/public.ts`), então
+// renovar a sessão nas páginas públicas só acrescentaria uma chamada ao Auth em cada visita.
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/admin/:path*'],
 };

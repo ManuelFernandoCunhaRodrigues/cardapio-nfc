@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next';
 
+import { buildContentSecurityPolicy } from './lib/security/csp';
+
 const nextConfig: NextConfig = {
   serverExternalPackages: ['ffmpeg-static'],
   outputFileTracingIncludes: {
@@ -10,6 +12,13 @@ const nextConfig: NextConfig = {
       {
         source: '/:path*',
         headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: buildContentSecurityPolicy({
+              supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+              development: process.env.NODE_ENV === 'development',
+            }),
+          },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-Frame-Options', value: 'DENY' },
