@@ -81,7 +81,7 @@ jobs:
           fi
       - uses: actions/checkout@v4
         if: steps.alvo.outputs.pronto == 'true'
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         if: steps.alvo.outputs.pronto == 'true'
         with:
           version: 2.120.0
