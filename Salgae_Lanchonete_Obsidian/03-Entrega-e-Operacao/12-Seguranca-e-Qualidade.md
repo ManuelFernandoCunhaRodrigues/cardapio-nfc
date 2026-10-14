@@ -94,3 +94,9 @@ Publicado em `https://salgae-producao.vercel.app` com o banco `SALGAE-PRODUCTION
 | Produto ativo/inativo, indisponibilidade, troca de foto, vídeo | ⏳ depende do cadastro do conteúdo real |
 | Abre bem em celular com rede móvel | ⏳ teste em aparelho real |
 | Procedimento de rollback conhecido | ✅ |
+
+### Operação (2026-10-14)
+
+- Erros do servidor saem como uma linha JSON com o nome do evento e o código do erro, o que permite filtrar nos logs da Vercel em vez de ler texto solto.
+- O Dependabot propõe atualizações de dependências toda segunda-feira, como PR para a `develop`, e cada uma passa pelo CI completo antes do merge.
+- A renovação de sessão roda só no painel. As páginas do cardápio não usam sessão e deixaram de chamar o Auth do Supabase a cada visita.
