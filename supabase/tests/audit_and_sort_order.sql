@@ -29,10 +29,10 @@ select set_config('request.jwt.claims', '{"sub":"bae2a6b4-c6fd-4567-b01c-01c70e5
 set local role authenticated;
 
 insert into _positions
-select 'categoria.antes', pg_catalog.coalesce(pg_catalog.max(sort_order), -1)
+select 'categoria.antes', coalesce(pg_catalog.max(sort_order), -1)
 from public.categories;
 insert into _positions
-select 'destaque.antes', pg_catalog.coalesce(pg_catalog.max(sort_order), -1)
+select 'destaque.antes', coalesce(pg_catalog.max(sort_order), -1)
 from public.highlights;
 
 insert into public.categories (id, name, slug, sort_order) values

@@ -38,7 +38,7 @@ begin
     audit_metadata := new_row - 'created_at' - 'updated_at';
   elsif tg_op = 'UPDATE' then
     audit_action := 'update';
-    select pg_catalog.coalesce(
+    select coalesce(
       pg_catalog.jsonb_object_agg(
         changed.key,
         pg_catalog.jsonb_build_object('de', old_row -> changed.key, 'para', changed.value)
@@ -102,20 +102,20 @@ begin
   if tg_table_name = 'products' then
     lock_scope := 'products:' || new.category_id::text;
     perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(lock_scope, 0));
-    select pg_catalog.coalesce(pg_catalog.max(products.sort_order), -1) + 1
+    select coalesce(pg_catalog.max(products.sort_order), -1) + 1
     into new.sort_order
     from public.products
     where products.category_id = new.category_id;
   elsif tg_table_name = 'categories' then
     lock_scope := 'categories';
     perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(lock_scope, 0));
-    select pg_catalog.coalesce(pg_catalog.max(categories.sort_order), -1) + 1
+    select coalesce(pg_catalog.max(categories.sort_order), -1) + 1
     into new.sort_order
     from public.categories;
   elsif tg_table_name = 'highlights' then
     lock_scope := 'highlights';
     perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(lock_scope, 0));
-    select pg_catalog.coalesce(pg_catalog.max(highlights.sort_order), -1) + 1
+    select coalesce(pg_catalog.max(highlights.sort_order), -1) + 1
     into new.sort_order
     from public.highlights;
   else
