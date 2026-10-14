@@ -79,7 +79,7 @@ jobs:
             echo "SUPABASE_DB_PASSWORD=$db_password" >> "$GITHUB_ENV"
             echo "pronto=true" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.alvo.outputs.pronto == 'true'
       - uses: supabase/setup-cli@v1
         if: steps.alvo.outputs.pronto == 'true'
