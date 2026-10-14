@@ -99,6 +99,15 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** migration que só funciona em cima do stage, política de acesso afrouxada por engano e fluxo quebrado na tela passam a barrar o merge em vez de aparecerem depois.
 - **Impacto:** `.github/workflows/ci.yml`, `supabase/config.toml`, `e2e/`, `scripts/testar-banco-local.sh`; resultados em `docs/testes/banco-local-e-ponta-a-ponta-resultados.md`. O CI fica cerca de 3 minutos mais longo. Envio de foto e vídeo e as telas de categorias, destaques e loja ainda não têm teste de ponta a ponta.
 - **Revisão:** ao criar tela nova no painel ou tabela nova no banco.
+### Auditoria e posição de item novo feitas pelo banco
+
+- **Data:** 2026-10-14
+- **Contexto:** o painel gravava a auditoria numa segunda chamada, depois da alteração, e ignorava a falha; uma mudança podia ficar sem registro. A posição de um item novo era calculada lendo o maior `sort_order` e inserindo em seguida, e duas criações ao mesmo tempo podiam pegar a mesma posição.
+- **Decisão:** gatilhos no banco registram em `audit_logs` toda criação, alteração e exclusão de categorias, produtos, destaques e dados da loja, na mesma transação. A permissão de gravar direto em `audit_logs` foi retirada de todos os usuários. Outro gatilho põe o item novo no fim da lista, com trava para criações simultâneas.
+- **Por quê:** se a mudança acontece, o registro existe; se o registro falha, a mudança não acontece. E o histórico não pode ser forjado nem pelo administrador.
+- **Impacto:** migration `20261014120000_audit_and_sort_order_triggers`; ações do painel mais curtas (`lib/admin/action-helpers.ts`). O registro passa a ser por coluna alterada: a "direção" de uma reordenação e os números da compactação de vídeo não aparecem mais no histórico, e uma troca de posição gera dois registros, um por item. Testes em `supabase/tests/audit_and_sort_order.sql`.
+- **Revisão:** quando a ideia 21 (usuários e rastreabilidade) for desenvolvida, porque ela vai ler esse histórico.
+
 ### Content-Security-Policy
 
 - **Data:** 2026-10-14

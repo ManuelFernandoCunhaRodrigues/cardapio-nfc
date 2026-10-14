@@ -18,14 +18,14 @@ Voltar: [[00-Comece-Aqui]] · Segurança: [[12-Seguranca-e-Qualidade]]
 | `products` | `id`, `category_id`, `name`, `description`, `price`, `image_path`, `video_path`, `badge`, `sort_order`, `is_active`, `is_available` | Um produto deve referenciar uma categoria válida. `video_path` é opcional. `badge` é opcional: `MAIS PEDIDO`, `NOVO` ou `QUENTINHO` ([[19-Referencia-Layout-Cardapio]]). |
 | `highlights` | `id`, `title`, `description`, `image_path`, `target`, `sort_order`, `is_active` | Controla conteúdo promocional no topo. |
 | `profiles` | `id`, `name`, `role`, `is_active` | Complementa a identidade do Supabase Auth. |
-| `audit_logs` (recomendado) | `id`, `actor_id`, `action`, `entity`, `entity_id`, `metadata`, `created_at` | Permite rastrear alterações administrativas relevantes. |
+| `audit_logs` | `id`, `actor_id`, `action`, `entity`, `entity_id`, `metadata`, `created_at` | Rastreia alterações do painel. Desde 2026-10-14 é preenchida só por gatilhos do banco, na mesma transação da mudança: `create` guarda a linha nova, `update` só as colunas que mudaram (`de`/`para`), `delete` a linha removida. Ninguém grava nela direto, nem o administrador. |
 | `store_settings` | `id` (linha única), `name`, `tagline`, `address`, `maps_url`, `phone`, `whatsapp`, `instagram`, `opening_hours`, `status_override`, `notice` | Dados da loja para a aba **Info** e o status aberta/fechada. `opening_hours` guarda os 7 dias; `status_override` (`auto`, `open`, `closed`) permite abrir ou fechar manualmente. Leitura pública, edição só admin. |
 
 ## Regras de integridade
 
 - Valor monetário deve ser salvo em formato sem ambiguidade: inteiro em centavos ou `numeric` com precisão definida; não usar `float`.
 - `slug` deve ser único por categoria quando ele fizer parte de URL.
-- `sort_order` precisa ter padrão previsível para evitar itens em ordem aleatória.
+- `sort_order` precisa ter padrão previsível para evitar itens em ordem aleatória. Item novo sempre entra no fim (gatilho com trava por escopo: categoria do produto, ou a tabela inteira para categorias e destaques); a posição só muda pelas funções de troca.
 - Trocar dois itens de posição é uma operação só no banco: as funções `swap_product_sort_orders`, `swap_category_sort_orders` e `swap_highlight_sort_orders` (migration `20261013151000_atomic_sort_order_swap`) trocam os dois `sort_order` em uma única instrução, ou não trocam nenhum. Rodam com a permissão de quem chama, então o RLS continua decidindo: só administrador ativo consegue. Produtos só trocam dentro da mesma categoria. Em produção desde 2026-10-13.
 - O código conhece o esquema pelos tipos gerados do Supabase (`lib/supabase/database.types.ts`, desde 2026-10-13): tabela, coluna ou função com nome errado deixa de compilar. O arquivo é gerado, não editado à mão, e precisa ser gerado de novo a cada migration.
 - A categoria de um produto não deve ser removida enquanto houver produtos vinculados, salvo em transação/migração segura.
