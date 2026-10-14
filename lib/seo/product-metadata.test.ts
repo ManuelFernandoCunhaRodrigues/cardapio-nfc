@@ -6,6 +6,7 @@ const product = {
   id: '6ac417ce-e9b5-496d-b5bf-2d07cd2d8197',
   category_id: 'f8ec9a0b-a79f-47fe-b2d2-ebf81c72d2a3',
   name: 'Coxinha de frango',
+  slug: 'coxinha-de-frango',
   description: null,
   price_cents: 700,
   image_path: null,
@@ -26,9 +27,9 @@ describe('getProductMetadata', () => {
 
     expect(metadata.title).toBe('Coxinha de frango | Salgaê');
     expect(metadata.description).toMatch(/^Conheça Coxinha de frango por R\$\s7,00 na Salgaê\.$/);
-    expect(metadata.alternates).toEqual({ canonical: `/produto/${product.id}` });
+    expect(metadata.alternates).toEqual({ canonical: `/produto/${product.slug}` });
     expect(metadata.openGraph).toMatchObject({
-      url: `/produto/${product.id}`,
+      url: `/produto/${product.slug}`,
       locale: 'pt_BR',
       siteName: 'Salgaê',
     });

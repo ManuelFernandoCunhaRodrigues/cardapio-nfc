@@ -14,7 +14,7 @@ export function buildSitemap(
     { url: toUrl('/cardapio') },
     { url: toUrl('/info') },
     ...products.map((product) => ({
-      url: toUrl(`/produto/${product.id}`),
+      url: toUrl(`/produto/${product.slug}`),
       lastModified: new Date(product.updated_at),
     })),
   ];

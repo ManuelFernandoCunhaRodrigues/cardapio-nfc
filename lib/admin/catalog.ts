@@ -15,6 +15,7 @@ export type AdminProduct = {
   id: string;
   category_id: string;
   name: string;
+  slug: string;
   description: string | null;
   price_cents: number;
   image_path: string | null;
@@ -60,7 +61,7 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
   const { data, error } = await supabase
     .from('products')
     .select(
-      'id, category_id, name, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available, category:categories(name, slug)',
+      'id, category_id, name, slug, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available, category:categories(name, slug)',
     )
     .order('sort_order')
     .order('name');

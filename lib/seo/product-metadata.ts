@@ -15,11 +15,11 @@ export function getProductMetadata(product: MenuProduct | null, image: string | 
   return {
     title,
     description,
-    alternates: { canonical: `/produto/${product.id}` },
+    alternates: { canonical: `/produto/${product.slug}` },
     openGraph: {
       title,
       description,
-      url: `/produto/${product.id}`,
+      url: `/produto/${product.slug}`,
       type: 'website',
       locale: 'pt_BR',
       siteName: 'Salgaê',

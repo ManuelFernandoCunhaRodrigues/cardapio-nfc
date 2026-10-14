@@ -8,6 +8,7 @@ const email = process.env.E2E_ADMIN_EMAIL;
 const password = process.env.E2E_ADMIN_PASSWORD;
 
 const productName = `Teste E2E ${Date.now()}`;
+const productSlug = productName.toLowerCase().replaceAll(' ', '-');
 let productId = '';
 
 async function signIn(page: Page) {
@@ -63,6 +64,7 @@ test.describe('painel administrativo', () => {
     productId = new URL(page.url()).pathname.split('/').pop() ?? '';
 
     await page.goto(`/produto/${productId}`);
+    await expect(page).toHaveURL(new RegExp(`/produto/${productSlug}$`));
     await expect(page.getByRole('heading', { level: 1, name: productName })).toBeVisible();
     await expect(page.getByText('R$ 12,34')).toBeVisible();
     expect(await coxinhasOnMenu(page)).toContain(productName);
@@ -100,6 +102,7 @@ test.describe('painel administrativo', () => {
     await expect(page.getByText('Situação do produto atualizada.')).toBeVisible();
 
     await page.goto(`/produto/${productId}`);
+    await expect(page).toHaveURL(new RegExp(`/produto/${productSlug}$`));
     await expect(page.getByText('INDISPONÍVEL', { exact: true })).toBeVisible();
     await expect(page.getByText(/Indisponível no momento/)).toBeVisible();
   });

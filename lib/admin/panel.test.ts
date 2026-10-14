@@ -18,6 +18,7 @@ const base: AdminProduct = {
   id: '1',
   category_id: 'c1',
   name: 'Coxinha de frango',
+  slug: 'coxinha-de-frango',
   description: null,
   price_cents: 700,
   image_path: 'photo',
