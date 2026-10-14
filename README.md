@@ -82,7 +82,7 @@ Organização das pastas:
 | --- | --- |
 | `/` | Início: destaques, categorias e mais pedidos. |
 | `/cardapio` | Lista completa por categoria. |
-| `/produto/[id]` | Detalhe do item, com vídeo opcional. |
+| `/produto/[slug]` | Detalhe do item pelo nome (ex.: `/produto/coxinha-de-frango`), com vídeo opcional. Endereços antigos por id redirecionam para o novo. |
 | `/busca` | Busca por nome, ingrediente ou categoria. |
 | `/info` | Situação da loja, horários e contatos. |
 | `/admin` | Resumo do painel e itens que precisam de atenção. |

@@ -99,6 +99,15 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** migration que só funciona em cima do stage, política de acesso afrouxada por engano e fluxo quebrado na tela passam a barrar o merge em vez de aparecerem depois.
 - **Impacto:** `.github/workflows/ci.yml`, `supabase/config.toml`, `e2e/`, `scripts/testar-banco-local.sh`; resultados em `docs/testes/banco-local-e-ponta-a-ponta-resultados.md`. O CI fica cerca de 3 minutos mais longo. Envio de foto e vídeo e as telas de categorias, destaques e loja ainda não têm teste de ponta a ponta.
 - **Revisão:** ao criar tela nova no painel ou tabela nova no banco.
+### Endereço do produto pelo nome
+
+- **Data:** 2026-10-14
+- **Contexto:** o produto abria em `/produto/<código>`, um identificador de 36 caracteres que não diz nada a quem recebe o link.
+- **Decisão:** o endereço passa a ser o nome (`/produto/coxinha-de-frango`). O banco gera esse nome de endereço na criação, sem acentos, e resolve repetição com `-2`, `-3`. Renomear o produto não muda o endereço, para links já compartilhados continuarem valendo. Os endereços antigos por código redirecionam (308) para o novo, o que mantém funcionando os destinos de destaque e qualquer link já enviado.
+- **Por quê:** link legível e que se apresenta melhor quando compartilhado, sem quebrar o que já existe.
+- **Impacto:** migration `20261014150000_product_slug`, rota `app/(public)/produto/[slug]`, sitemap e prévia de link pelo nome. O painel continua abrindo o produto pelo código. Se o nome mudar muito, o endereço fica com o nome antigo; trocar exige editar o banco.
+- **Revisão:** se o responsável quiser editar o endereço pelo painel.
+
 ### Auditoria e posição de item novo feitas pelo banco
 
 - **Data:** 2026-10-14
