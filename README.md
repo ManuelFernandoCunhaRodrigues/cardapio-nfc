@@ -109,7 +109,7 @@ Organização das pastas:
 
 ## Qualidade
 
-- 174 testes unitários e de integração com Vitest (`npm test`), concentrados nas regras de `lib/` e na rota de vídeo.
+- 174 testes unitários e de integração com Vitest (`npm test`), concentrados nas regras de `lib/` e na rota de vídeo. A cobertura é medida no CI e aparece no resumo do job: em 2026-10-14, 56% das linhas e 71% das funções de `lib/` e `app/`. Um piso logo abaixo disso faz o CI falhar se a cobertura cair.
 - Testes de RLS em SQL (`supabase/tests/`), que rodam dentro de uma transação desfeita no fim e conferem o que visitante, usuário comum e administrador conseguem ler e escrever.
 - 12 testes de ponta a ponta com Playwright (`e2e/`): o cardápio no celular e, no painel, entrar, criar produto, reordenar, marcar em falta e sair, conferindo o efeito no cardápio.
 - CI no GitHub Actions a cada PR, em dois jobs. O primeiro confere formatação, lint, typecheck, testes e build. O segundo sobe o Supabase local, aplica todas as migrations em um banco vazio, confere se os tipos versionados batem com esse banco, roda os testes de RLS e depois os de ponta a ponta contra o build de produção.
@@ -138,6 +138,7 @@ Preencha em `.env.local` a URL e a chave anônima/publicável do Supabase. A apl
 | `npm run lint` | ESLint. |
 | `npm run typecheck` | TypeScript estrito, sem emitir arquivos. |
 | `npm test` | Testes com Vitest. |
+| `npm run test:coverage` | Os mesmos testes, com medição de cobertura de `lib/` e `app/` (relatório em `coverage/`). |
 | `npm run test:db` | Testes SQL de RLS, Storage e reordenação contra o Supabase local. |
 | `npm run test:e2e` | Testes de ponta a ponta com Playwright, contra o build de produção. |
 | `npm run test:types-db` | Confere os tipos versionados contra os gerados do banco local (usado no CI). |

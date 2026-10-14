@@ -73,5 +73,6 @@ describe('opções do QR', () => {
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
-  });
+    // Gera e decodifica duas imagens; com a medição de cobertura passa de 5 s.
+  }, 20_000);
 });
