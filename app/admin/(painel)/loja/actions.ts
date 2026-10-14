@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { formError } from '@/lib/admin/action-helpers';
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { buildOpeningHours } from '@/lib/admin/panel';
 import { reportServerError } from '@/lib/observability';
@@ -35,13 +36,6 @@ export async function updateStoreStatusOverride(
       );
       return { status: 'error', message: 'Não foi possível mudar o estado da loja agora.' };
     }
-    const { error: auditError } = await supabase.from('audit_logs').insert({
-      actor_id: admin.userId,
-      action: 'update',
-      entity: 'store_settings',
-      metadata: { status_override: parsed.data },
-    });
-    if (auditError) reportServerError('store_status_override_audit_failed', auditError);
     revalidatePath('/admin', 'layout');
     revalidatePath('/admin/loja');
     revalidatePath('/', 'layout');
@@ -80,18 +74,7 @@ export async function updateStoreSettings(
     status_override: formData.get('status_override'),
     notice: formData.get('notice'),
   });
-  if (!parsed.success) {
-    const fieldErrors = parsed.error.issues.reduce<Record<string, string[]>>((errors, issue) => {
-      const field = issue.path.join('.');
-      if (field) errors[field] = [...(errors[field] ?? []), issue.message];
-      return errors;
-    }, {});
-    return {
-      status: 'error',
-      message: 'Revise os campos destacados antes de salvar.',
-      fieldErrors,
-    };
-  }
+  if (!parsed.success) return formError<StoreSettingsActionState>(parsed.error);
   try {
     const admin = await requireAdmin({ redirectUnauthenticated: false });
     if (!admin)
@@ -114,20 +97,6 @@ export async function updateStoreSettings(
       return {
         status: 'error',
         message: 'Não foi possível salvar agora. Tente novamente em instantes.',
-      };
-    }
-    const { error: auditError } = await supabase.from('audit_logs').insert({
-      actor_id: admin.userId,
-      action: 'update',
-      entity: 'store_settings',
-      metadata: { fields: Object.keys(parsed.data) },
-    });
-    if (auditError) {
-      reportServerError('store_settings_audit_failed', auditError);
-      return {
-        status: 'error',
-        message:
-          'Os dados foram salvos, mas não foi possível registrar a auditoria. Avise a administração.',
       };
     }
     revalidatePath('/admin/loja');

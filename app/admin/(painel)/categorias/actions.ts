@@ -1,44 +1,18 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { formError, revalidateCatalog } from '@/lib/admin/action-helpers';
 import { swapSortOrders } from '@/lib/admin/reorder';
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { reportServerError } from '@/lib/observability';
-import type { Json } from '@/lib/supabase/database.types';
 import { createClient } from '@/lib/supabase/server';
 import { categoryFormSchema } from '@/lib/validators/category';
 
 import type { CategoryActionState } from './action-state';
 
-function formError(error: z.ZodError): CategoryActionState {
-  const fieldErrors = error.issues.reduce<Record<string, string[]>>((result, issue) => {
-    const field = issue.path.join('.');
-    if (field) result[field] = [...(result[field] ?? []), issue.message];
-    return result;
-  }, {});
-  return { status: 'error', message: 'Revise os campos destacados antes de salvar.', fieldErrors };
-}
-
 function catalogPaths(): void {
-  revalidatePath('/', 'layout');
-  revalidatePath('/admin');
-  revalidatePath('/admin/categorias');
-  revalidatePath('/admin/produtos');
-}
-
-async function audit(
-  actorId: string,
-  action: 'create' | 'update' | 'delete' | 'reorder',
-  entityId: string,
-  metadata: Json,
-) {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('audit_logs')
-    .insert({ actor_id: actorId, action, entity: 'category', entity_id: entityId, metadata });
-  if (error) reportServerError('category_audit_failed', error);
+  revalidateCatalog(['categorias', 'produtos']);
 }
 
 export async function createCategory(
@@ -51,24 +25,14 @@ export async function createCategory(
     description: formData.get('description'),
     is_active: formData.get('is_active') === 'on',
   });
-  if (!parsed.success) return formError(parsed.error);
+  if (!parsed.success) return formError<CategoryActionState>(parsed.error);
   const admin = await requireAdmin({ redirectUnauthenticated: false });
   if (!admin)
     return { status: 'error', message: 'Sua sessão não permite esta alteração. Entre novamente.' };
 
   try {
     const supabase = await createClient();
-    const { data: last } = await supabase
-      .from('categories')
-      .select('sort_order')
-      .order('sort_order', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const { data, error } = await supabase
-      .from('categories')
-      .insert({ ...parsed.data, sort_order: (last?.sort_order ?? -1) + 1 })
-      .select('id')
-      .single();
+    const { error } = await supabase.from('categories').insert(parsed.data);
     if (error) {
       if (error.code === '23505')
         return {
@@ -82,7 +46,6 @@ export async function createCategory(
         message: 'Não foi possível criar a categoria agora. Tente novamente.',
       };
     }
-    await audit(admin.userId, 'create', data.id, { name: parsed.data.name });
     catalogPaths();
     return { status: 'success', message: 'Categoria criada com sucesso.' };
   } catch (error) {
@@ -107,7 +70,7 @@ export async function updateCategory(
   });
   if (!id.success || !parsed.success)
     return !parsed.success
-      ? formError(parsed.error)
+      ? formError<CategoryActionState>(parsed.error)
       : { status: 'error', message: 'Categoria inválida.' };
   const admin = await requireAdmin({ redirectUnauthenticated: false });
   if (!admin)
@@ -128,7 +91,6 @@ export async function updateCategory(
         message: 'Não foi possível salvar a categoria agora. Tente novamente.',
       };
     }
-    await audit(admin.userId, 'update', id.data, { name: parsed.data.name });
     catalogPaths();
     return { status: 'success', message: 'Categoria atualizada com sucesso.' };
   } catch (error) {
@@ -159,7 +121,6 @@ export async function toggleCategory(
     reportServerError('category_toggle_failed', error);
     return { status: 'error', message: 'Não foi possível atualizar o status da categoria.' };
   }
-  await audit(admin.userId, 'update', id.data, { is_active: active });
   catalogPaths();
   return { status: 'success', message: active ? 'Categoria ativada.' : 'Categoria desativada.' };
 }
@@ -191,7 +152,6 @@ export async function reorderCategory(
     reportServerError('category_reorder_failed', reorderError);
     return { status: 'error', message: 'Não foi possível alterar a ordem agora.' };
   }
-  await audit(admin.userId, 'reorder', id.data, { direction: direction.data });
   catalogPaths();
   return { status: 'success', message: 'Ordem da categoria atualizada.' };
 }
@@ -217,7 +177,6 @@ export async function deleteCategory(
     reportServerError('category_delete_failed', error);
     return { status: 'error', message: 'Não foi possível excluir a categoria agora.' };
   }
-  await audit(admin.userId, 'delete', id.data, {});
   catalogPaths();
   return { status: 'success', message: 'Categoria excluída.' };
 }

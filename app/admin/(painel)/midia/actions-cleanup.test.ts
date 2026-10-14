@@ -44,7 +44,6 @@ function fakeClient(
       }),
     },
     from: (table: string) => {
-      if (table === 'audit_logs') return { insert: async () => ({ error: null }) };
       return {
         select: (columns: string) => ({
           eq: (column: string) => {
