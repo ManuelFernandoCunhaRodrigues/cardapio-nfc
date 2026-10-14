@@ -6,3 +6,7 @@ docs
 .claude
 public/_e2e
 coverage
+e2e
+playwright.config.ts
+playwright-report
+test-results

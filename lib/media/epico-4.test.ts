@@ -372,15 +372,9 @@ describe('Épico 4 — Server Actions com fakes de Supabase/Storage', () => {
     expect(client).not.toHaveBeenCalled();
   });
 
-  it('13. cria destaque na próxima ordem, registra auditoria e a troca de ordem continua limitada ao par', async () => {
+  it('13. cria destaque sem enviar posição e a troca de ordem continua limitada ao par', async () => {
     const inserted: Array<Record<string, unknown>> = [];
-    const audit: Array<Record<string, unknown>> = [];
     const highlights = {
-      select: () => ({
-        order: () => ({
-          limit: () => ({ maybeSingle: async () => ({ data: { sort_order: 2 }, error: null }) }),
-        }),
-      }),
       insert: (values: Record<string, unknown>) => {
         inserted.push(values);
         return {
@@ -389,27 +383,15 @@ describe('Épico 4 — Server Actions com fakes de Supabase/Storage', () => {
       },
     };
     mocks.createClient.mockResolvedValue({
-      from: (table: string) =>
-        table === 'highlights'
-          ? highlights
-          : {
-              insert: async (values: Record<string, unknown>) => {
-                audit.push(values);
-                return { error: null };
-              },
-            },
+      from: () => highlights,
     });
     const result = await createHighlight(
       { status: 'idle' },
       form({ title: 'Combo da casa', description: '', target: '/cardapio', is_active: 'on' }),
     );
     expect(result).toMatchObject({ status: 'success', entityId: highlightId });
-    expect(inserted[0]).toMatchObject({ sort_order: 3, title: 'Combo da casa' });
-    expect(audit[0]).toMatchObject({
-      action: 'create',
-      entity: 'highlight',
-      entity_id: highlightId,
-    });
+    expect(inserted[0]).toMatchObject({ title: 'Combo da casa' });
+    expect(inserted[0]).not.toHaveProperty('sort_order');
     expect(
       swapSortOrders(
         [

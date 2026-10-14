@@ -292,21 +292,6 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    const { error: auditError } = await supabase.from('audit_logs').insert({
-      actor_id: authorization.admin.userId,
-      action: 'media_video_replace',
-      entity: 'product',
-      entity_id: productId,
-      metadata: {
-        video_path: outputPath,
-        original_bytes: compressed.inputBytes,
-        compressed_bytes: compressed.outputBytes,
-        duration_seconds: compressed.duration,
-        width: compressed.width,
-        height: compressed.height,
-      },
-    });
-    if (auditError) reportServerError('media_audit_failed', auditError);
     refreshProduct(productId);
     return json({
       status: 'success',

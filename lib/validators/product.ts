@@ -27,6 +27,7 @@ export const productSchema = z
     id: z.string().uuid(),
     category_id: z.string().uuid(),
     name: z.string(),
+    slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     description: z.string().nullable(),
     price_cents: z.number().int().nonnegative(),
     image_path: z.string().nullable(),

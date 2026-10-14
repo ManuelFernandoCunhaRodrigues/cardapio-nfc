@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useActionState, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import {
   initialProductActionState,
@@ -52,6 +52,9 @@ function SituationControl({
 }: Readonly<{ product: AdminProduct; onResult: ResultHandler }>) {
   const [state, action] = useActionState(setProductSituation, initialProductActionState);
   const formRef = useRef<HTMLFormElement>(null);
+  // O controle aparece duas vezes na página (cartões do celular e tabela do desktop): o id não
+  // pode vir do produto, senão o rótulo da tabela aponta para o campo escondido dos cartões.
+  const selectId = useId();
   const situation = productSituationFromFields(product);
   useEffect(() => {
     if (state.status !== 'idle' && state.message) onResult(state);
@@ -59,13 +62,13 @@ function SituationControl({
   return (
     <form action={action} className="relative z-10" ref={formRef}>
       <input name="id" type="hidden" value={product.id} />
-      <label className="sr-only" htmlFor={`situation-${product.id}`}>
+      <label className="sr-only" htmlFor={selectId}>
         Situação de {product.name}
       </label>
       <select
         className={`min-h-11 rounded-full border px-3 font-[family-name:var(--font-poppins)] text-xs font-semibold focus:outline-hidden focus:ring-4 focus:ring-brand/20 ${situation === 'menu' ? 'border-green/20 bg-green-soft text-green' : situation === 'unavailable' ? 'border-amber/30 bg-amber-soft text-body' : 'border-danger/20 bg-danger-soft text-danger'}`}
         defaultValue={situation}
-        id={`situation-${product.id}`}
+        id={selectId}
         name="situation"
         onChange={() => formRef.current?.requestSubmit()}
       >

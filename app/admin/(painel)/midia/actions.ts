@@ -1,13 +1,13 @@
 'use server';
 
 import { randomUUID } from 'crypto';
-import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { revalidateCatalog } from '@/lib/admin/action-helpers';
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { compressImageToWebp } from '@/lib/media/compress';
 import { ACCEPTED_VIDEO_MIME_TYPES, VIDEO_RAW_MAX_BYTES } from '@/lib/media/video/constants';
-import { cleanupVideoOrphans, type VideoCleanupClient } from '@/lib/media/video/storage-cleanup';
+import { cleanupVideoOrphans } from '@/lib/media/video/storage-cleanup';
 import { commitStagedMedia, isMediaUnreferenced, mediaObjectPaths } from '@/lib/media/workflow';
 import { reportServerError } from '@/lib/observability';
 import { createClient } from '@/lib/supabase/server';
@@ -22,27 +22,10 @@ function fail(message: string): MediaActionState {
   return { status: 'error', message };
 }
 function refreshMediaPaths(productId?: string) {
-  revalidatePath('/', 'layout');
-  revalidatePath('/admin');
-  revalidatePath('/admin/produtos');
-  revalidatePath('/admin/destaques');
-  if (productId) revalidatePath(`/admin/produtos/${productId}`);
+  revalidateCatalog(['produtos', 'destaques'], productId);
 }
 function imageFiles(basePath: string): string[] {
   return mediaObjectPaths(basePath);
-}
-async function audit(
-  actorId: string,
-  action: string,
-  entity: 'product' | 'highlight',
-  entityId: string,
-  metadata: Record<string, unknown>,
-) {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('audit_logs')
-    .insert({ actor_id: actorId, action, entity, entity_id: entityId, metadata });
-  if (error) reportServerError('media_audit_failed', error);
 }
 async function canDeleteImagePath(
   path: string,
@@ -99,7 +82,6 @@ async function uploadImage(
   id: string,
   file: FormDataEntryValue | null,
   table: 'products' | 'highlights',
-  adminId: string,
 ): Promise<MediaActionState> {
   if (!(file instanceof File) || file.size === 0) return fail('Escolha uma foto antes de enviar.');
   try {
@@ -155,13 +137,6 @@ async function uploadImage(
         'A foto foi validada, mas não pôde ser vinculada ao item. A foto anterior foi mantida.',
       );
     }
-    await audit(
-      adminId,
-      'media_image_replace',
-      table === 'products' ? 'product' : 'highlight',
-      id,
-      { bucket, image_path: basePath },
-    );
     refreshMediaPaths(table === 'products' ? id : undefined);
     return { status: 'success', message: 'Foto otimizada e salva com sucesso.', path: basePath };
   } catch (error) {
@@ -191,7 +166,6 @@ export async function uploadProductImage(
     productId.data,
     formData.get('image'),
     'products',
-    admin.userId,
   );
 }
 
@@ -221,7 +195,6 @@ export async function removeProductImage(
     table: 'products',
     id: productId.data,
   });
-  await audit(admin.userId, 'media_image_remove', 'product', productId.data, {});
   refreshMediaPaths(productId.data);
   return { status: 'success', message: 'Foto removida.' };
 }
@@ -240,7 +213,6 @@ export async function uploadHighlightImage(
     highlightId.data,
     formData.get('image'),
     'highlights',
-    admin.userId,
   );
 }
 
@@ -268,7 +240,6 @@ export async function removeHighlightImage(
     table: 'highlights',
     id: highlightId.data,
   });
-  await audit(admin.userId, 'media_image_remove', 'highlight', highlightId.data, {});
   refreshMediaPaths();
   return { status: 'success', message: 'Foto removida.' };
 }
@@ -293,7 +264,7 @@ export async function createProductVideoUpload(
     .eq('id', productId.data)
     .single();
   if (error || !product?.image_path) return fail('Salve uma foto de capa antes de enviar o vídeo.');
-  await cleanupVideoOrphans(supabase as unknown as VideoCleanupClient, {
+  await cleanupVideoOrphans(supabase, {
     cleanupUploads: true,
     productId: productId.data,
     onError: reportServerError,
@@ -349,11 +320,10 @@ export async function removeProductVideo(
       .remove([product.video_path]);
     if (removeError) reportServerError('media_video_cleanup_failed', removeError);
   }
-  await cleanupVideoOrphans(supabase as unknown as VideoCleanupClient, {
+  await cleanupVideoOrphans(supabase, {
     productId: productId.data,
     onError: reportServerError,
   });
-  await audit(admin.userId, 'media_video_remove', 'product', productId.data, {});
   refreshMediaPaths(productId.data);
   return { status: 'success', message: 'Vídeo removido.' };
 }

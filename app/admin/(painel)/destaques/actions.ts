@@ -1,8 +1,8 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { formError, revalidateCatalog } from '@/lib/admin/action-helpers';
 import { swapSortOrders } from '@/lib/admin/reorder';
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { reportServerError } from '@/lib/observability';
@@ -14,30 +14,8 @@ import type { HighlightActionState } from './action-state';
 function fail(message: string): HighlightActionState {
   return { status: 'error', message };
 }
-function formError(error: z.ZodError): HighlightActionState {
-  const fieldErrors = error.issues.reduce<Record<string, string[]>>((result, issue) => {
-    const field = issue.path.join('.');
-    if (field) result[field] = [...(result[field] ?? []), issue.message];
-    return result;
-  }, {});
-  return { status: 'error', message: 'Revise os campos destacados antes de salvar.', fieldErrors };
-}
 function refreshHighlights() {
-  revalidatePath('/', 'layout');
-  revalidatePath('/admin');
-  revalidatePath('/admin/destaques');
-}
-async function audit(
-  actorId: string,
-  action: string,
-  entityId: string,
-  metadata: Record<string, unknown>,
-) {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('audit_logs')
-    .insert({ actor_id: actorId, action, entity: 'highlight', entity_id: entityId, metadata });
-  if (error) reportServerError('highlight_audit_failed', error);
+  revalidateCatalog(['destaques']);
 }
 function values(formData: FormData) {
   return highlightFormSchema.safeParse({
@@ -53,26 +31,19 @@ export async function createHighlight(
   formData: FormData,
 ): Promise<HighlightActionState> {
   const parsed = values(formData);
-  if (!parsed.success) return formError(parsed.error);
+  if (!parsed.success) return formError<HighlightActionState>(parsed.error);
   const admin = await requireAdmin({ redirectUnauthenticated: false });
   if (!admin) return fail('Sua sessão não permite esta alteração. Entre novamente.');
   const supabase = await createClient();
-  const { data: last } = await supabase
-    .from('highlights')
-    .select('sort_order')
-    .order('sort_order', { ascending: false })
-    .limit(1)
-    .maybeSingle();
   const { data, error } = await supabase
     .from('highlights')
-    .insert({ ...parsed.data, sort_order: (last?.sort_order ?? -1) + 1 })
+    .insert(parsed.data)
     .select('id')
     .single();
   if (error) {
     reportServerError('highlight_create_failed', error);
     return fail('Não foi possível criar o destaque agora.');
   }
-  await audit(admin.userId, 'create', data.id, { title: parsed.data.title });
   refreshHighlights();
   return { status: 'success', message: 'Destaque criado com sucesso.', entityId: data.id };
 }
@@ -84,7 +55,7 @@ export async function updateHighlight(
   const id = z.string().uuid().safeParse(formData.get('id'));
   const parsed = values(formData);
   if (!id.success) return fail('Destaque inválido.');
-  if (!parsed.success) return formError(parsed.error);
+  if (!parsed.success) return formError<HighlightActionState>(parsed.error);
   const admin = await requireAdmin({ redirectUnauthenticated: false });
   if (!admin) return fail('Sua sessão não permite esta alteração. Entre novamente.');
   const supabase = await createClient();
@@ -93,7 +64,6 @@ export async function updateHighlight(
     reportServerError('highlight_update_failed', error);
     return fail('Não foi possível salvar o destaque agora.');
   }
-  await audit(admin.userId, 'update', id.data, { title: parsed.data.title });
   refreshHighlights();
   return { status: 'success', message: 'Destaque atualizado com sucesso.', entityId: id.data };
 }
@@ -113,7 +83,6 @@ export async function toggleHighlight(
     .update({ is_active: active })
     .eq('id', id.data);
   if (error) return fail('Não foi possível atualizar o status do destaque.');
-  await audit(admin.userId, 'update', id.data, { is_active: active });
   refreshHighlights();
   return { status: 'success', message: active ? 'Destaque ativado.' : 'Destaque desativado.' };
 }
@@ -143,7 +112,6 @@ export async function reorderHighlight(
     reportServerError('highlight_reorder_failed', reorderError);
     return fail('Não foi possível alterar a ordem agora.');
   }
-  await audit(admin.userId, 'reorder', id.data, { direction: direction.data });
   refreshHighlights();
   return { status: 'success', message: 'Ordem atualizada.' };
 }
@@ -181,7 +149,6 @@ export async function deleteHighlight(
       if (storageError) reportServerError('highlight_media_cleanup_failed', storageError);
     }
   }
-  await audit(admin.userId, 'delete', id.data, {});
   refreshHighlights();
   return { status: 'success', message: 'Destaque excluído.' };
 }

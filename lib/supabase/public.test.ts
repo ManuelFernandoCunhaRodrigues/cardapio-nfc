@@ -7,9 +7,14 @@ describe('createTimeoutFetch', () => {
 
   it('aborta a leitura quando excede o tempo limite', async () => {
     vi.useFakeTimers();
-    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
-      init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), { once: true });
-    }));
+    const fetchMock = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), {
+            once: true,
+          });
+        }),
+    );
     const fetchWithTimeout = createTimeoutFetch(fetchMock);
 
     const request = fetchWithTimeout('https://example.test');
@@ -35,9 +40,14 @@ describe('createTimeoutFetch', () => {
   it('respeita o signal externo', async () => {
     const controller = new AbortController();
     const externalReason = new DOMException('Cancelada pela chamada.', 'AbortError');
-    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
-      init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), { once: true });
-    }));
+    const fetchMock = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), {
+            once: true,
+          });
+        }),
+    );
     const fetchWithTimeout = createTimeoutFetch(fetchMock);
 
     const request = fetchWithTimeout('https://example.test', { signal: controller.signal });
@@ -51,7 +61,9 @@ describe('createTimeoutFetch', () => {
     const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
       const body = new ReadableStream({
         start(controller) {
-          init?.signal?.addEventListener('abort', () => controller.error(init.signal?.reason), { once: true });
+          init?.signal?.addEventListener('abort', () => controller.error(init.signal?.reason), {
+            once: true,
+          });
         },
       });
       return Promise.resolve(new Response(body));

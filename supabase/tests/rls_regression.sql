@@ -92,7 +92,8 @@ reset role;
 
 -- ===================== ESPERADOS =====================
 -- 'ok:N' = executou e afetou/retornou N linhas; 'erro:XXXXX' = SQLSTATE esperado
--- 42501 = sem privilégio / violação de RLS no insert; 23503 = FK (categoria com produtos)
+-- 42501 = sem privilégio / violação de RLS; inclusive admin não insere auditoria diretamente.
+-- 23503 = FK (categoria com produtos)
 create temp table _e (k text primary key, v text) on commit drop;
 insert into _e values
   ('anon.ve_categoria_inativa','ok:0'), ('anon.ve_produto_cat_inativa','ok:0'), ('anon.ve_produto_inativo','ok:0'),
@@ -106,7 +107,7 @@ insert into _e values
   ('comum.storage_insere','erro:42501'), ('comum.is_admin','ok:0'), ('comum.storage_lista','ok:0'),
   ('admin.is_admin','ok:1'), ('admin.ve_produto_inativo','ok:1'), ('admin.ve_categoria_inativa','ok:1'),
   ('admin.insere_categoria','ok:1'), ('admin.atualiza_produto','ok:1'), ('admin.apaga_destaque','ok:1'),
-  ('admin.atualiza_loja','ok:1'), ('admin.le_perfis','ok:1'), ('admin.insere_auditoria','ok:1'),
+  ('admin.atualiza_loja','ok:1'), ('admin.le_perfis','ok:1'), ('admin.insere_auditoria','erro:42501'),
   ('admin.storage_insere','ok:1'), ('admin.storage_lista','ok:1'), ('admin.apaga_categoria_com_produtos','erro:23503');
 
 do $$

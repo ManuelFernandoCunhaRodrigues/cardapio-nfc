@@ -83,6 +83,58 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Impacto:** variáveis em [[09-Ambientes-e-Deploy]]; roteiro em `docs/publicacao-producao.md`.
 - **Revisão:** ao definir o domínio público e ao avaliar a CSP.
 
+### Migrations aplicadas pelo GitHub Actions
+
+- **Data:** 2026-10-13
+- **Contexto:** as migrations eram aplicadas à mão, pelo SQL Editor ou pela ferramenta do Supabase. Em produção, duas ficaram registradas com versão diferente da do repositório, e a ordem "banco antes do código" dependia de alguém lembrar.
+- **Decisão:** o workflow **Migrations** usa a CLI do Supabase. No stage aplica sozinho a cada merge na `develop`. Em produção a aplicação é um passo manual no GitHub (Run workflow), e o PR para a `main` é reprovado enquanto a produção não tiver as migrations.
+- **Por quê:** a versão registrada passa a ser sempre a do arquivo, o histórico fica no GitHub e a produção continua dependendo de uma pessoa decidir.
+- **Impacto:** `.github/workflows/migrations.yml` e `docs/migrations-pelo-ci.md`. Depende de três segredos cadastrados pelo responsável e de um acerto único no histórico de migrations da produção; até lá o workflow só avisa. Migration nova precisa funcionar com o código que já está em produção, porque o banco muda antes.
+- **Revisão:** depois da primeira promoção feita por esse caminho.
+### Banco local no CI, testes de RLS automáticos e testes de ponta a ponta
+
+- **Data:** 2026-10-13
+- **Contexto:** os testes de RLS eram rodados à mão no stage, as migrations nunca tinham sido aplicadas do zero fora dele e nenhum teste passava pela tela. Reordenar pelo painel, por exemplo, só tinha teste de banco.
+- **Decisão:** todo PR sobe o Supabase local em contêineres, aplica todas as migrations em um banco vazio, confere se os tipos versionados batem com esse banco, roda os testes SQL e depois os testes de ponta a ponta (Playwright) contra o build de produção. O administrador de teste só existe nesse banco e a senha é sorteada a cada execução.
+- **Por quê:** migration que só funciona em cima do stage, política de acesso afrouxada por engano e fluxo quebrado na tela passam a barrar o merge em vez de aparecerem depois.
+- **Impacto:** `.github/workflows/ci.yml`, `supabase/config.toml`, `e2e/`, `scripts/testar-banco-local.sh`; resultados em `docs/testes/banco-local-e-ponta-a-ponta-resultados.md`. O CI fica cerca de 3 minutos mais longo. Envio de foto e vídeo e as telas de categorias, destaques e loja ainda não têm teste de ponta a ponta.
+- **Revisão:** ao criar tela nova no painel ou tabela nova no banco.
+### Endereço do produto pelo nome
+
+- **Data:** 2026-10-14
+- **Contexto:** o produto abria em `/produto/<código>`, um identificador de 36 caracteres que não diz nada a quem recebe o link.
+- **Decisão:** o endereço passa a ser o nome (`/produto/coxinha-de-frango`). O banco gera esse nome de endereço na criação, sem acentos, e resolve repetição com `-2`, `-3`. Renomear o produto não muda o endereço, para links já compartilhados continuarem valendo. Os endereços antigos por código redirecionam (308) para o novo, o que mantém funcionando os destinos de destaque e qualquer link já enviado.
+- **Por quê:** link legível e que se apresenta melhor quando compartilhado, sem quebrar o que já existe.
+- **Impacto:** migration `20261014150000_product_slug`, rota `app/(public)/produto/[slug]`, sitemap e prévia de link pelo nome. O painel continua abrindo o produto pelo código. Se o nome mudar muito, o endereço fica com o nome antigo; trocar exige editar o banco.
+- **Revisão:** se o responsável quiser editar o endereço pelo painel.
+
+### Auditoria e posição de item novo feitas pelo banco
+
+- **Data:** 2026-10-14
+- **Contexto:** o painel gravava a auditoria numa segunda chamada, depois da alteração, e ignorava a falha; uma mudança podia ficar sem registro. A posição de um item novo era calculada lendo o maior `sort_order` e inserindo em seguida, e duas criações ao mesmo tempo podiam pegar a mesma posição.
+- **Decisão:** gatilhos no banco registram em `audit_logs` toda criação, alteração e exclusão de categorias, produtos, destaques e dados da loja, na mesma transação. A permissão de gravar direto em `audit_logs` foi retirada de todos os usuários. Outro gatilho põe o item novo no fim da lista, com trava para criações simultâneas.
+- **Por quê:** se a mudança acontece, o registro existe; se o registro falha, a mudança não acontece. E o histórico não pode ser forjado nem pelo administrador.
+- **Impacto:** migration `20261014120000_audit_and_sort_order_triggers`; ações do painel mais curtas (`lib/admin/action-helpers.ts`). O registro passa a ser por coluna alterada: a "direção" de uma reordenação e os números da compactação de vídeo não aparecem mais no histórico, e uma troca de posição gera dois registros, um por item. Testes em `supabase/tests/audit_and_sort_order.sql`.
+- **Revisão:** quando a ideia 21 (usuários e rastreabilidade) for desenvolvida, porque ela vai ler esse histórico.
+
+### Content-Security-Policy
+
+- **Data:** 2026-10-14
+- **Contexto:** a CSP tinha ficado para depois do lançamento (ver "Indexação por ambiente e cabeçalhos de segurança").
+- **Decisão:** todas as rotas saem com uma CSP que só aceita scripts do próprio site, proíbe `eval` em produção, `<object>`, moldura por outro site, `<base>` de fora e envio de formulário para outro domínio, e libera o Supabase só para imagens, vídeos e conexões. Scripts em linha continuam permitidos porque o Next coloca os dados de cada página em `<script>` sem nonce; usar nonce obrigaria a gerar cada página a cada visita e perder as páginas estáticas do cardápio.
+- **Por quê:** fecha a porta para script injetado de outro domínio e para o site ser emoldurado, sem trocar desempenho por isso.
+- **Impacto:** `lib/security/csp.ts` e `next.config.ts`. Os testes de ponta a ponta falham se qualquer página aberta tiver recurso bloqueado. Serviço externo novo (mapa embutido, análise de acesso, fonte de outro domínio) precisa entrar na política.
+- **Revisão:** se o Next passar a gerar páginas estáticas com nonce, ou ao incluir serviço externo.
+
+### Página de produto com leitura própria, prévia de link e sitemap
+
+- **Data:** 2026-10-13
+- **Contexto:** a página de um produto lia o cardápio inteiro para achar um item, o link compartilhado (WhatsApp, redes) saía sem descrição nem foto e os buscadores não tinham a lista de páginas.
+- **Decisão:** a página lê só o produto pedido, a categoria dele e os outros itens da mesma categoria. Cada produto ganha título, descrição, endereço canônico e dados de prévia de link (Open Graph), com a foto quando houver. As páginas dos produtos ativos são geradas no build e continuam se atualizando sozinhas. O `sitemap.xml` lista início, cardápio, informações e produtos, e só existe em produção; em stage fica vazio, como o `robots.txt` já bloqueia tudo.
+- **Por quê:** menos dados trafegados a cada visita, link que se apresenta bem quando alguém compartilha e produção encontrável sem expor o stage.
+- **Impacto:** `lib/menu/get-public-menu.ts`, `lib/seo/`, `app/sitemap.ts` e `app/robots.ts`. Se o banco estiver lento no build, as páginas de produto passam a ser geradas na primeira visita em vez de derrubar o build. O endereço do produto continua sendo o identificador; trocar por um nome legível exige migration e fica como ideia.
+- **Revisão:** ao definir o domínio público.
+
 ### Refatoração de design do cardápio e do painel
 
 - **Data:** 2026-10-12

@@ -1,9 +1,13 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import type { Database } from '@/lib/supabase/database.types';
+
 import { VIDEO_ORPHAN_AGE_MS } from './constants';
 
 type StorageObject = { name: string; created_at?: string | null; updated_at?: string | null };
 type StorageResult<T> = PromiseLike<{ data: T | null; error: unknown | null }>;
 
-export type VideoCleanupClient = {
+type VideoCleanupClientDouble = {
   storage: {
     from(bucket: string): {
       list(
@@ -30,6 +34,8 @@ export type VideoCleanupClient = {
   };
 };
 
+export type VideoCleanupClient = SupabaseClient<Database> | VideoCleanupClientDouble;
+
 type CleanupOptions = {
   productId?: string;
   cleanupUploads?: boolean;
@@ -44,7 +50,7 @@ function isOldEnough(object: StorageObject, now: number): boolean {
 }
 
 async function listAll(
-  client: VideoCleanupClient,
+  client: VideoCleanupClientDouble,
   bucket: string,
   folder: string,
   pageSize: number,
@@ -62,7 +68,7 @@ async function listAll(
   }
 }
 
-async function cleanupUploads(client: VideoCleanupClient, now: number, pageSize: number) {
+async function cleanupUploads(client: VideoCleanupClientDouble, now: number, pageSize: number) {
   const objects = await listAll(client, 'product-video-uploads', 'uploads', pageSize);
   const paths = objects
     .filter((object) => isOldEnough(object, now))
@@ -73,7 +79,7 @@ async function cleanupUploads(client: VideoCleanupClient, now: number, pageSize:
 }
 
 async function cleanupProduct(
-  client: VideoCleanupClient,
+  client: VideoCleanupClientDouble,
   productId: string,
   now: number,
   pageSize: number,
@@ -99,10 +105,15 @@ async function cleanupProduct(
 }
 
 /** Erro de listagem cancela somente a faxina correspondente; nunca equivale a pasta vazia. */
-export async function cleanupVideoOrphans(
-  client: VideoCleanupClient,
+type CleanupVideoOrphans = {
+  (client: SupabaseClient<Database>, options?: CleanupOptions): Promise<void>;
+  (client: VideoCleanupClientDouble, options?: CleanupOptions): Promise<void>;
+};
+
+const cleanupVideoOrphansImplementation = async (
+  client: VideoCleanupClientDouble,
   options: CleanupOptions = {},
-): Promise<void> {
+): Promise<void> => {
   const now = options.now ?? Date.now();
   const pageSize = options.pageSize ?? 100;
   if (options.cleanupUploads) {
@@ -119,4 +130,6 @@ export async function cleanupVideoOrphans(
       options.onError?.('media_video_orphan_cleanup_failed', error);
     }
   }
-}
+};
+
+export const cleanupVideoOrphans = cleanupVideoOrphansImplementation as CleanupVideoOrphans;

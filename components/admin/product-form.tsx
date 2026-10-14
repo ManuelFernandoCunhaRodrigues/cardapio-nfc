@@ -231,6 +231,7 @@ export function ProductForm({
       id: product?.id ?? '00000000-0000-4000-8000-000000000000',
       category_id: categoryId || '00000000-0000-4000-8000-000000000001',
       name: name || 'Nome do produto',
+      slug: product?.slug ?? 'produto',
       description: description || null,
       price_cents: parsePriceBRL(price) ?? 0,
       image_path: product?.image_path ?? null,
@@ -271,7 +272,7 @@ export function ProductForm({
           <Link
             aria-label="Ver no cardápio"
             className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-border bg-white text-ink lg:hidden"
-            href={`/produto/${product.id}`}
+            href={`/produto/${product.slug}`}
             target="_blank"
           >
             <AdminIcon name="eye" />
@@ -283,7 +284,7 @@ export function ProductForm({
           {product ? (
             <Link
               className="inline-flex min-h-11 items-center rounded-full border border-border bg-white px-5 text-sm font-bold text-ink"
-              href={`/produto/${product.id}`}
+              href={`/produto/${product.slug}`}
               target="_blank"
             >
               Ver no cardápio

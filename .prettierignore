@@ -8,7 +8,13 @@ next-env.d.ts
 *.md
 docs
 public
-supabase
+/supabase
 Salgae_Lanchonete_Obsidian
 .claude
 tsconfig.json
+playwright-report
+test-results
+
+# Gerado pela CLI do Supabase; não formatar à mão
+lib/supabase/database.types.ts
+lib/supabase/database.types.local.ts

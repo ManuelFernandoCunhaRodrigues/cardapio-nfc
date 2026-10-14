@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "incremental": false },
+  "include": ["supabase/tests/types/schema-matches-types.check.ts"],
+  "exclude": ["node_modules"]
+}

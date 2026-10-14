@@ -88,6 +88,7 @@ select pg_temp.tentar('anon.storage_lista',          $q$select 1 from storage.ob
 reset role;
 
 create temp table _e (k text primary key, v text) on commit drop;
+-- Mudança deliberada: nem o admin grava auditoria diretamente; só os triggers.
 insert into _e values
   ('anon.ve_categoria_inativa','ok:0'), ('anon.ve_produto_cat_inativa','ok:0'), ('anon.ve_produto_inativo','ok:0'),
   ('anon.ve_destaque_inativo','ok:0'), ('anon.le_loja','ok:1'), ('anon.le_perfis','erro:42501'),
@@ -100,7 +101,7 @@ insert into _e values
   ('comum.storage_insere','erro:42501'), ('comum.is_admin','ok:0'), ('comum.storage_lista','ok:0'),
   ('admin.is_admin','ok:1'), ('admin.ve_produto_inativo','ok:1'), ('admin.ve_categoria_inativa','ok:1'),
   ('admin.insere_categoria','ok:1'), ('admin.atualiza_produto','ok:1'), ('admin.apaga_destaque','ok:1'),
-  ('admin.atualiza_loja','ok:1'), ('admin.le_perfis','ok:1'), ('admin.insere_auditoria','ok:1'),
+  ('admin.atualiza_loja','ok:1'), ('admin.le_perfis','ok:1'), ('admin.insere_auditoria','erro:42501'),
   ('admin.storage_insere','ok:1'), ('admin.storage_lista','ok:1'), ('admin.apaga_categoria_com_produtos','erro:23503');
 
 do $$

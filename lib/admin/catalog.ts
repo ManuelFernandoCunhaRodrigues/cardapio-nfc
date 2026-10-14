@@ -15,6 +15,7 @@ export type AdminProduct = {
   id: string;
   category_id: string;
   name: string;
+  slug: string;
   description: string | null;
   price_cents: number;
   image_path: string | null;
@@ -36,6 +37,10 @@ export type AdminHighlight = {
   is_active: boolean;
 };
 
+function normalizeBadge(badge: string | null): AdminProduct['badge'] {
+  return badge === 'mais_pedido' || badge === 'novo' || badge === 'quentinho' ? badge : null;
+}
+
 export async function getAdminCategories(): Promise<AdminCategory[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -45,12 +50,10 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
     .order('name');
   if (error) return [];
 
-  return (data ?? []).map((category) => {
-    const row = category as unknown as Omit<AdminCategory, 'product_count'> & {
-      products: Array<{ count: number }>;
-    };
-    return { ...row, product_count: row.products?.[0]?.count ?? 0 };
-  });
+  return (data ?? []).map(({ products, ...category }) => ({
+    ...category,
+    product_count: products[0]?.count ?? 0,
+  }));
 }
 
 export async function getAdminProducts(): Promise<AdminProduct[]> {
@@ -58,12 +61,12 @@ export async function getAdminProducts(): Promise<AdminProduct[]> {
   const { data, error } = await supabase
     .from('products')
     .select(
-      'id, category_id, name, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available, category:categories(name, slug)',
+      'id, category_id, name, slug, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available, category:categories(name, slug)',
     )
     .order('sort_order')
     .order('name');
   if (error) return [];
-  return (data ?? []) as unknown as AdminProduct[];
+  return (data ?? []).map((product) => ({ ...product, badge: normalizeBadge(product.badge) }));
 }
 
 export async function getAdminHighlights(): Promise<AdminHighlight[]> {
@@ -73,5 +76,5 @@ export async function getAdminHighlights(): Promise<AdminHighlight[]> {
     .select('id, title, description, image_path, target, sort_order, is_active')
     .order('sort_order')
     .order('title');
-  return error ? [] : ((data ?? []) as AdminHighlight[]);
+  return error ? [] : (data ?? []);
 }
