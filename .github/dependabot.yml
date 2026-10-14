@@ -10,6 +10,12 @@ updates:
       day: monday
       timezone: America/Sao_Paulo
     open-pull-requests-limit: 5
+    # Versão principal nova (TypeScript, ESLint, Next…) muda comportamento e é feita à mão, numa
+    # branch própria. `@types/node` acompanha o Node do projeto (22), não o mais recente.
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
     groups:
       correcoes-e-melhorias:
         update-types:
