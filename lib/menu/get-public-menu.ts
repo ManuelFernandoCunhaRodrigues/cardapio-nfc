@@ -9,7 +9,7 @@ import type { MenuCategory, MenuHighlight, MenuProduct } from './types';
 
 export type PublicDataResult<T> = { data: T; error: false } | { data: null; error: true };
 export type PublicProductCategory = Pick<MenuCategory, 'name' | 'slug'>;
-export type PublicSitemapProduct = { id: string; updated_at: string };
+export type PublicSitemapProduct = { slug: string; updated_at: string };
 
 export async function getPublicCategories(): Promise<PublicDataResult<MenuCategory[]>> {
   try {
@@ -31,7 +31,7 @@ export async function getPublicProducts(): Promise<PublicDataResult<MenuProduct[
     const { data, error } = await createPublicClient()
       .from('products')
       .select(
-        'id, category_id, name, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available',
+        'id, category_id, name, slug, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available',
       )
       .eq('is_active', true)
       .order('sort_order');
@@ -51,7 +51,7 @@ export const getPublicProduct = cache(
       const { data, error } = await createPublicClient()
         .from('products')
         .select(
-          'id, category_id, name, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available',
+          'id, category_id, name, slug, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available',
         )
         .eq('id', id)
         .eq('is_active', true)
@@ -68,6 +68,29 @@ export const getPublicProduct = cache(
   },
 );
 
+export const getPublicProductBySlug = cache(
+  async (slug: string): Promise<PublicDataResult<MenuProduct | null>> => {
+    try {
+      const { data, error } = await createPublicClient()
+        .from('products')
+        .select(
+          'id, category_id, name, slug, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available',
+        )
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return { data: null, error: false };
+      const parsed = productSchema.safeParse(data);
+      if (!parsed.success) throw parsed.error;
+      return { data: parsed.data, error: false };
+    } catch (error) {
+      reportServerError('public_product_by_slug_read_failed', error);
+      return { data: null, error: true };
+    }
+  },
+);
+
 export async function getPublicProductsByCategory(
   categoryId: string,
 ): Promise<PublicDataResult<MenuProduct[]>> {
@@ -75,7 +98,7 @@ export async function getPublicProductsByCategory(
     const { data, error } = await createPublicClient()
       .from('products')
       .select(
-        'id, category_id, name, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available',
+        'id, category_id, name, slug, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available',
       )
       .eq('category_id', categoryId)
       .eq('is_active', true)
@@ -114,7 +137,7 @@ export async function getPublicSitemapProducts(): Promise<
   try {
     const { data, error } = await createPublicClient()
       .from('products')
-      .select('id, updated_at')
+      .select('slug, updated_at')
       .eq('is_active', true);
     if (error) throw error;
     return { data: data ?? [], error: false };

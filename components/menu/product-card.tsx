@@ -22,7 +22,7 @@ export function ProductCard({
   compact = false,
 }: Readonly<{ product: MenuProduct; compact?: boolean }>) {
   const label = getBadgeLabel(product.badge);
-  const href = `/produto/${product.id}`;
+  const href = `/produto/${product.slug}`;
   const card = (
     <Link
       aria-label={`${product.name}, ${formatPriceBRL(product.price_cents)}${product.is_available ? '' : ', indisponível'}`}

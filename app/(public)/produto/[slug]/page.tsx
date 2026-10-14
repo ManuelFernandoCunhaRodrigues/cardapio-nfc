@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 
 import { BackToMenu } from '@/components/menu/back-to-menu';
 import { Icon } from '@/components/menu/icons';
@@ -9,6 +9,7 @@ import { ProductRow } from '@/components/menu/product-row';
 import { getBadgeLabel } from '@/lib/menu/badges';
 import {
   getPublicProduct,
+  getPublicProductBySlug,
   getPublicProductCategory,
   getPublicProductsByCategory,
   getPublicSitemapProducts,
@@ -19,22 +20,23 @@ import { getProductMetadata } from '@/lib/seo/product-metadata';
 import { formatPriceBRL } from '@/lib/utils/format-price';
 
 export const revalidate = 60;
-type ProductPageProps = { params: Promise<{ id: string }> };
+type ProductPageProps = { params: Promise<{ slug: string }> };
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
-  const { id } = await params;
-  if (!UUID_PATTERN.test(id)) return getProductMetadata(null, null);
-  const result = await getPublicProduct(id);
+  const { slug } = await params;
+  const result = UUID_PATTERN.test(slug)
+    ? await getPublicProduct(slug)
+    : await getPublicProductBySlug(slug);
   return getProductMetadata(
     result.data,
     getPublicImageVariantUrl('product-images', result.data?.image_path, 'detail'),
   );
 }
 
-export async function generateStaticParams(): Promise<{ id: string }[]> {
+export async function generateStaticParams(): Promise<{ slug: string }[]> {
   const result = await getPublicSitemapProducts();
-  return result.data?.map(({ id }) => ({ id })) ?? [];
+  return result.data?.map(({ slug }) => ({ slug })) ?? [];
 }
 
 function ReadError() {
@@ -50,12 +52,15 @@ function ReadError() {
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { id } = await params;
-  if (!UUID_PATTERN.test(id)) notFound();
-  const productResult = await getPublicProduct(id);
+  const { slug } = await params;
+  const isLegacyId = UUID_PATTERN.test(slug);
+  const productResult = isLegacyId
+    ? await getPublicProduct(slug)
+    : await getPublicProductBySlug(slug);
   if (productResult.error) return <ReadError />;
   const product = productResult.data;
   if (!product) notFound();
+  if (isLegacyId) permanentRedirect(`/produto/${product.slug}`);
 
   const [categoryResult, categoryProductsResult] = await Promise.all([
     getPublicProductCategory(product.category_id),

@@ -6,6 +6,7 @@ const product = {
   id: 'b76b1cd3-7525-4f9f-8e90-0c14e66bd00a',
   category_id: '7a1af5ec-0800-4201-9df3-e58f4d8a2bd4',
   name: 'Coxinha de frango',
+  slug: 'coxinha-de-frango',
   description: null,
   price_cents: 700,
   image_path: null,
@@ -37,6 +38,11 @@ describe('productSchema', () => {
     expect(productSchema.safeParse({ ...product, badge: 'mais_pedido' }).success).toBe(true);
     expect(productSchema.safeParse({ ...product, badge: 'novo' }).success).toBe(true);
     expect(productSchema.safeParse({ ...product, badge: 'promo' }).success).toBe(false);
+  });
+
+  it('aceita somente slugs no formato de URL', () => {
+    expect(productSchema.safeParse(product).success).toBe(true);
+    expect(productSchema.safeParse({ ...product, slug: 'Coxinha de frango' }).success).toBe(false);
   });
 
   it('valida os campos editáveis do formulário', () => {

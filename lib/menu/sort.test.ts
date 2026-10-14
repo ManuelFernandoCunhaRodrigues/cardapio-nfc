@@ -6,6 +6,7 @@ import type { MenuProduct } from '@/lib/menu/types';
 const base = {
   id: 'b76b1cd3-7525-4f9f-8e90-0c14e66bd00a',
   category_id: '7a1af5ec-0800-4201-9df3-e58f4d8a2bd4',
+  slug: 'produto-base',
   description: null,
   price_cents: 700,
   image_path: null,

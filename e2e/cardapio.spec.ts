@@ -1,10 +1,28 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type APIRequestContext } from '@playwright/test';
 
 import { watchCspViolations } from './csp';
 
 // Dados esperados: os de `supabase/seed.sql` (seis categorias, um produto em cada).
 
 const mainNav = 'Navegação principal';
+const UUID_PATTERN = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+async function productIdBySlug(request: APIRequestContext, slug: string) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !anonKey) throw new Error('Configuração pública do Supabase ausente.');
+
+  const endpoint = new URL('/rest/v1/products', supabaseUrl);
+  endpoint.searchParams.set('select', 'id');
+  endpoint.searchParams.set('slug', `eq.${slug}`);
+  const response = await request.get(endpoint.toString(), {
+    headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+  });
+  if (!response.ok()) throw new Error(`Produto não encontrado pela API: ${response.status()}.`);
+  const id = (await response.text()).match(UUID_PATTERN)?.[0];
+  if (!id) throw new Error(`UUID ausente para o slug ${slug}.`);
+  return id;
+}
 
 test.describe('cardápio público', () => {
   // Toda página aberta nestes testes também prova que a Content-Security-Policy não bloqueia nada.
@@ -40,7 +58,7 @@ test.describe('cardápio público', () => {
     await expect(coxinhas.getByRole('heading', { level: 2, name: 'Coxinhas' })).toBeVisible();
     await coxinhas.getByRole('link', { name: /^Coxinha de frango, R\$\s7,00/ }).click();
 
-    await expect(page).toHaveURL(/\/produto\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/produto\/coxinha-de-frango$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Coxinha de frango' })).toBeVisible();
     await expect(page.getByText('Disponível agora')).toBeVisible();
     await expect(page.getByText('Consulta apenas. Faça seu pedido com o atendente.')).toBeVisible();
@@ -56,7 +74,7 @@ test.describe('cardápio público', () => {
     );
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       'href',
-      /\/produto\/[0-9a-f-]{36}$/,
+      /\/produto\/coxinha-de-frango$/,
     );
     await expect(
       page.getByRole('navigation', { name: mainNav }).getByRole('link', { name: 'Cardápio' }),
@@ -64,6 +82,15 @@ test.describe('cardápio público', () => {
 
     await page.goBack();
     await expect(page).toHaveURL(/\/cardapio$/);
+  });
+
+  test('link antigo por UUID redireciona para o slug', async ({ page, request }) => {
+    const productId = await productIdBySlug(request, 'coxinha-de-frango');
+
+    await page.goto(`/produto/${productId}`);
+
+    await expect(page).toHaveURL(/\/produto\/coxinha-de-frango$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Coxinha de frango' })).toBeVisible();
   });
 
   test('a busca encontra pelo nome, lembra o termo e avisa quando não acha', async ({ page }) => {
@@ -94,8 +121,8 @@ test.describe('cardápio público', () => {
     expect(missing?.status()).toBe(404);
     await expect(page.getByRole('heading', { name: 'Página não encontrada' })).toBeVisible();
 
-    const malformed = await page.goto('/produto/nao-e-um-id');
-    expect(malformed?.status()).toBe(404);
+    const missingSlug = await page.goto('/produto/produto-que-nao-existe');
+    expect(missingSlug?.status()).toBe(404);
   });
 
   test('o painel exige login e o site não é indexado fora da produção', async ({

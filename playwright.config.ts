@@ -1,5 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Fora do CI, os testes que consultam o Supabase usam as mesmas variáveis do app.
+try {
+  process.loadEnvFile('.env.local');
+} catch {
+  // Sem .env.local: o CI define as variáveis no próprio job.
+}
+
 // Os testes de ponta a ponta rodam contra o build de produção (`next start`) ligado ao Supabase
 // local (`supabase start`), com os dados de `supabase/seed.sql`.
 const port = Number(process.env.E2E_PORT ?? 3000);
