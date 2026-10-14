@@ -1,10 +1,21 @@
 import { expect, test } from '@playwright/test';
 
+import { watchCspViolations } from './csp';
+
 // Dados esperados: os de `supabase/seed.sql` (seis categorias, um produto em cada).
 
 const mainNav = 'Navegação principal';
 
 test.describe('cardápio público', () => {
+  // Toda página aberta nestes testes também prova que a Content-Security-Policy não bloqueia nada.
+  let cspViolations: string[] = [];
+  test.beforeEach(({ page }) => {
+    cspViolations = watchCspViolations(page);
+  });
+  test.afterEach(() => {
+    expect(cspViolations, 'recursos bloqueados pela CSP').toEqual([]);
+  });
+
   test('a tela inicial lista categorias e produtos e marca a aba Início', async ({ page }) => {
     await page.goto('/');
 
@@ -112,5 +123,7 @@ test.describe('cardápio público', () => {
     expect(headers['x-content-type-options']).toBe('nosniff');
     expect(headers['x-frame-options']).toBe('DENY');
     expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+    expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
+    expect(headers['content-security-policy']).toContain("object-src 'none'");
   });
 });

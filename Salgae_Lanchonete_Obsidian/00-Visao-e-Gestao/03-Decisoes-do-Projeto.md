@@ -99,6 +99,15 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** migration que só funciona em cima do stage, política de acesso afrouxada por engano e fluxo quebrado na tela passam a barrar o merge em vez de aparecerem depois.
 - **Impacto:** `.github/workflows/ci.yml`, `supabase/config.toml`, `e2e/`, `scripts/testar-banco-local.sh`; resultados em `docs/testes/banco-local-e-ponta-a-ponta-resultados.md`. O CI fica cerca de 3 minutos mais longo. Envio de foto e vídeo e as telas de categorias, destaques e loja ainda não têm teste de ponta a ponta.
 - **Revisão:** ao criar tela nova no painel ou tabela nova no banco.
+### Content-Security-Policy
+
+- **Data:** 2026-10-14
+- **Contexto:** a CSP tinha ficado para depois do lançamento (ver "Indexação por ambiente e cabeçalhos de segurança").
+- **Decisão:** todas as rotas saem com uma CSP que só aceita scripts do próprio site, proíbe `eval` em produção, `<object>`, moldura por outro site, `<base>` de fora e envio de formulário para outro domínio, e libera o Supabase só para imagens, vídeos e conexões. Scripts em linha continuam permitidos porque o Next coloca os dados de cada página em `<script>` sem nonce; usar nonce obrigaria a gerar cada página a cada visita e perder as páginas estáticas do cardápio.
+- **Por quê:** fecha a porta para script injetado de outro domínio e para o site ser emoldurado, sem trocar desempenho por isso.
+- **Impacto:** `lib/security/csp.ts` e `next.config.ts`. Os testes de ponta a ponta falham se qualquer página aberta tiver recurso bloqueado. Serviço externo novo (mapa embutido, análise de acesso, fonte de outro domínio) precisa entrar na política.
+- **Revisão:** se o Next passar a gerar páginas estáticas com nonce, ou ao incluir serviço externo.
+
 ### Página de produto com leitura própria, prévia de link e sitemap
 
 - **Data:** 2026-10-13
