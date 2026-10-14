@@ -59,6 +59,8 @@ Defeitos antigos corrigidos no caminho: a aba "Início" não ficava marcada na t
 
 **Ida para a produção (2026-10-13):** o responsável autorizou no chat. A migration de vídeo (`20261011003026_video_compression_storage`) foi rodada por ele no SQL Editor do projeto SALGAE-PRODUCTION e conferida no banco; depois a `develop` foi promovida para a `main`. Conferido no site de produção: páginas respondendo, abas marcadas, banner novo, login novo do painel, painel protegido sem sessão e rota de envio de vídeo no ar. Pendência pequena: no banco de produção a migration ficou registrada com a versão `20261013114751`, diferente da do repositório; só importa se alguém usar `supabase db push`.
 
+**Terceira ida para a produção (2026-10-14):** o responsável autorizou no chat. Antes do merge foram aplicadas em SALGAE-PRODUCTION as migrations de auditoria pelo banco e de endereço por nome; depois a `develop` foi promovida para a `main` (PR #49). Conferido em produção: páginas, endereço `/produto/<nome>`, redirecionamento dos endereços antigos, 404 para nome inexistente, sitemap com as páginas e produtos, `robots.txt` apontando para ele, prévia de link com endereço completo e Content-Security-Policy, sem erro no console. Pendência: o acerto dos números de versão de quatro migrations no histórico da produção (`docs/migrations-pelo-ci.md`).
+
 A produção ainda tem pouco conteúdo (3 produtos, 1 categoria, nenhum destaque); os destaques de exemplo existem só no stage.
 
 Falta o responsável conferir: enviar foto e vídeo de um produto em um passo só (não deu para testar pelo navegador automatizado), o aviso de sair sem salvar e o uso em celular real.

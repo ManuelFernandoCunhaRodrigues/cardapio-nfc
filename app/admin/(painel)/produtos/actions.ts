@@ -128,7 +128,7 @@ export async function toggleProduct(
   const supabase = await createClient();
   const { error } = await supabase
     .from('products')
-    .update({ [field.data]: value })
+    .update(field.data === 'is_active' ? { is_active: value } : { is_available: value })
     .eq('id', id.data);
   if (error) {
     reportServerError('product_toggle_failed', error);

@@ -37,21 +37,23 @@ Os identificadores dos dois projetos estão no próprio workflow; não são segr
 
 ## Acerto do histórico de produção, uma vez só
 
-Em produção, duas migrations foram aplicadas pelo SQL Editor e pela ferramenta do Supabase, e ficaram registradas com a data em que rodaram:
+Em produção, quatro migrations foram aplicadas pelo SQL Editor ou pela ferramenta do Supabase e ficaram registradas com a data em que rodaram:
 
 | Migration | Versão no repositório | Versão registrada em produção |
 | --- | --- | --- |
 | `video_compression_storage` | `20261011003026` | `20261013114751` |
 | `atomic_sort_order_swap` | `20261013151000` | `20261013214047` |
+| `audit_and_sort_order_triggers` | `20261014120000` | `20261014140106` |
+| `product_slug` | `20261014150000` | `20261014140119` |
 
 Com essa diferença, a CLI recusa o `db push` em produção ("remote migration versions not found in local migrations directory"). O acerto troca só o número registrado; o esquema do banco não muda. Pela CLI, com o projeto de produção ligado:
 
 ```bash
-npx supabase migration repair --status reverted 20261013114751 20261013214047
-npx supabase migration repair --status applied 20261011003026 20261013151000
+npx supabase migration repair --status reverted 20261013114751 20261013214047 20261014140106 20261014140119
+npx supabase migration repair --status applied 20261011003026 20261013151000 20261014120000 20261014150000
 ```
 
-Depois, `npx supabase migration list` tem de mostrar as sete versões iguais nas duas colunas. O stage já está alinhado.
+Depois, `npx supabase migration list` tem de mostrar as nove versões iguais nas duas colunas. O stage já está alinhado.
 
 ## Promoção para a produção, passo a passo
 
