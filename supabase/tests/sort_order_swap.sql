@@ -1,4 +1,4 @@
--- Troca atômica de ordenação (migration 20261013151000_atomic_sort_order_swap).
+-- Troca atômica com posições iniciais atribuídas pelo trigger do banco.
 -- Rodar inteiro como `postgres` (SQL Editor ou execute_sql). Tudo acontece numa
 -- transação que termina em ROLLBACK: nenhum dado persiste.
 -- Falha => RAISE EXCEPTION listando cada verificação divergente.
@@ -8,7 +8,13 @@
 begin;
 
 create temp table _r (k text primary key, v text) on commit drop;
-grant all on _r to anon, authenticated;
+create temp table _initial (
+  kind text not null,
+  id uuid not null,
+  sort_order integer not null,
+  primary key (kind, id)
+) on commit drop;
+grant all on _r, _initial to anon, authenticated;
 
 -- Dados de teste (somem no rollback)
 insert into public.categories (id, name, slug, sort_order) values
@@ -21,6 +27,21 @@ insert into public.products (id, category_id, name, price_cents, sort_order) val
 insert into public.highlights (id, title, sort_order) values
   ('c1111111-1111-4111-8111-111111111111', 'Teste troca D1', 9001),
   ('c2222222-2222-4222-8222-222222222222', 'Teste troca D2', 9002);
+
+-- O trigger ignora as posições informadas; estas são as posições reais de partida.
+insert into _initial
+select 'category', id, sort_order from public.categories
+where id in ('a1111111-1111-4111-8111-111111111111', 'a2222222-2222-4222-8222-222222222222')
+union all
+select 'product', id, sort_order from public.products
+where id in (
+  'b1111111-1111-4111-8111-111111111111',
+  'b2222222-2222-4222-8222-222222222222',
+  'b3333333-3333-4333-8333-333333333333'
+)
+union all
+select 'highlight', id, sort_order from public.highlights
+where id in ('c1111111-1111-4111-8111-111111111111', 'c2222222-2222-4222-8222-222222222222');
 
 -- Executa uma instrução e registra 'ok:<linhas>' ou 'erro:<sqlstate>'.
 -- O bloco com EXCEPTION desfaz o que a instrução tiver alterado antes de falhar.
@@ -35,11 +56,40 @@ exception when others then
 end $$;
 grant execute on function pg_temp.tentar(text, text) to anon, authenticated;
 
--- Registra a ordem atual dos três produtos de teste, como "P1,P2,P3".
-create function pg_temp.ordem(chave text) returns void language sql as $$
+select pg_temp.tentar(
+  'ordem.posicoes_iniciais_distintas',
+  $q$select 1 where
+    (select count(distinct sort_order) from _initial where kind = 'category') = 2
+    and (select count(distinct sort_order) from _initial
+         where kind = 'product'
+           and id in ('b1111111-1111-4111-8111-111111111111', 'b2222222-2222-4222-8222-222222222222')) = 2
+    and (select count(distinct sort_order) from _initial where kind = 'highlight') = 2$q$
+);
+
+-- Registra se todas as posições continuam iguais às capturadas após os inserts.
+create function pg_temp.posicoes_inalteradas(chave text) returns void language sql as $$
   insert into _r
-  select chave, string_agg(sort_order::text, ',' order by name)
-  from public.products where name like 'Teste troca P%'
+  select chave, case
+    when pg_catalog.count(*) = 7
+      and pg_catalog.count(*) filter (where initial.sort_order is distinct from current.sort_order) = 0
+    then 'ok:1'
+    else 'ok:0'
+  end
+  from _initial as initial
+  left join (
+    select 'category' as kind, id, sort_order from public.categories
+    where id in ('a1111111-1111-4111-8111-111111111111', 'a2222222-2222-4222-8222-222222222222')
+    union all
+    select 'product', id, sort_order from public.products
+    where id in (
+      'b1111111-1111-4111-8111-111111111111',
+      'b2222222-2222-4222-8222-222222222222',
+      'b3333333-3333-4333-8333-333333333333'
+    )
+    union all
+    select 'highlight', id, sort_order from public.highlights
+    where id in ('c1111111-1111-4111-8111-111111111111', 'c2222222-2222-4222-8222-222222222222')
+  ) as current using (kind, id)
   on conflict (k) do update set v = excluded.v;
 $$;
 
@@ -57,7 +107,7 @@ select pg_temp.tentar('comum.troca_produtos',   $q$select public.swap_product_so
 select pg_temp.tentar('comum.troca_categorias', $q$select public.swap_category_sort_orders('a1111111-1111-4111-8111-111111111111', 'a2222222-2222-4222-8222-222222222222')$q$);
 select pg_temp.tentar('comum.troca_destaques',  $q$select public.swap_highlight_sort_orders('c1111111-1111-4111-8111-111111111111', 'c2222222-2222-4222-8222-222222222222')$q$);
 reset role;
-select pg_temp.ordem('ordem.depois_de_anon_e_comum');
+select pg_temp.posicoes_inalteradas('ordem.depois_de_anon_e_comum');
 
 -- ===================== ADMIN =====================
 select set_config('request.jwt.claims', '{"sub":"bae2a6b4-c6fd-4567-b01c-01c70e5d940a","role":"authenticated"}', true);
@@ -69,16 +119,39 @@ select pg_temp.tentar('admin.troca_mesmo_id',              $q$select public.swap
 select pg_temp.tentar('admin.troca_categoria_inexistente', $q$select public.swap_category_sort_orders('a1111111-1111-4111-8111-111111111111', 'a9999999-9999-4999-8999-999999999999')$q$);
 select pg_temp.tentar('admin.troca_destaque_inexistente',  $q$select public.swap_highlight_sort_orders('c1111111-1111-4111-8111-111111111111', 'c9999999-9999-4999-8999-999999999999')$q$);
 reset role;
-select pg_temp.ordem('ordem.depois_das_recusas');
+select pg_temp.posicoes_inalteradas('ordem.depois_das_recusas');
 
 set local role authenticated;
 select pg_temp.tentar('admin.troca_produtos',   $q$select public.swap_product_sort_orders('b1111111-1111-4111-8111-111111111111', 'b2222222-2222-4222-8222-222222222222')$q$);
 select pg_temp.tentar('admin.troca_categorias', $q$select public.swap_category_sort_orders('a1111111-1111-4111-8111-111111111111', 'a2222222-2222-4222-8222-222222222222')$q$);
 select pg_temp.tentar('admin.troca_destaques',  $q$select public.swap_highlight_sort_orders('c1111111-1111-4111-8111-111111111111', 'c2222222-2222-4222-8222-222222222222')$q$);
 reset role;
-select pg_temp.ordem('ordem.depois_da_troca');
-insert into _r select 'ordem.categorias', string_agg(sort_order::text, ',' order by name) from public.categories where name like 'Teste troca %';
-insert into _r select 'ordem.destaques',  string_agg(sort_order::text, ',' order by title) from public.highlights where title like 'Teste troca %';
+select pg_temp.tentar(
+  'ordem.depois_da_troca',
+  $q$select 1 where
+    (select sort_order from public.products where id = 'b1111111-1111-4111-8111-111111111111')
+      = (select sort_order from _initial where kind = 'product' and id = 'b2222222-2222-4222-8222-222222222222')
+    and (select sort_order from public.products where id = 'b2222222-2222-4222-8222-222222222222')
+      = (select sort_order from _initial where kind = 'product' and id = 'b1111111-1111-4111-8111-111111111111')
+    and (select sort_order from public.products where id = 'b3333333-3333-4333-8333-333333333333')
+      = (select sort_order from _initial where kind = 'product' and id = 'b3333333-3333-4333-8333-333333333333')$q$
+);
+select pg_temp.tentar(
+  'ordem.categorias',
+  $q$select 1 where
+    (select sort_order from public.categories where id = 'a1111111-1111-4111-8111-111111111111')
+      = (select sort_order from _initial where kind = 'category' and id = 'a2222222-2222-4222-8222-222222222222')
+    and (select sort_order from public.categories where id = 'a2222222-2222-4222-8222-222222222222')
+      = (select sort_order from _initial where kind = 'category' and id = 'a1111111-1111-4111-8111-111111111111')$q$
+);
+select pg_temp.tentar(
+  'ordem.destaques',
+  $q$select 1 where
+    (select sort_order from public.highlights where id = 'c1111111-1111-4111-8111-111111111111')
+      = (select sort_order from _initial where kind = 'highlight' and id = 'c2222222-2222-4222-8222-222222222222')
+    and (select sort_order from public.highlights where id = 'c2222222-2222-4222-8222-222222222222')
+      = (select sort_order from _initial where kind = 'highlight' and id = 'c1111111-1111-4111-8111-111111111111')$q$
+);
 
 -- ===================== CONFERÊNCIA =====================
 do $$
@@ -90,19 +163,20 @@ declare
     "comum.troca_produtos": "erro:P0001",
     "comum.troca_categorias": "erro:P0001",
     "comum.troca_destaques": "erro:P0001",
-    "ordem.depois_de_anon_e_comum": "10,20,30",
+    "ordem.posicoes_iniciais_distintas": "ok:1",
+    "ordem.depois_de_anon_e_comum": "ok:1",
     "admin.troca_categorias_diferentes": "erro:P0001",
     "admin.troca_id_inexistente": "erro:P0001",
     "admin.troca_mesmo_id": "erro:P0001",
     "admin.troca_categoria_inexistente": "erro:P0001",
     "admin.troca_destaque_inexistente": "erro:P0001",
-    "ordem.depois_das_recusas": "10,20,30",
+    "ordem.depois_das_recusas": "ok:1",
     "admin.troca_produtos": "ok:1",
     "admin.troca_categorias": "ok:1",
     "admin.troca_destaques": "ok:1",
-    "ordem.depois_da_troca": "20,10,30",
-    "ordem.categorias": "9002,9001",
-    "ordem.destaques": "9002,9001"
+    "ordem.depois_da_troca": "ok:1",
+    "ordem.categorias": "ok:1",
+    "ordem.destaques": "ok:1"
   }';
   divergencias text;
 begin

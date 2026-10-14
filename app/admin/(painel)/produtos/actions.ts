@@ -1,28 +1,18 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { formError, revalidateCatalog } from '@/lib/admin/action-helpers';
 import { swapSortOrders } from '@/lib/admin/reorder';
 import { fieldsFromProductSituation } from '@/lib/admin/panel';
 import { requireAdmin } from '@/lib/admin/require-admin';
 import { reportServerError } from '@/lib/observability';
 import { cleanupVideoOrphans } from '@/lib/media/video/storage-cleanup';
 import { createClient } from '@/lib/supabase/server';
-import type { Json } from '@/lib/supabase/database.types';
 import { parsePriceBRL } from '@/lib/utils/parse-price';
 import { productFormSchema } from '@/lib/validators/product';
 
 import type { ProductActionState } from './action-state';
-
-function formError(error: z.ZodError): ProductActionState {
-  const fieldErrors = error.issues.reduce<Record<string, string[]>>((result, issue) => {
-    const field = issue.path.join('.');
-    if (field) result[field] = [...(result[field] ?? []), issue.message];
-    return result;
-  }, {});
-  return { status: 'error', message: 'Revise os campos destacados antes de salvar.', fieldErrors };
-}
 
 function productValues(formData: FormData) {
   const parsed = productFormSchema.safeParse({
@@ -34,7 +24,7 @@ function productValues(formData: FormData) {
     is_active: formData.get('is_active') === 'on',
     is_available: formData.get('is_available') === 'on',
   });
-  if (!parsed.success) return { error: formError(parsed.error) };
+  if (!parsed.success) return { error: formError<ProductActionState>(parsed.error) };
   const price_cents = parsePriceBRL(parsed.data.price);
   if (price_cents === null)
     return {
@@ -58,23 +48,7 @@ function productValues(formData: FormData) {
 }
 
 function catalogPaths(id?: string): void {
-  revalidatePath('/', 'layout');
-  revalidatePath('/admin');
-  revalidatePath('/admin/produtos');
-  if (id) revalidatePath(`/admin/produtos/${id}`);
-}
-
-async function audit(
-  actorId: string,
-  action: 'create' | 'update' | 'delete' | 'reorder',
-  entityId: string,
-  metadata: Json,
-) {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('audit_logs')
-    .insert({ actor_id: actorId, action, entity: 'product', entity_id: entityId, metadata });
-  if (error) reportServerError('product_audit_failed', error);
+  revalidateCatalog(['produtos'], id);
 }
 
 export async function createProduct(
@@ -88,16 +62,9 @@ export async function createProduct(
     return { status: 'error', message: 'Sua sessão não permite esta alteração. Entre novamente.' };
   try {
     const supabase = await createClient();
-    const { data: last } = await supabase
-      .from('products')
-      .select('sort_order')
-      .eq('category_id', result.values.category_id)
-      .order('sort_order', { ascending: false })
-      .limit(1)
-      .maybeSingle();
     const { data, error } = await supabase
       .from('products')
-      .insert({ ...result.values, sort_order: (last?.sort_order ?? -1) + 1 })
+      .insert(result.values)
       .select('id')
       .single();
     if (error) {
@@ -107,10 +74,6 @@ export async function createProduct(
         message: 'Não foi possível criar o produto agora. Tente novamente.',
       };
     }
-    await audit(admin.userId, 'create', data.id, {
-      name: result.values.name,
-      category_id: result.values.category_id,
-    });
     catalogPaths(data.id);
     return { status: 'success', message: 'Produto criado com sucesso.', entityId: data.id };
   } catch (error) {
@@ -140,10 +103,6 @@ export async function updateProduct(
         message: 'Não foi possível salvar o produto agora. Tente novamente.',
       };
     }
-    await audit(admin.userId, 'update', id.data, {
-      name: result.values.name,
-      category_id: result.values.category_id,
-    });
     catalogPaths(id.data);
     return { status: 'success', message: 'Produto atualizado com sucesso.', entityId: id.data };
   } catch (error) {
@@ -175,7 +134,6 @@ export async function toggleProduct(
     reportServerError('product_toggle_failed', error);
     return { status: 'error', message: 'Não foi possível atualizar o status do produto.' };
   }
-  await audit(admin.userId, 'update', id.data, { [field.data]: value });
   catalogPaths(id.data);
   return {
     status: 'success',
@@ -200,7 +158,6 @@ export async function setProductSituation(
     reportServerError('product_situation_failed', error);
     return { status: 'error', message: 'Não foi possível mudar a situação do produto.' };
   }
-  await audit(admin.userId, 'update', id.data, { situation: situation.data, ...values });
   catalogPaths(id.data);
   return { status: 'success', message: 'Situação do produto atualizada.' };
 }
@@ -234,10 +191,6 @@ export async function reorderProduct(
     reportServerError('product_reorder_failed', reorderError);
     return { status: 'error', message: 'Não foi possível alterar a ordem agora.' };
   }
-  await audit(admin.userId, 'reorder', id.data, {
-    category_id: categoryId.data,
-    direction: direction.data,
-  });
   catalogPaths(id.data);
   return { status: 'success', message: 'Ordem do produto atualizada.' };
 }
@@ -293,7 +246,6 @@ export async function deleteProduct(
     productId: id.data,
     onError: reportServerError,
   });
-  await audit(admin.userId, 'delete', id.data, { media_cleanup_checked: true });
   catalogPaths(id.data);
   return { status: 'success', message: 'Produto excluído.' };
 }

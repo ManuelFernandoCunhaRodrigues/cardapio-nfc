@@ -87,14 +87,7 @@ function fakeClient(
         },
       }),
     },
-    from: (table: string) => {
-      if (table === 'audit_logs')
-        return {
-          insert: async () => {
-            calls.push('auditar');
-            return { error: null };
-          },
-        };
+    from: () => {
       return {
         select: (columns: string) => ({
           eq: () => ({
@@ -165,8 +158,7 @@ function concurrentVideoClients(
         },
       }),
     },
-    from: (table: string) => {
-      if (table === 'audit_logs') return { insert: async () => ({ error: null }) };
+    from: () => {
       return {
         select: (columns: string) => ({
           eq: (_column: string, value: string) => ({
@@ -350,7 +342,6 @@ describe('POST /admin/midia/video', () => {
     expect(fake.calls.indexOf('reler-referencias')).toBeGreaterThan(
       fake.calls.indexOf('gravar-video-path'),
     );
-    expect(fake.calls.indexOf('auditar')).toBeGreaterThan(fake.calls.indexOf('reler-referencias'));
     expect(fake.removals).toContainEqual({
       bucket: 'product-videos',
       paths: ['products/anterior.mp4'],
