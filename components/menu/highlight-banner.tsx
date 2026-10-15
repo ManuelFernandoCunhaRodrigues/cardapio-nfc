@@ -153,17 +153,24 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
         {items.map((highlight, index) => {
           const title = splitLastWord(highlight.title);
           const isActive = !enhanced || active === index;
+          const imageSrc = highlight.image_path?.startsWith('/')
+            ? highlight.image_path
+            : getPublicImageVariantUrl(
+                'highlight-images',
+                highlight.image_path,
+                'detail',
+              );
           return (
             <div
               aria-hidden={!isActive}
-              className="relative h-[240px] min-w-full snap-center"
+              className="relative h-[270px] min-w-full snap-center min-[390px]:h-[252px] sm:h-[240px]"
               inert={!isActive}
               key={highlight.id}
               role="group"
               aria-label={`${index + 1} de ${items.length}`}
             >
               <Link
-                className="relative block h-full overflow-hidden rounded-[24px] bg-ink bg-[radial-gradient(120%_90%_at_82%_62%,rgba(230,95,42,.5),rgba(230,95,42,0)_60%)] p-5 text-white focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/40"
+                className="relative block h-full overflow-hidden rounded-[24px] bg-ink p-5 text-white focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/40"
                 href={highlight.target || '/cardapio'}
                 onClick={() => {
                   if (highlight.target?.startsWith('/produto/'))
@@ -171,11 +178,27 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
                 }}
                 tabIndex={isActive ? 0 : -1}
               >
-                <div className="relative z-10 max-w-[60%]">
+                {imageSrc ? (
+                  <MediaImage
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover object-center"
+                    name={highlight.title}
+                    priority={index === 0}
+                    sizes="(max-width: 480px) 100vw, 480px"
+                    src={imageSrc}
+                  />
+                ) : (
+                  <CoxinhaArt className="absolute inset-0 h-full w-full" variant="banner" />
+                )}
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 bg-[linear-gradient(90deg,rgba(23,17,13,0.72)_0%,rgba(23,17,13,0.6)_34%,rgba(23,17,13,0.38)_58%,rgba(23,17,13,0.1)_78%,rgba(23,17,13,0)_100%)]"
+                />
+                <div className="relative z-10 max-w-[78%] sm:max-w-[60%]">
                   <span className="inline-flex rounded-full bg-brand-strong px-2.5 py-1 font-[family-name:var(--font-poppins)] text-[10px] font-semibold tracking-[0.08em]">
                     DESTAQUE DA CASA
                   </span>
-                  <h2 className="display mt-2 line-clamp-2 text-[30px] leading-[34px]">
+                  <h2 className="display mt-2 line-clamp-3 text-[clamp(24px,7vw,30px)] leading-[1.12]">
                     {title.leading ? <>{title.leading} </> : null}
                     <span className="text-amber">{title.last}</span>
                   </h2>
@@ -187,24 +210,6 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
                   <span className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-strong px-4 font-[family-name:var(--font-poppins)] text-sm font-semibold">
                     Conferir <Icon height={16} name="arrow" width={16} />
                   </span>
-                </div>
-                <div className="absolute -bottom-4 -right-3 h-[228px] w-[54%]">
-                  {highlight.image_path ? (
-                    <MediaImage
-                      alt=""
-                      className="h-full w-full object-contain"
-                      name={highlight.title}
-                      priority={index === 0}
-                      sizes="(max-width: 480px) 52vw, 250px"
-                      src={getPublicImageVariantUrl(
-                        'highlight-images',
-                        highlight.image_path,
-                        'detail',
-                      )}
-                    />
-                  ) : (
-                    <CoxinhaArt className="h-full w-full" variant="banner" />
-                  )}
                 </div>
               </Link>
             </div>

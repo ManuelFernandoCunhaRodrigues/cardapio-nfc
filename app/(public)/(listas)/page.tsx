@@ -11,6 +11,10 @@ import { sortProductsForHome } from '@/lib/menu/sort';
 
 export const revalidate = 60;
 
+type HomePageProps = {
+  searchParams?: Promise<{ preview?: string }>;
+};
+
 const categoryEmoji: Record<string, string> = {
   coxinhas: '🥟',
   pasteis: '🥠',
@@ -21,11 +25,26 @@ const categoryEmoji: Record<string, string> = {
   doces: '🍫',
 };
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: HomePageProps) {
   const [menu, settings] = await Promise.all([getPublicMenu(), getPublicStoreSettings()]);
   const menuFailed = menu.categories.error || menu.products.error || menu.highlights.error;
   const products = menu.products.data ?? [];
-  const highlights = menu.highlights.data ?? [];
+  const { preview } = (await searchParams) ?? {};
+  const localComboPreview =
+    process.env.NODE_ENV === 'development' && preview === 'combo';
+  const highlights = localComboPreview
+    ? [
+        {
+          id: 'local-combo-preview',
+          title: 'Combo Esfiha + Suco',
+          description: 'Duas esfihas assadas com suco gelado.',
+          image_path: '/imagens-combos-promocoes/destaque-combo-esfiha-suco.png',
+          target: '/cardapio#combos',
+          sort_order: -1,
+        },
+        ...(menu.highlights.data ?? []),
+      ]
+    : (menu.highlights.data ?? []);
   const featured = sortProductsForHome(products).slice(0, 8);
 
   return (
