@@ -30,8 +30,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const menuFailed = menu.categories.error || menu.products.error || menu.highlights.error;
   const products = menu.products.data ?? [];
   const { preview } = (await searchParams) ?? {};
-  const localComboPreview =
-    process.env.NODE_ENV === 'development' && preview === 'combo';
+  const localComboPreview = process.env.NODE_ENV === 'development' && preview === 'combo';
   const highlights = localComboPreview
     ? [
         {
