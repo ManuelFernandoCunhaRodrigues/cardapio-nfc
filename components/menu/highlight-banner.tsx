@@ -155,11 +155,7 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
           const isActive = !enhanced || active === index;
           const imageSrc = highlight.image_path?.startsWith('/')
             ? highlight.image_path
-            : getPublicImageVariantUrl(
-                'highlight-images',
-                highlight.image_path,
-                'detail',
-              );
+            : getPublicImageVariantUrl('highlight-images', highlight.image_path, 'detail');
           return (
             <div
               aria-hidden={!isActive}
