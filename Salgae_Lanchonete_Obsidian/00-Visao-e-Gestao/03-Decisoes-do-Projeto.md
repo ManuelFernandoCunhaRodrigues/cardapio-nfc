@@ -175,5 +175,6 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - Imagens nos destaques dos alimentos: o responsável mencionou a possibilidade em 2026-10-12; falta ele detalhar o que quer além da foto que cada destaque já aceita ([[22-Carrossel-de-Destaques]]).
 - Fotos das categorias: o responsável pediu a opção de imagem por categoria em 2026-10-13; planejado em [[24-Planejamento-Midia-em-Categorias-e-Destaques]] (o desenho continua aparecendo quando não houver foto).
 - Papéis de acesso do painel.
+- Separar backend e frontend, usar Motion (React) e ampliar os testes com Playwright: anotado em 2026-10-19 em [[25-Mudanca-Separar-Backend-e-Frontend]]; o responsável vai fazer, faltam os detalhes da separação.
 - Controle de estoque e status "Promoção" do protótipo do painel: ficaram fora do Épico 3 (não estão no escopo nem no banco); decidir se entram.
 - Se haverá métricas anônimas desde a primeira versão.
