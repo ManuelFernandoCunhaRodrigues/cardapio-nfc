@@ -326,7 +326,7 @@ export function ProductsManager({
       <div aria-label="Filtros de atenção" className="mt-3 flex flex-wrap gap-2">
         <button
           aria-pressed={!filterParam}
-          className={`min-h-11 rounded-full border px-4 text-xs font-bold ${!filterParam ? 'border-brand-strong bg-peach text-brand-strong' : 'border-border bg-white text-body'}`}
+          className={`min-h-11 rounded-full border px-4 text-xs font-bold ${!filterParam ? 'border-brand-strong bg-peach text-ink' : 'border-border bg-white text-body'}`}
           onClick={() => setParam('filtro', '')}
           type="button"
         >
@@ -335,7 +335,7 @@ export function ProductsManager({
         {filterLabels.map((item) => (
           <button
             aria-pressed={filterParam === item.param}
-            className={`min-h-11 rounded-full border px-4 text-xs font-bold ${filterParam === item.param ? 'border-brand-strong bg-peach text-brand-strong' : 'border-border bg-white text-body'}`}
+            className={`min-h-11 rounded-full border px-4 text-xs font-bold ${filterParam === item.param ? 'border-brand-strong bg-peach text-ink' : 'border-border bg-white text-body'}`}
             key={item.param}
             onClick={() => setParam('filtro', filterParam === item.param ? '' : item.param)}
             type="button"

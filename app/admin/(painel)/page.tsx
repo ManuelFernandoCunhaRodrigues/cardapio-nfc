@@ -226,31 +226,31 @@ export default async function AdminDashboardPage() {
             </span>
           </div>
           <dl className="mt-4 space-y-4 text-sm">
-            <div className="flex gap-3">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-peach text-brand-strong">
-                <AdminIcon height={17} name="clock" width={17} />
-              </span>
-              <div>
-                <dt className="text-xs text-muted">Horário de hoje</dt>
-                <dd className="font-bold text-ink">
-                  {today?.closed
-                    ? 'Fechada'
-                    : today
-                      ? `${today.open} às ${today.close}`
-                      : 'Não informado'}
-                </dd>
-              </div>
+            <div className="relative min-h-8 pl-11">
+              <dt className="text-xs text-muted">
+                <span className="absolute left-0 top-0 grid size-8 place-items-center rounded-full bg-peach text-brand-strong">
+                  <AdminIcon height={17} name="clock" width={17} />
+                </span>
+                Horário de hoje
+              </dt>
+              <dd className="font-bold text-ink">
+                {today?.closed
+                  ? 'Fechada'
+                  : today
+                    ? `${today.open} às ${today.close}`
+                    : 'Não informado'}
+              </dd>
             </div>
-            <div className="flex gap-3">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-peach text-brand-strong">
-                <AdminIcon height={17} name="alert" width={17} />
-              </span>
-              <div>
-                <dt className="text-xs text-muted">Aviso no cardápio</dt>
-                <dd className="font-bold text-ink">
-                  {settings?.notice || 'Nenhum aviso publicado.'}
-                </dd>
-              </div>
+            <div className="relative min-h-8 pl-11">
+              <dt className="text-xs text-muted">
+                <span className="absolute left-0 top-0 grid size-8 place-items-center rounded-full bg-peach text-brand-strong">
+                  <AdminIcon height={17} name="alert" width={17} />
+                </span>
+                Aviso no cardápio
+              </dt>
+              <dd className="font-bold text-ink">
+                {settings?.notice || 'Nenhum aviso publicado.'}
+              </dd>
             </div>
           </dl>
           <Link
