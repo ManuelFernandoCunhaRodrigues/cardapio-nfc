@@ -1,9 +1,6 @@
-import { expect, test, type APIRequestContext } from '@playwright/test';
+import { expect, test, type APIRequestContext } from '../fixtures';
 
-import { watchCspViolations } from './csp';
-
-// Dados esperados: os de `supabase/seed.sql` (seis categorias, um produto em cada).
-
+// Dados esperados: os de `supabase/seed.sql`.
 const mainNav = 'Navegação principal';
 const UUID_PATTERN = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
@@ -25,33 +22,30 @@ async function productIdBySlug(request: APIRequestContext, slug: string) {
 }
 
 test.describe('cardápio público', () => {
-  // Toda página aberta nestes testes também prova que a Content-Security-Policy não bloqueia nada.
-  let cspViolations: string[] = [];
-  test.beforeEach(({ page }) => {
-    cspViolations = watchCspViolations(page);
-  });
-  test.afterEach(() => {
-    expect(cspViolations, 'recursos bloqueados pela CSP').toEqual([]);
-  });
+  test(
+    'a tela inicial lista categorias e produtos e marca a aba Início',
+    { tag: '@responsive' },
+    async ({ page }) => {
+      await page.goto('/');
 
-  test('a tela inicial lista categorias e produtos e marca a aba Início', async ({ page }) => {
-    await page.goto('/');
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'Cardápio da Salgaê' }),
+      ).toBeAttached();
+      await expect(
+        page
+          .getByRole('navigation', { name: 'Categorias' })
+          .getByRole('link', { name: 'Coxinhas' }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('list', { name: 'Produtos mais pedidos' }).getByRole('listitem'),
+      ).not.toHaveCount(0);
+      await expect(
+        page.getByRole('navigation', { name: mainNav }).getByRole('link', { name: 'Início' }),
+      ).toHaveAttribute('aria-current', 'page');
+    },
+  );
 
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'Cardápio da Salgaê' }),
-    ).toBeAttached();
-    await expect(
-      page.getByRole('navigation', { name: 'Categorias' }).getByRole('link', { name: 'Coxinhas' }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('list', { name: 'Produtos mais pedidos' }).getByRole('listitem'),
-    ).not.toHaveCount(0);
-    await expect(
-      page.getByRole('navigation', { name: mainNav }).getByRole('link', { name: 'Início' }),
-    ).toHaveAttribute('aria-current', 'page');
-  });
-
-  test('do cardápio ao detalhe do produto e de volta', async ({ page }) => {
+  test('do cardápio ao detalhe do produto e de volta', { tag: '@responsive' }, async ({ page }) => {
     await page.goto('/cardapio');
 
     const coxinhas = page.locator('section#coxinhas');
@@ -63,7 +57,7 @@ test.describe('cardápio público', () => {
     await expect(page.getByText('Disponível agora')).toBeVisible();
     await expect(page.getByText('Consulta apenas. Faça seu pedido com o atendente.')).toBeVisible();
     await expect(page).toHaveTitle('Coxinha de frango | Salgaê');
-    // Prévia de link: o que WhatsApp e redes leem ao receber o endereço do produto.
+    // Prévia usada por WhatsApp e redes sociais.
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
       'Frango cremoso em massa crocante.',
@@ -93,19 +87,23 @@ test.describe('cardápio público', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Coxinha de frango' })).toBeVisible();
   });
 
-  test('a busca encontra pelo nome, lembra o termo e avisa quando não acha', async ({ page }) => {
-    await page.goto('/busca');
+  test(
+    'a busca encontra pelo nome, lembra o termo e avisa quando não acha',
+    { tag: '@responsive' },
+    async ({ page }) => {
+      await page.goto('/busca');
 
-    const search = page.getByRole('searchbox', { name: 'Buscar no cardápio' });
-    await search.fill('pastel');
-    await expect(page.getByText('1 resultado', { exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: /^Pastel de carne, / })).toBeVisible();
-    await expect(page).toHaveURL(/\/busca\?q=pastel$/);
+      const search = page.getByRole('searchbox', { name: 'Buscar no cardápio' });
+      await search.fill('pastel');
+      await expect(page.getByText('1 resultado', { exact: true })).toBeVisible();
+      await expect(page.getByRole('link', { name: /^Pastel de carne, / })).toBeVisible();
+      await expect(page).toHaveURL(/\/busca\?q=pastel$/);
 
-    await search.fill('xyzzy');
-    await expect(page.getByRole('heading', { name: 'Nada por aqui' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Ver cardápio completo' })).toBeVisible();
-  });
+      await search.fill('xyzzy');
+      await expect(page.getByRole('heading', { name: 'Nada por aqui' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Ver cardápio completo' })).toBeVisible();
+    },
+  );
 
   test('a aba Info abre as informações da loja', async ({ page }) => {
     await page.goto('/info');
@@ -136,7 +134,7 @@ test.describe('cardápio público', () => {
     expect(robots.ok()).toBe(true);
     expect(await robots.text()).toMatch(/Disallow: \/\s*$/m);
 
-    // Fora da produção o sitemap existe, mas não lista nenhuma página.
+    // Fora da produção, o sitemap não lista páginas.
     const sitemap = await request.get('/sitemap.xml');
     expect(sitemap.ok()).toBe(true);
     const xml = await sitemap.text();
