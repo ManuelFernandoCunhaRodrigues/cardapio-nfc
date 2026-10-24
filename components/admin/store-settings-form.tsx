@@ -188,7 +188,7 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
                   Abertura de {DAYS[hour.day]}
                 </label>
                 <input
-                  className={`min-h-11 min-w-0 w-[96px] rounded-xl border border-border bg-white px-0 text-center text-sm text-ink ${hour.closed ? 'opacity-45' : ''}`}
+                  className={`min-h-11 min-w-0 w-[96px] rounded-xl border border-border px-0 text-center text-sm ${hour.closed ? 'bg-surface-inner text-muted' : 'bg-white text-ink'}`}
                   id={`open-${hour.day}`}
                   name={`open-${hour.day}`}
                   onChange={(event) => updateHour(hour.day, { open: event.target.value })}
@@ -203,7 +203,7 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
                   <input
                     aria-describedby={hourError ? `close-${hour.day}-error` : undefined}
                     aria-invalid={Boolean(hourError)}
-                    className={`min-h-11 min-w-0 w-[96px] rounded-xl border border-border bg-white px-0 text-center text-sm text-ink ${hour.closed ? 'opacity-45' : ''}`}
+                    className={`min-h-11 min-w-0 w-[96px] rounded-xl border border-border px-0 text-center text-sm ${hour.closed ? 'bg-surface-inner text-muted' : 'bg-white text-ink'}`}
                     id={`close-${hour.day}`}
                     name={`close-${hour.day}`}
                     onChange={(event) => updateHour(hour.day, { close: event.target.value })}
