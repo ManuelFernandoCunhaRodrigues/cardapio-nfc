@@ -46,7 +46,7 @@ test.describe('categorias do painel', () => {
     await createCategory(page, adminDb, name);
 
     const card = page.getByRole('article').filter({ hasText: name });
-    await card.getByRole('button', { name: 'Editar' }).click();
+    await card.getByRole('button', { name: 'Editar', exact: true }).click();
     await page.getByLabel('Nome').fill(updatedName);
     await page.getByRole('button', { name: 'Salvar categoria' }).click();
     await expect(page.getByText('Categoria atualizada com sucesso.')).toBeVisible();

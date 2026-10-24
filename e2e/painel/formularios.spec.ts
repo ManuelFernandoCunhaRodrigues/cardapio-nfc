@@ -2,8 +2,8 @@ import { expect, test, type AdminDb, type Page } from '../fixtures';
 
 async function createProduct(page: Page, adminDb: AdminDb, name: string) {
   await page.goto('/admin/produtos/novo');
-  await page.getByLabel('Nome do produto').fill(name);
-  await page.getByLabel('Preço').fill('11,20');
+  await page.getByRole('textbox', { name: 'Nome do produto', exact: true }).fill(name);
+  await page.getByRole('textbox', { name: 'Preço' }).fill('11,20');
   await page.getByRole('button', { name: 'Coxinhas', exact: true }).click();
   await page.getByRole('button', { name: 'Criar produto' }).filter({ visible: true }).click();
   await expect(page).toHaveURL(/\/admin\/produtos\/[0-9a-f-]{36}\?criado=1$/);
@@ -19,7 +19,7 @@ test.describe('formulários do painel', () => {
     const productId = await createProduct(page, adminDb, name);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
-    await page.getByLabel('Descrição').fill(uniqueName('alteracao-nao-salva'));
+    await page.getByRole('textbox', { name: 'Descrição' }).fill(uniqueName('alteracao-nao-salva'));
 
     const dialogPromise = page.waitForEvent('dialog');
     const clickPromise = page
@@ -36,14 +36,14 @@ test.describe('formulários do painel', () => {
 
   test('marca nome e preço inválidos com descrição acessível', async ({ page, uniqueName }) => {
     await page.goto('/admin/produtos/novo');
-    await page.getByLabel('Nome do produto').fill('X');
-    await page.getByLabel('Preço').fill('preço inválido');
-    await page.getByLabel('Descrição').fill(uniqueName('formulario-invalido'));
+    await page.getByRole('textbox', { name: 'Nome do produto', exact: true }).fill('X');
+    await page.getByRole('textbox', { name: 'Preço' }).fill('preço inválido');
+    await page.getByRole('textbox', { name: 'Descrição' }).fill(uniqueName('formulario-invalido'));
     await page.getByRole('button', { name: 'Coxinhas', exact: true }).click();
     await page.getByRole('button', { name: 'Criar produto' }).filter({ visible: true }).click();
 
-    const name = page.getByLabel('Nome do produto');
-    const price = page.getByLabel('Preço');
+    const name = page.getByRole('textbox', { name: 'Nome do produto', exact: true });
+    const price = page.getByRole('textbox', { name: 'Preço' });
     await expect(name).toHaveAttribute('aria-invalid', 'true');
     await expect(name).toHaveAccessibleDescription('Informe o nome do produto.');
     await expect(price).toHaveAttribute('aria-invalid', 'true');

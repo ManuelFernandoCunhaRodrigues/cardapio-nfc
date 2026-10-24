@@ -2,8 +2,8 @@ import { expect, test, type AdminDb, type Page } from '../fixtures';
 
 async function createProduct(page: Page, adminDb: AdminDb, name: string) {
   await page.goto('/admin/produtos/novo');
-  await page.getByLabel('Nome do produto').fill(name);
-  await page.getByLabel('Preço').fill('12,34');
+  await page.getByRole('textbox', { name: 'Nome do produto', exact: true }).fill(name);
+  await page.getByRole('textbox', { name: 'Preço' }).fill('12,34');
   await page.getByRole('button', { name: 'Coxinhas', exact: true }).click();
   await page.getByRole('button', { name: 'Criar produto' }).filter({ visible: true }).click();
   await expect(page).toHaveURL(/\/admin\/produtos\/[0-9a-f-]{36}\?criado=1$/);
@@ -36,8 +36,8 @@ test.describe('CRUD de produtos', () => {
     const description = `Descrição atualizada de ${uniqueName('produto')}`;
     const product = await createProduct(page, adminDb, name);
 
-    await page.getByLabel('Preço').fill('19,87');
-    await page.getByLabel('Descrição').fill(description);
+    await page.getByRole('textbox', { name: 'Preço' }).fill('19,87');
+    await page.getByRole('textbox', { name: 'Descrição' }).fill(description);
     await saveProduct(page);
 
     await page.goto(`/produto/${product.slug}`);
@@ -72,7 +72,7 @@ test.describe('CRUD de produtos', () => {
     const updatedName = uniqueName('produto-nome-novo');
     const product = await createProduct(page, adminDb, originalName);
 
-    await page.getByLabel('Nome do produto').fill(updatedName);
+    await page.getByRole('textbox', { name: 'Nome do produto', exact: true }).fill(updatedName);
     await saveProduct(page);
     const { data, error } = await adminDb.client
       .from('products')
