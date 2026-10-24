@@ -58,9 +58,11 @@ test.describe('formulários do painel', () => {
     await submit.click();
     await expect(price).toHaveAttribute('aria-invalid', 'true');
     await expect(price).toHaveAccessibleDescription('Informe um preço válido, como R$ 8,90.');
-    await expect(
-      page.getByText('Informe um preço válido, como R$ 8,90.', { exact: true }),
-    ).toBeVisible();
+    // A mensagem do preço aparece no campo e no aviso geral do formulário.
+    await expect(page.locator('#product-price-error')).toHaveText(
+      'Informe um preço válido, como R$ 8,90.',
+    );
+    await expect(page.getByRole('alert')).toHaveText('Informe um preço válido, como R$ 8,90.');
     await expect(page).toHaveURL(/\/admin\/produtos\/novo/);
   });
 });
