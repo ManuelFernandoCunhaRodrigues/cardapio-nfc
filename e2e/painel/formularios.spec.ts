@@ -62,7 +62,10 @@ test.describe('formulários do painel', () => {
     await expect(page.locator('#product-price-error')).toHaveText(
       'Informe um preço válido, como R$ 8,90.',
     );
-    await expect(page.getByRole('alert')).toHaveText('Informe um preço válido, como R$ 8,90.');
+    // O Next também tem um `role="alert"` (anunciador de rotas): filtra pelo texto.
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Informe um preço válido, como R$ 8,90.' }),
+    ).toBeVisible();
     await expect(page).toHaveURL(/\/admin\/produtos\/novo/);
   });
 });
