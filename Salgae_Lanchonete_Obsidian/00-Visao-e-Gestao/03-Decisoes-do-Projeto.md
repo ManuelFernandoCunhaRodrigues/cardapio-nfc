@@ -155,6 +155,15 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Revisão:** depois do uso em stage; rever o tempo de 6 segundos se o responsável quiser mudar.
 - **Revisão de 2026-10-13:** depois de ver o stage, o responsável pediu o banner maior (240 px), os pontinhos embaixo no centro e **sem o botão de pausar**. Ficam as pausas por toque, mouse e teclado. Em produção desde 2026-10-13.
 
+### Separar backend e frontend, Motion e Playwright
+
+- **Data:** 2026-10-23
+- **Contexto:** mudança anotada em 2026-10-19 em [[25-Mudanca-Separar-Backend-e-Frontend]]; o responsável pediu para planejar e executar.
+- **Decisão:** monorepo com `apps/web` (Next.js), `apps/api` (Hono) e `packages/core`; API como segundo projeto na Vercel Hobby, com Dockerfile para VPS; ordem Playwright → separação → Motion.
+- **Por quê:** os testes ampliados protegem a separação; a API própria deixa o sistema pronto para a VPS de cada cliente sem custo na demonstração.
+- **Impacto:** estrutura de pastas, CI, projetos da Vercel e segurança (CSP, CORS só para o vídeo). Plano em `docs/planejamento/separacao-backend-frontend-plano.md`.
+- **Revisão:** depois da prova de conceito do Hono com ffmpeg na Vercel (primeiro passo da separação).
+
 ## Modelo de registro para próximas decisões
 
 ### Título da decisão
@@ -175,5 +184,6 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - Imagens nos destaques dos alimentos: o responsável mencionou a possibilidade em 2026-10-12; falta ele detalhar o que quer além da foto que cada destaque já aceita ([[22-Carrossel-de-Destaques]]).
 - Fotos das categorias: o responsável pediu a opção de imagem por categoria em 2026-10-13; planejado em [[24-Planejamento-Midia-em-Categorias-e-Destaques]] (o desenho continua aparecendo quando não houver foto).
 - Papéis de acesso do painel.
+- Cache no navegador (service worker) para o cardápio abrir mais rápido e sem internet: ideia registrada em 2026-10-24 em [[26-Ideia-Cardapio-Rapido-e-Sem-Internet]]; proposta de entrar na Fase 3 do plano de separação, aguardando o responsável.
 - Controle de estoque e status "Promoção" do protótipo do painel: ficaram fora do Épico 3 (não estão no escopo nem no banco); decidir se entram.
 - Se haverá métricas anônimas desde a primeira versão.
