@@ -4,7 +4,7 @@ area: Produto
 tags:
   - moc
   - produto
-atualizado: 2026-10-13
+atualizado: 2026-10-24
 ---
 # Índice — Produto e Experiência
 
@@ -17,6 +17,7 @@ Ideias registradas no planejamento. O produto continua no básico; cada ideia s�
 
 - [[20-Ideia-Pedido-pela-Mesa]] — pedido direto da mesa, acesso só no local e banco em VPS.
 - [[21-Ideia-Usuarios-e-Rastreabilidade]] — logins criados pelo administrador e histórico de ações.
+- [[26-Ideia-Cardapio-Rapido-e-Sem-Internet]] — cache no navegador (service worker) para abrir o cardápio mais rápido e sem internet.
 
 Base visual dessas telas: [[_Indice-04-Design-e-Identidade-Visual]].
 
