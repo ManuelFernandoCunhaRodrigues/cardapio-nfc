@@ -6,7 +6,7 @@ tags:
   - arquitetura
   - ideia
   - aprovado
-atualizado: 2026-10-23
+atualizado: 2026-10-24
 ---
 # Mudança planejada — separar backend e frontend, Motion e Playwright
 
@@ -50,6 +50,21 @@ Resumo do plano (revisado pelo Codex):
 - **Fase 3 — Motion (3 PRs):** provider de cliente com `reducedMotion="user"` e `LazyMotion`; carrossel, cards, barra inferior, busca e painel; HTML estático nunca nasce invisível.
 
 Depende do responsável: trocar o Root Directory dos projetos do site na Vercel e criar os projetos da API (ou autorizar), e o "sim" de cada promoção para produção.
+
+## Andamento
+
+### Fase 1 — Playwright: concluída em 2026-10-24
+
+- **PR #67:** login salvo uma vez, projetos por papel (só o painel em desktop grava dados), limpeza automática do que cada teste cria e 16 testes novos (categorias, destaques, loja com relógio congelado, edição e exclusão de produto, cache, formulários).
+- **PR #69:** foto e vídeo enviados pelo painel aparecendo no cardápio (a exclusão do produto apaga os arquivos), acessibilidade com axe nas telas públicas e do painel, carrossel respeitando "menos movimento".
+- **Total:** 56 execuções em 15 arquivos, todas verdes; o job de ponta a ponta leva cerca de 5 minutos.
+- **Defeitos reais encontrados e corrigidos (PR #69):** lista de definições mal formada no Resumo do painel; contraste baixo no filtro ativo de Produtos (3,93:1, mínimo 4,5:1) e nos horários de dia fechado na Loja.
+- **Comportamento observado (possível melhoria, não alterado):** no formulário de produto, com nome e preço errados ao mesmo tempo, o painel mostra só o erro do nome; o do preço aparece na tentativa seguinte.
+- **Segurança (PR #64, na develop e no stage):** Next 16.4.0 → 16.4.2 e Zod 4.6.5 → 4.6.7, corrigindo falhas críticas apontadas pelo `npm audit`. Falta promover para a produção.
+
+### Fase 2 — Separação: próxima
+
+Começa pela prova de conceito do Hono com ffmpeg na Vercel (PR 2.0), que precisa de um projeto de teste na Vercel.
 
 ## Perguntas em aberto (respondidas em 2026-10-23, ver acima)
 
