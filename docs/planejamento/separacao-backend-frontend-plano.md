@@ -50,7 +50,7 @@ com Supabase local no CI.
 | Categorias | criar, editar, reordenar, apagar (vazia) e bloqueio ao apagar com produtos |
 | Destaques | criar, ativar/desativar, reordenar; aparece e some do carrossel do cardápio |
 | Loja | abrir/fechar manual e horário (relógio congelado) → selo no cardápio e na Info |
-| Produtos | editar preço e descrição, excluir, slug novo com redirecionamento do antigo |
+| Produtos | editar preço e descrição, excluir, renomear mantém o endereço antigo (o slug não muda de propósito) |
 | Cache | depois de alterar no painel, um contexto novo do navegador já vê o cardápio atualizado |
 | Formulários | aviso de sair sem salvar; erros de validação por campo |
 
