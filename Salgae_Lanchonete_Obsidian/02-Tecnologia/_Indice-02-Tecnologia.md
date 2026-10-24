@@ -11,6 +11,6 @@ atualizado: 2026-10-08
 - [[06-Arquitetura-e-Stack]] — visão técnica e tecnologias.
 - [[07-Modelo-de-Dados-Supabase]] — entidades e regras.
 - [[08-Imagens-e-Storage]] — política de fotos, vídeos e armazenamento.
-- [[25-Mudanca-Separar-Backend-e-Frontend]] — mudança anotada (em análise): separar backend e frontend, Motion e Playwright.
+- [[25-Mudanca-Separar-Backend-e-Frontend]] — plano aprovado (2026-10-23): separar backend e frontend, Motion e Playwright.
 
 Voltar: [[Home]]
