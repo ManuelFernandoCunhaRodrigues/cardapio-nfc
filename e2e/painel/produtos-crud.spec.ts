@@ -56,7 +56,8 @@ test.describe('CRUD de produtos', () => {
 
     await page.goto('/admin/produtos');
     const row = page.getByRole('row').filter({ hasText: name });
-    await row.getByRole('button', { name: `Mais ações para ${name}` }).click();
+    // "Mais ações" é um <summary>, que o Chromium não expõe como botão.
+    await row.getByLabel(`Mais ações para ${name}`).click();
     await row.getByRole('button', { name: 'Excluir', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: `Excluir ${name}?` });
     await dialog.getByRole('button', { name: 'Excluir de vez' }).click();

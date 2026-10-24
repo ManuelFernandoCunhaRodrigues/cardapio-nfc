@@ -18,7 +18,11 @@ test.describe('invalidação do cache público', () => {
     expect(productId).toMatch(/^[0-9a-f-]{36}$/);
     adminDb.track('products', productId!);
 
-    const publicContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
+    const publicContext = await browser.newContext({
+      baseURL: new URL(page.url()).origin,
+      // Sem isso o contexto herda a sessão salva do projeto.
+      storageState: { cookies: [], origins: [] },
+    });
     try {
       expect((await publicContext.storageState()).cookies).toEqual([]);
       const publicPage = await publicContext.newPage();

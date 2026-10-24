@@ -34,23 +34,33 @@ test.describe('formulários do painel', () => {
     await expect(page).toHaveURL(new RegExp(`/admin/produtos/${productId}`));
   });
 
-  test('marca nome e preço inválidos com descrição acessível', async ({ page, uniqueName }) => {
+  // O servidor só confere o preço depois que o nome passa na validação: os erros aparecem um de
+  // cada vez.
+  test('marca nome e depois preço inválidos com descrição acessível', async ({
+    page,
+    uniqueName,
+  }) => {
     await page.goto('/admin/produtos/novo');
-    await page.getByRole('textbox', { name: 'Nome do produto', exact: true }).fill('X');
-    await page.getByRole('textbox', { name: 'Preço' }).fill('preço inválido');
-    await page.getByRole('textbox', { name: 'Descrição' }).fill(uniqueName('formulario-invalido'));
-    await page.getByRole('button', { name: 'Coxinhas', exact: true }).click();
-    await page.getByRole('button', { name: 'Criar produto' }).filter({ visible: true }).click();
-
     const name = page.getByRole('textbox', { name: 'Nome do produto', exact: true });
     const price = page.getByRole('textbox', { name: 'Preço' });
+    const submit = page.getByRole('button', { name: 'Criar produto' }).filter({ visible: true });
+
+    await name.fill('X');
+    await price.fill('preço inválido');
+    await page.getByRole('textbox', { name: 'Descrição' }).fill(uniqueName('formulario-invalido'));
+    await page.getByRole('button', { name: 'Coxinhas', exact: true }).click();
+    await submit.click();
     await expect(name).toHaveAttribute('aria-invalid', 'true');
     await expect(name).toHaveAccessibleDescription('Informe o nome do produto.');
+    await expect(page.getByText('Informe o nome do produto.', { exact: true })).toBeVisible();
+
+    await name.fill(uniqueName('formulario-preco'));
+    await submit.click();
     await expect(price).toHaveAttribute('aria-invalid', 'true');
     await expect(price).toHaveAccessibleDescription('Informe um preço válido, como R$ 8,90.');
-    await expect(page.getByText('Informe o nome do produto.', { exact: true })).toBeVisible();
     await expect(
       page.getByText('Informe um preço válido, como R$ 8,90.', { exact: true }),
     ).toBeVisible();
+    await expect(page).toHaveURL(/\/admin\/produtos\/novo/);
   });
 });
