@@ -17,4 +17,4 @@ Salgae_Lanchonete_Obsidian/.obsidian/workspace.json
 playwright-report/
 test-results/
 apps/web/playwright/.auth/
-apps/web/lib/supabase/database.types.local.ts
+apps/web/src/lib/supabase/database.types.local.ts

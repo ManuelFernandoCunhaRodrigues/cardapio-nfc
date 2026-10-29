@@ -70,6 +70,11 @@ Depende do responsável: trocar o Root Directory dos projetos do site na Vercel 
   - O `next.config.ts` aponta `outputFileTracingRoot` e `turbopack.root` para a raiz, porque as dependências ficam no `node_modules` de lá; o ffmpeg continua entrando na função de vídeo.
   - O `.env.local` agora fica em `apps/web/.env.local`.
   - **Depende do responsável antes do merge:** na Vercel, o projeto `salgae-homologacao` precisa de *Root Directory = `apps/web`* (com "Include files outside the root directory" ligado). Sem isso, o stage não publica a `develop` nova (o site no ar não cai, fica na versão anterior). O `salgae-producao` só troca na promoção para a `main`.
+- **2026-10-28 — `apps/web` organizado por funcionalidade, com back e front separados em pastas.** O responsável comparou com uma estrutura de app Vite (`src/features/…`, `pages/`, `services/`). Decisão: **não trocar o Next.js por Vite**, porque o projeto depende de servidor (ffmpeg, Server Actions, páginas prontas no servidor para SEO e para abrir rápido, sessão renovada no `proxy.ts`). Ficou só a parte boa da proposta, a organização por funcionalidade.
+  - Código em `apps/web/src/`: `app/` (rotas), `features/` (`menu`, `products`, `categories`, `highlights`, `store`, `media`, `auth`, `admin`), `components/ui/`, `lib/` (infraestrutura: Supabase, SEO, CSP, logs, QR) e `proxy.ts`.
+  - Em cada funcionalidade: `server/` = back (Server Actions, Supabase, ffmpeg); `components/` e `client/` = front; `schemas/` e `rules/` = usados pelos dois lados. As Server Actions saíram de `app/admin/(painel)/*/actions.ts` para `features/*/server/actions.ts`; a rota de vídeo continua em `app/`.
+  - O `server/` de cada funcionalidade é o que vai para `apps/api`; `schemas/` e `rules/` vão para `packages/core`.
+  - Arquivos sem uso: nenhum arquivo de código versionado ficou sem uso (grafo de imports a partir das páginas, rotas, proxy, testes e scripts). As imagens e os vídeos não versionados em `apps/web/public/` e na raiz não são usados pelo código; ficam com o responsável decidir.
 - **Próximos:** PR 2.0 (prova de conceito do Hono com ffmpeg num projeto de teste da Vercel), PR 2.2 (`packages/core`), PR 2.3 (esqueleto de `apps/api`).
 
 ## Perguntas em aberto (respondidas em 2026-10-23, ver acima)

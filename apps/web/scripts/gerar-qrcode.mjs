@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import QRCode from 'qrcode';
 
-import { buildQrOptions, normalizeQrUrl, qrFileSlug } from '../lib/qr/options.ts';
+import { buildQrOptions, normalizeQrUrl, qrFileSlug } from '../src/lib/qr/options.ts';
 
 // `docs/` fica na raiz do monorepo, dois níveis acima de `apps/web`.
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));

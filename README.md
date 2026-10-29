@@ -80,12 +80,37 @@ supabase/       migrations, seed e testes SQL (compartilhado)
 docs/           documentação técnica; Salgae_Lanchonete_Obsidian/ — vault do projeto
 ```
 
-Dentro de `apps/web`:
+Dentro de `apps/web`, o código fica em `src/`, organizado por funcionalidade:
 
-- `app/(public)` — páginas do cardápio; `app/admin` — painel, Server Actions e a rota de vídeo.
-- `components/menu` e `components/admin` — interface de cada lado; `components/ui` — peças comuns.
-- `lib` — regras sem interface (ordenação, busca, horários, mídia, validadores), onde ficam os testes.
-- `e2e` — testes de ponta a ponta.
+```
+src/
+  app/              rotas do Next.js (páginas do cardápio, painel e a rota de vídeo)
+  features/
+    menu/           cardápio público
+    products/       produtos
+    categories/     categorias
+    highlights/     destaques do banner
+    store/          dados da loja e horário de funcionamento
+    media/          foto e vídeo (compactação com sharp e ffmpeg)
+    auth/           login e permissão de administrador
+    admin/          estrutura comum do painel
+  components/ui/    peças de interface comuns
+  lib/              infraestrutura: Supabase, SEO, CSP, logs, QR Code, formatação
+  proxy.ts          renovação da sessão, só em /admin
+```
+
+Cada funcionalidade separa o que roda no servidor do que é tela:
+
+| Pasta | Lado | O que tem |
+| --- | --- | --- |
+| `server/` | back | Server Actions, leitura e gravação no Supabase, ffmpeg |
+| `components/` | front | componentes React |
+| `client/` | front | código do navegador sem interface (reduzir foto, validar vídeo antes de enviar) |
+| `schemas/` e `rules/` | os dois | validações (zod) e regras puras, com os testes ao lado |
+
+O `server/` de cada funcionalidade é o que vai para `apps/api` quando a API entrar.
+
+Os testes de ponta a ponta ficam em `apps/web/e2e`.
 
 Na raiz, `supabase/migrations` guarda o esquema, as políticas e as funções, e `supabase/tests` os testes de RLS em SQL.
 
@@ -114,7 +139,7 @@ Na raiz, `supabase/migrations` guarda o esquema, as políticas e as funções, e
 
 **Vídeo sempre leve.** O arquivo bruto vai direto do navegador para um bucket privado por URL assinada. Uma rota do servidor confere o tipo real pela assinatura do arquivo, compacta com `ffmpeg` (H.264, até 720p, sem áudio, `faststart`) e publica o resultado, tipicamente de dezenas de megabytes para 1 a 3 MB. O bruto e os temporários são apagados sempre, com sucesso ou com erro.
 
-**Troca de mídia sem deixar item quebrado.** O arquivo novo é enviado, o registro passa a apontar para ele e só então o antigo é apagado — e apenas se nenhum outro registro o usar. Se a gravação falhar, o arquivo novo é removido e o item continua como estava (`lib/media/workflow.ts`).
+**Troca de mídia sem deixar item quebrado.** O arquivo novo é enviado, o registro passa a apontar para ele e só então o antigo é apagado — e apenas se nenhum outro registro o usar. Se a gravação falhar, o arquivo novo é removido e o item continua como estava (`src/features/media/server/workflow.ts`).
 
 **Reordenação atômica.** Trocar dois itens de posição é uma única instrução no banco, por uma função SQL. Ou as duas posições mudam, ou nenhuma.
 
@@ -122,15 +147,15 @@ Na raiz, `supabase/migrations` guarda o esquema, as políticas e as funções, e
 
 ## Qualidade
 
-- 174 testes unitários e de integração com Vitest (`npm test`), concentrados nas regras de `lib/` e na rota de vídeo. A cobertura é medida no CI e aparece no resumo do job: em 2026-10-14, 56% das linhas e 71% das funções de `lib/` e `app/`. Um piso logo abaixo disso faz o CI falhar se a cobertura cair.
+- 184 testes unitários e de integração com Vitest (`npm test`), concentrados nas regras de `src/features/` e na rota de vídeo. A cobertura é medida no CI e aparece no resumo do job: em 2026-10-14, 56% das linhas e 71% das funções do código de servidor e das regras. Um piso logo abaixo disso faz o CI falhar se a cobertura cair.
 - Testes de RLS em SQL (`supabase/tests/`), que rodam dentro de uma transação desfeita no fim e conferem o que visitante, usuário comum e administrador conseguem ler e escrever.
 - 12 testes de ponta a ponta com Playwright (`e2e/`): o cardápio no celular e, no painel, entrar, criar produto, reordenar, marcar em falta e sair, conferindo o efeito no cardápio.
 - CI no GitHub Actions a cada PR, em dois jobs. O primeiro confere formatação, lint, typecheck, testes e build. O segundo sobe o Supabase local, aplica todas as migrations em um banco vazio, confere se os tipos versionados batem com esse banco, roda os testes de RLS e depois os de ponta a ponta contra o build de produção.
 - Acessibilidade tratada como requisito: navegação por teclado, rótulos para leitor de tela e respeito a movimento reduzido. No Lighthouse móvel do stage, acessibilidade 100 e desempenho de 94 a 98 nas rotas públicas (medição de 2026-10-09, anterior ao redesign).
-- Cabeçalhos de segurança (`Content-Security-Policy`, `HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) e páginas de stage fora dos buscadores. A CSP (`lib/security/csp.ts`) só aceita scripts do próprio site, libera o Supabase apenas para imagens, vídeos e conexões, e os testes de ponta a ponta falham se alguma página tiver algo bloqueado por ela.
-- Erros do servidor registrados como uma linha JSON (`lib/observability.ts`), com evento e código do erro, para filtrar nos logs da Vercel.
+- Cabeçalhos de segurança (`Content-Security-Policy`, `HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) e páginas de stage fora dos buscadores. A CSP (`src/lib/security/csp.ts`) só aceita scripts do próprio site, libera o Supabase apenas para imagens, vídeos e conexões, e os testes de ponta a ponta falham se alguma página tiver algo bloqueado por ela.
+- Erros do servidor registrados como uma linha JSON (`src/lib/observability.ts`), com evento e código do erro, para filtrar nos logs da Vercel.
 - Dependabot abre, toda segunda-feira, PRs de atualização para a `develop`; eles passam pelo mesmo CI.
-- A renovação de sessão do Supabase (`proxy.ts`) roda só em `/admin`: as páginas do cardápio não fazem chamada ao Auth.
+- A renovação de sessão do Supabase (`src/proxy.ts`) roda só em `/admin`: as páginas do cardápio não fazem chamada ao Auth.
 
 ## Executar localmente
 
@@ -151,7 +176,7 @@ Os comandos rodam na raiz e repassam para o pacote certo. Preencha em `apps/web/
 | `npm run lint` | ESLint. |
 | `npm run typecheck` | TypeScript estrito, sem emitir arquivos. |
 | `npm test` | Testes com Vitest. |
-| `npm run test:coverage` | Os mesmos testes, com medição de cobertura de `lib/` e `app/` (relatório em `coverage/`). |
+| `npm run test:coverage` | Os mesmos testes, com medição de cobertura dos arquivos `.ts` de `src/` (relatório em `apps/web/coverage/`). |
 | `npm run test:db` | Testes SQL de RLS, Storage e reordenação contra o Supabase local. |
 | `npm run test:e2e` | Testes de ponta a ponta com Playwright, contra o build de produção. |
 | `npm run test:types-db` | Confere os tipos versionados contra os gerados do banco local (usado no CI). |
@@ -181,7 +206,7 @@ npx supabase db push
 
 `supabase/seed.sql` traz dados de exemplo para ambiente local ou stage. Não execute o seed em produção.
 
-Os tipos do banco usados pelo código ficam em `apps/web/lib/supabase/database.types.ts`. O arquivo é gerado pelo Supabase a partir do esquema; depois de uma migration nova, gere de novo (`npx supabase gen types typescript --project-id <ref-do-projeto> > apps/web/lib/supabase/database.types.ts`) em vez de editar à mão. Os três clientes (`lib/supabase/client.ts`, `server.ts` e `public.ts`) recebem esse tipo, então um nome de tabela, coluna ou função errado vira erro no `npm run typecheck`.
+Os tipos do banco usados pelo código ficam em `apps/web/src/lib/supabase/database.types.ts`. O arquivo é gerado pelo Supabase a partir do esquema; depois de uma migration nova, gere de novo (`npx supabase gen types typescript --project-id <ref-do-projeto> > apps/web/src/lib/supabase/database.types.ts`) em vez de editar à mão. Os três clientes (`src/lib/supabase/client.ts`, `server.ts` e `public.ts`) recebem esse tipo, então um nome de tabela, coluna ou função errado vira erro no `npm run typecheck`.
 
 ### Primeiro administrador
 

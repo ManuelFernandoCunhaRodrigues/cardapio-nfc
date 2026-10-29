@@ -5,7 +5,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 
 const source = path.resolve('public', 'brand', 'salgae-logo.webp');
-const appDirectory = path.resolve('app');
+const appDirectory = path.resolve('src', 'app');
 // Branco, como o fundo do próprio logo, para não formar uma faixa no ícone.
 const background = { r: 255, g: 255, b: 255, alpha: 1 };
 

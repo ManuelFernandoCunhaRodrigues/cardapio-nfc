@@ -78,7 +78,7 @@ jobs:
       # funções são as mesmas do arquivo versionado.
       - name: Tipos do banco em dia com as migrations
         run: |
-          supabase gen types typescript --local --schema public > apps/web/lib/supabase/database.types.local.ts
+          supabase gen types typescript --local --schema public > apps/web/src/lib/supabase/database.types.local.ts
           npm run test:types-db
       - name: Testes de banco (RLS, Storage e reordenação)
         run: bash scripts/testar-banco-local.sh

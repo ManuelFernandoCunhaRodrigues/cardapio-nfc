@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import type { NextConfig } from 'next';
 
-import { buildContentSecurityPolicy } from './lib/security/csp';
+import { buildContentSecurityPolicy } from './src/lib/security/csp';
 
 // Raiz do monorepo: as dependências ficam no `node_modules` de lá (npm workspaces).
 const monorepoRoot = path.resolve(__dirname, '../..');

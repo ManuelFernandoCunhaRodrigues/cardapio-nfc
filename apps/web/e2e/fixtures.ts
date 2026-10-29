@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { expect as baseExpect, test as base } from '@playwright/test';
 
-import type { Database } from '../lib/supabase/database.types';
+import type { Database } from '../src/lib/supabase/database.types';
 import { watchCspViolations } from './csp';
 
 export type { APIRequestContext, Page } from '@playwright/test';

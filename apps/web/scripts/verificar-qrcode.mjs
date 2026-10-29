@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import jsQR from 'jsqr';
 import sharp from 'sharp';
 
-import { normalizeQrUrl, qrFileSlug } from '../lib/qr/options.ts';
+import { normalizeQrUrl, qrFileSlug } from '../src/lib/qr/options.ts';
 
 const url = normalizeQrUrl(process.argv[2]);
 // `docs/` fica na raiz do monorepo, dois níveis acima de `apps/web`.
