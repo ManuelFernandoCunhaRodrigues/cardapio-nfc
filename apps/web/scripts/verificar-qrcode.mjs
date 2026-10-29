@@ -1,6 +1,7 @@
 // Decodifica o PNG do QR (tamanho original e reduzido a 256 px) e confere a URL.
 // Uso: npm run qr:verificar -- [url]   (sai com código 1 se não bater)
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import jsQR from 'jsqr';
 import sharp from 'sharp';
@@ -8,7 +9,9 @@ import sharp from 'sharp';
 import { normalizeQrUrl, qrFileSlug } from '../lib/qr/options.ts';
 
 const url = normalizeQrUrl(process.argv[2]);
-const file = path.resolve('docs', 'qr', `${qrFileSlug(url)}.png`);
+// `docs/` fica na raiz do monorepo, dois níveis acima de `apps/web`.
+const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
+const file = path.join(repoRoot, 'docs', 'qr', `${qrFileSlug(url)}.png`);
 
 async function decode(width) {
   const { data, info } = await sharp(file)

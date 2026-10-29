@@ -1,53 +1,33 @@
 {
-  "name": "salgae-lanchonete",
+  "name": "salgae",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@10.9.2",
   "engines": {
     "node": ">=22.0.0"
   },
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint .",
+    "dev": "npm run dev -w @salgae/web --",
+    "build": "npm run build -w @salgae/web",
+    "start": "npm run start -w @salgae/web --",
+    "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:coverage": "npm run test:coverage -w @salgae/web",
+    "test:e2e": "npm run test:e2e -w @salgae/web --",
     "test:db": "bash scripts/testar-banco-local.sh",
     "test:types-db": "tsc --noEmit -p tsconfig.tipos-do-banco.json",
-    "icones:gerar": "node scripts/gerar-icones.mjs",
-    "qr:gerar": "node --experimental-strip-types --no-warnings scripts/gerar-qrcode.mjs",
-    "qr:verificar": "node --experimental-strip-types --no-warnings scripts/verificar-qrcode.mjs"
-  },
-  "dependencies": {
-    "@supabase/ssr": "0.12.7",
-    "@supabase/supabase-js": "2.118.0",
-    "ffmpeg-static": "5.3.0",
-    "next": "16.4.2",
-    "react": "19.3.1",
-    "react-dom": "19.3.1",
-    "sharp": "0.35.5",
-    "zod": "4.6.7"
+    "icones:gerar": "npm run icones:gerar -w @salgae/web",
+    "qr:gerar": "npm run qr:gerar -w @salgae/web --",
+    "qr:verificar": "npm run qr:verificar -w @salgae/web --"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.13.0",
-    "@playwright/test": "1.64.1",
-    "@tailwindcss/postcss": "4.3.3",
-    "@types/node": "22.20.5",
-    "@types/qrcode": "1.5.6",
-    "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0",
-    "@vitest/coverage-v8": "5.0.5",
-    "eslint": "9.36.0",
-    "eslint-config-next": "16.4.2",
-    "jsqr": "1.4.0",
     "prettier": "3.9.10",
-    "qrcode": "1.5.4",
-    "tailwindcss": "4.3.3",
-    "typescript": "5.9.3",
-    "vitest": "5.0.5"
+    "typescript": "5.9.3"
   }
 }

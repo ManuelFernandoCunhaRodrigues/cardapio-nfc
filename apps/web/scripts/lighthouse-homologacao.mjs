@@ -1,9 +1,10 @@
 // Lighthouse mobile (4G simulado) nas rotas da homologação: 3 execuções por rota,
 // mediana por métrica, comparação com os limiares do plano H1/H2 do Épico 5.
-// Uso: node scripts/lighthouse-homologacao.mjs [baseUrl]   (sai com código 1 se algo reprovar)
+// Uso: node apps/web/scripts/lighthouse-homologacao.mjs [baseUrl]   (sai com código 1 se algo reprovar)
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const base = (process.argv[2] ?? 'https://salgae-homologacao.vercel.app').replace(/\/$/, '');
 const routes = [
@@ -15,7 +16,9 @@ const routes = [
 ];
 const publicRoutes = new Set(routes.filter((route) => !route.startsWith('/admin')));
 const RUNS = 3;
-const outDir = path.resolve('docs', 'testes', 'lighthouse');
+// `docs/` fica na raiz do monorepo, dois níveis acima de `apps/web`.
+const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
+const outDir = path.join(repoRoot, 'docs', 'testes', 'lighthouse');
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
 const median = (values) => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
@@ -56,17 +59,16 @@ await mkdir(outDir, { recursive: true });
 // Evidência sempre da execução atual: apaga relatórios brutos anteriores.
 for (const name of await readdir(outDir))
   if (/-\d\.json$/.test(name)) await rm(path.join(outDir, name));
-const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD']).toString().trim();
+const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: repoRoot })
+  .toString()
+  .trim();
 // A própria pasta de evidências (execucao.log, relatórios) não conta como alteração de código.
 const dirty =
-  execFileSync('git', [
-    'status',
-    '--porcelain',
-    '--untracked-files=no',
-    '--',
-    '.',
-    ':!docs/testes/lighthouse',
-  ])
+  execFileSync(
+    'git',
+    ['status', '--porcelain', '--untracked-files=no', '--', '.', ':!docs/testes/lighthouse'],
+    { cwd: repoRoot },
+  )
     .toString()
     .trim() !== '';
 const summary = [];

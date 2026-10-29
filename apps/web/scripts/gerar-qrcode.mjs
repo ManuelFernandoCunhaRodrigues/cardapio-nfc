@@ -2,13 +2,17 @@
 // Uso: npm run qr:gerar -- [url]   (padrão: homologação)
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import QRCode from 'qrcode';
 
 import { buildQrOptions, normalizeQrUrl, qrFileSlug } from '../lib/qr/options.ts';
 
+// `docs/` fica na raiz do monorepo, dois níveis acima de `apps/web`.
+const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
+
 const url = normalizeQrUrl(process.argv[2]);
-const dir = path.resolve('docs', 'qr');
+const dir = path.join(repoRoot, 'docs', 'qr');
 const base = path.join(dir, qrFileSlug(url));
 await mkdir(dir, { recursive: true });
 await writeFile(`${base}.svg`, await QRCode.toString(url, { ...buildQrOptions(), type: 'svg' }));

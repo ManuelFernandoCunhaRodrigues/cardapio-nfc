@@ -1,11 +1,18 @@
+import path from 'node:path';
+
 import type { NextConfig } from 'next';
 
 import { buildContentSecurityPolicy } from './lib/security/csp';
 
+// Raiz do monorepo: as dependências ficam no `node_modules` de lá (npm workspaces).
+const monorepoRoot = path.resolve(__dirname, '../..');
+
 const nextConfig: NextConfig = {
+  turbopack: { root: monorepoRoot },
+  outputFileTracingRoot: monorepoRoot,
   serverExternalPackages: ['ffmpeg-static'],
   outputFileTracingIncludes: {
-    '/admin/midia/video': ['./node_modules/ffmpeg-static/ffmpeg*'],
+    '/admin/midia/video': ['../../node_modules/ffmpeg-static/ffmpeg*'],
   },
   async headers() {
     return [

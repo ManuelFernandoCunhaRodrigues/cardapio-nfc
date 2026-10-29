@@ -6,7 +6,7 @@ tags:
   - arquitetura
   - ideia
   - aprovado
-atualizado: 2026-10-24
+atualizado: 2026-10-28
 ---
 # Mudança planejada — separar backend e frontend, Motion e Playwright
 
@@ -62,9 +62,15 @@ Depende do responsável: trocar o Root Directory dos projetos do site na Vercel 
 - **Comportamento observado (possível melhoria, não alterado):** no formulário de produto, com nome e preço errados ao mesmo tempo, o painel mostra só o erro do nome; o do preço aparece na tentativa seguinte.
 - **Segurança (PR #64, na develop e no stage):** Next 16.4.0 → 16.4.2 e Zod 4.6.5 → 4.6.7, corrigindo falhas críticas apontadas pelo `npm audit`. Falta promover para a produção.
 
-### Fase 2 — Separação: próxima
+### Fase 2 — Separação: em andamento
 
-Começa pela prova de conceito do Hono com ffmpeg na Vercel (PR 2.0), que precisa de um projeto de teste na Vercel.
+- **2026-10-28 — PR 2.1 (monorepo) antes da prova de conceito.** O responsável pediu para estruturar as pastas separando o front do back. O PR 2.1 veio primeiro porque não depende do resultado da prova de conceito: tanto o plano A (API com vídeo) quanto o plano B (vídeo fica no Next) usam o monorepo.
+  - O site foi movido com `git mv` para `apps/web` (pacote `@salgae/web`); a raiz virou npm workspaces e os comandos de sempre (`npm run dev`, `build`, `test`, `test:e2e`…) continuam na raiz, repassando para o pacote.
+  - `supabase/`, `docs/`, o vault e o teste de banco (`scripts/testar-banco-local.sh`) ficam na raiz.
+  - O `next.config.ts` aponta `outputFileTracingRoot` e `turbopack.root` para a raiz, porque as dependências ficam no `node_modules` de lá; o ffmpeg continua entrando na função de vídeo.
+  - O `.env.local` agora fica em `apps/web/.env.local`.
+  - **Depende do responsável antes do merge:** na Vercel, o projeto `salgae-homologacao` precisa de *Root Directory = `apps/web`* (com "Include files outside the root directory" ligado). Sem isso, o stage não publica a `develop` nova (o site no ar não cai, fica na versão anterior). O `salgae-producao` só troca na promoção para a `main`.
+- **Próximos:** PR 2.0 (prova de conceito do Hono com ffmpeg num projeto de teste da Vercel), PR 2.2 (`packages/core`), PR 2.3 (esqueleto de `apps/api`).
 
 ## Perguntas em aberto (respondidas em 2026-10-23, ver acima)
 

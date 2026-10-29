@@ -68,13 +68,26 @@ flowchart LR
   Actions -. revalidatePath .-> Publico
 ```
 
-Organização das pastas:
+Organização das pastas (monorepo com npm workspaces):
+
+```
+apps/
+  web/          site em Next.js: cardápio e painel (@salgae/web)
+  api/          API em Hono — a caminho (Fase 2 da separação backend/frontend)
+packages/
+  core/         validações, tipos do banco e regras comuns — a caminho
+supabase/       migrations, seed e testes SQL (compartilhado)
+docs/           documentação técnica; Salgae_Lanchonete_Obsidian/ — vault do projeto
+```
+
+Dentro de `apps/web`:
 
 - `app/(public)` — páginas do cardápio; `app/admin` — painel, Server Actions e a rota de vídeo.
 - `components/menu` e `components/admin` — interface de cada lado; `components/ui` — peças comuns.
 - `lib` — regras sem interface (ordenação, busca, horários, mídia, validadores), onde ficam os testes.
-- `supabase/migrations` — esquema, políticas e funções; `supabase/tests` — testes de RLS em SQL.
 - `e2e` — testes de ponta a ponta.
+
+Na raiz, `supabase/migrations` guarda o esquema, as políticas e as funções, e `supabase/tests` os testes de RLS em SQL.
 
 ## Rotas
 
@@ -125,11 +138,11 @@ Requisitos: Node.js 22 ou superior e um projeto Supabase.
 
 ```bash
 npm install
-cp .env.example .env.local
+cp apps/web/.env.example apps/web/.env.local
 npm run dev
 ```
 
-Preencha em `.env.local` a URL e a chave anônima/publicável do Supabase. A aplicação valida essas variáveis ao acessar o Supabase e informa claramente quando estiverem ausentes ou inválidas. Nunca coloque uma `service_role` em variáveis `NEXT_PUBLIC_`.
+Os comandos rodam na raiz e repassam para o pacote certo. Preencha em `apps/web/.env.local` a URL e a chave anônima/publicável do Supabase. A aplicação valida essas variáveis ao acessar o Supabase e informa claramente quando estiverem ausentes ou inválidas. Nunca coloque uma `service_role` em variáveis `NEXT_PUBLIC_`.
 
 | Comando | Finalidade |
 | --- | --- |
@@ -168,7 +181,7 @@ npx supabase db push
 
 `supabase/seed.sql` traz dados de exemplo para ambiente local ou stage. Não execute o seed em produção.
 
-Os tipos do banco usados pelo código ficam em `lib/supabase/database.types.ts`. O arquivo é gerado pelo Supabase a partir do esquema; depois de uma migration nova, gere de novo (`npx supabase gen types typescript --project-id <ref-do-projeto> > lib/supabase/database.types.ts`) em vez de editar à mão. Os três clientes (`lib/supabase/client.ts`, `server.ts` e `public.ts`) recebem esse tipo, então um nome de tabela, coluna ou função errado vira erro no `npm run typecheck`.
+Os tipos do banco usados pelo código ficam em `apps/web/lib/supabase/database.types.ts`. O arquivo é gerado pelo Supabase a partir do esquema; depois de uma migration nova, gere de novo (`npx supabase gen types typescript --project-id <ref-do-projeto> > apps/web/lib/supabase/database.types.ts`) em vez de editar à mão. Os três clientes (`lib/supabase/client.ts`, `server.ts` e `public.ts`) recebem esse tipo, então um nome de tabela, coluna ou função errado vira erro no `npm run typecheck`.
 
 ### Primeiro administrador
 
