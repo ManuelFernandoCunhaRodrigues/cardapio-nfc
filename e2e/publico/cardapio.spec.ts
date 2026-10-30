@@ -50,7 +50,7 @@ test.describe('cardápio público', () => {
 
     const coxinhas = page.locator('section#coxinhas');
     await expect(coxinhas.getByRole('heading', { level: 2, name: 'Coxinhas' })).toBeVisible();
-    await coxinhas.getByRole('link', { name: /^Coxinha de frango .*R\$\s7,00/ }).click();
+    await coxinhas.getByRole('link', { name: /^Coxinha de frango.*R\$\s7,00/ }).click();
 
     await expect(page).toHaveURL(/\/produto\/coxinha-de-frango$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Coxinha de frango' })).toBeVisible();
