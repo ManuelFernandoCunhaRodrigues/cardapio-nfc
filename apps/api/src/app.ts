@@ -2,7 +2,9 @@ import { Hono } from 'hono';
 
 import type { ApiEnv } from './config/env.js';
 import { createHealthModule } from './modules/health/health.module.js';
+import { createMenuModule } from './modules/menu/menu.module.js';
 import { createSessionModule } from './modules/session/session.module.js';
+import { createStoreModule } from './modules/store/store.module.js';
 import {
   corsMiddleware,
   errorHandler,
@@ -19,6 +21,7 @@ type AppDependencies = {
 
 export function createApp({ env, supabase }: AppDependencies) {
   const app = new Hono<AppHonoEnv>();
+  const publicClient = supabase.createPublicClient();
   app.use('*', requestIdMiddleware());
   app.use('*', corsMiddleware(env.WEB_ORIGIN));
   app.use('*', requestTimeoutMiddleware());
@@ -27,7 +30,9 @@ export function createApp({ env, supabase }: AppDependencies) {
     context.json({ status: 'error' as const, message: 'Recurso não encontrado.' }, 404),
   );
 
-  app.route('/health', createHealthModule(supabase.createPublicClient()));
+  app.route('/health', createHealthModule(publicClient));
+  app.route('/v1', createMenuModule(publicClient));
+  app.route('/v1', createStoreModule(publicClient));
   app.route('/v1/admin/session', createSessionModule(supabase));
   return app;
 }

@@ -1,12 +1,9 @@
 import type { MetadataRoute } from 'next';
+import type { PublicSitemapItem } from '@salgae/core/contracts/public-api';
 
 import type { SiteEnv } from '@/lib/env';
-import type { PublicSitemapProduct } from '@/features/menu/server/get-public-menu';
 
-export function buildSitemap(
-  siteUrl: URL,
-  products: PublicSitemapProduct[],
-): MetadataRoute.Sitemap {
+export function buildSitemap(siteUrl: URL, products: PublicSitemapItem[]): MetadataRoute.Sitemap {
   const toUrl = (path: string) => new URL(path, siteUrl).toString();
 
   return [
@@ -23,7 +20,7 @@ export function buildSitemap(
 export function getPublicSitemap(
   siteEnv: SiteEnv,
   siteUrl: URL | undefined,
-  products: PublicSitemapProduct[],
+  products: PublicSitemapItem[],
 ): MetadataRoute.Sitemap {
   if (siteEnv !== 'production' || !siteUrl) return [];
   return buildSitemap(siteUrl, products);

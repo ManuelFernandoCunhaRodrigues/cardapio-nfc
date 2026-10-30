@@ -6,7 +6,7 @@ import { MediaImage } from '@/features/media/components/media-image';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
-import { getPublicMenu, getPublicStoreSettings } from '@/features/menu/server/get-public-menu';
+import { getPublicMenu, getPublicStore } from '@/lib/api/public-api-client';
 import { sortProductsForHome } from '@salgae/core/rules/product-sort';
 
 export const revalidate = 60;
@@ -26,9 +26,8 @@ const categoryEmoji: Record<string, string> = {
 };
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const [menu, settings] = await Promise.all([getPublicMenu(), getPublicStoreSettings()]);
-  const menuFailed = menu.categories.error || menu.products.error || menu.highlights.error;
-  const products = menu.products.data ?? [];
+  const [menu, settings] = await Promise.all([getPublicMenu(), getPublicStore()]);
+  const products = menu.products;
   const { preview } = (await searchParams) ?? {};
   const localComboPreview = process.env.NODE_ENV === 'development' && preview === 'combo';
   const highlights = localComboPreview
@@ -41,9 +40,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           target: '/cardapio#combos',
           sort_order: -1,
         },
-        ...(menu.highlights.data ?? []),
+        ...menu.highlights,
       ]
-    : (menu.highlights.data ?? []);
+    : menu.highlights;
   const featured = sortProductsForHome(products).slice(0, 8);
 
   return (
@@ -56,76 +55,65 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <Icon className="text-muted" name="search" />
         <span>Busque seu salgado favorito</span>
       </Link>
-      {settings?.notice ? (
+      {settings.notice ? (
         <p className="mt-3 flex items-center gap-2 rounded-xl bg-amber-soft px-3.5 py-2 text-xs font-bold leading-4 text-ink">
           <Icon height={16} name="info" width={16} />
           {settings.notice}
         </p>
       ) : null}
-      {menuFailed ? (
-        <section className="mt-5 rounded-card border border-border bg-white p-5">
-          <h1 className="disp text-xl font-bold text-ink">O cardápio está dando uma pausa</h1>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            Tente atualizar em instantes ou consulte a equipe no balcão.
-          </p>
-        </section>
-      ) : (
-        <>
-          <HighlightBanner highlights={highlights} />
-          <nav
-            aria-label="Categorias"
-            className="-mx-4 mt-3 flex gap-3.5 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      <HighlightBanner highlights={highlights} />
+      <nav
+        aria-label="Categorias"
+        className="-mx-4 mt-3 flex gap-3.5 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {menu.categories.map((category) => (
+          <Link
+            className="flex w-[52px] shrink-0 flex-col items-center gap-1.5 text-center font-[family-name:var(--font-poppins)] text-xs font-medium text-ink focus-visible:rounded-lg focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
+            href={`/cardapio#${category.slug}`}
+            key={category.id}
           >
-            {(menu.categories.data ?? []).map((category) => (
-              <Link
-                className="flex w-[52px] shrink-0 flex-col items-center gap-1.5 text-center font-[family-name:var(--font-poppins)] text-xs font-medium text-ink focus-visible:rounded-lg focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
-                href={`/cardapio#${category.slug}`}
-                key={category.id}
-              >
-                <span className="grid size-[52px] overflow-hidden rounded-full bg-white shadow-card">
-                  {category.image_path ? (
-                    <MediaImage
-                      alt=""
-                      className="h-full w-full"
-                      name={category.name}
-                      src={getPublicImageVariantUrl('product-images', category.image_path, 'card')}
-                    />
-                  ) : (
-                    <span aria-hidden="true" className="grid place-items-center text-2xl">
-                      {categoryEmoji[category.slug] ?? '🍽️'}
-                    </span>
-                  )}
+            <span className="grid size-[52px] overflow-hidden rounded-full bg-white shadow-card">
+              {category.image_path ? (
+                <MediaImage
+                  alt=""
+                  className="h-full w-full"
+                  name={category.name}
+                  src={getPublicImageVariantUrl('product-images', category.image_path, 'card')}
+                />
+              ) : (
+                <span aria-hidden="true" className="grid place-items-center text-2xl">
+                  {categoryEmoji[category.slug] ?? '🍽️'}
                 </span>
-                <span className="line-clamp-1 w-16">{category.name}</span>
-              </Link>
+              )}
+            </span>
+            <span className="line-clamp-1 w-16">{category.name}</span>
+          </Link>
+        ))}
+      </nav>
+      <section className="mt-5" aria-labelledby="mais-pedidos">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="disp text-lg font-semibold text-ink" id="mais-pedidos">
+            Mais pedidos
+          </h2>
+          <Link
+            className="-my-3 inline-flex min-h-11 items-center gap-1 py-3 font-[family-name:var(--font-poppins)] text-sm font-semibold text-brand-strong focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
+            href="/cardapio"
+          >
+            Ver todos <Icon height={16} name="arrow" width={16} />
+          </Link>
+        </div>
+        {featured.length ? (
+          <ProductRow ariaLabel="Produtos mais pedidos" className="mt-1">
+            {featured.map((product) => (
+              <ProductCard compact key={product.id} product={product} />
             ))}
-          </nav>
-          <section className="mt-5" aria-labelledby="mais-pedidos">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="disp text-lg font-semibold text-ink" id="mais-pedidos">
-                Mais pedidos
-              </h2>
-              <Link
-                className="-my-3 inline-flex min-h-11 items-center gap-1 py-3 font-[family-name:var(--font-poppins)] text-sm font-semibold text-brand-strong focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
-                href="/cardapio"
-              >
-                Ver todos <Icon height={16} name="arrow" width={16} />
-              </Link>
-            </div>
-            {featured.length ? (
-              <ProductRow ariaLabel="Produtos mais pedidos" className="mt-1">
-                {featured.map((product) => (
-                  <ProductCard compact key={product.id} product={product} />
-                ))}
-              </ProductRow>
-            ) : (
-              <p className="mt-3 rounded-product bg-white p-4 text-sm text-muted">
-                Ainda não há itens disponíveis. Fale com a equipe no balcão.
-              </p>
-            )}
-          </section>
-        </>
-      )}
+          </ProductRow>
+        ) : (
+          <p className="mt-3 rounded-product bg-white p-4 text-sm text-muted">
+            Ainda não há itens disponíveis. Fale com a equipe no balcão.
+          </p>
+        )}
+      </section>
     </main>
   );
 }

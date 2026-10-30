@@ -1,31 +1,14 @@
 import { CategoryNav } from '@/features/menu/components/category-nav';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
-import { getPublicCategories, getPublicProducts } from '@/features/menu/server/get-public-menu';
+import { getPublicMenu } from '@/lib/api/public-api-client';
 import { formatItemCount } from '@/features/menu/rules/presentation';
 import { sortProductsByAvailability } from '@salgae/core/rules/product-sort';
 
 export const revalidate = 60;
 
 export default async function CardapioPage() {
-  const [categoriesResult, productsResult] = await Promise.all([
-    getPublicCategories(),
-    getPublicProducts(),
-  ]);
-  if (categoriesResult.error || productsResult.error)
-    return (
-      <main className="p-4">
-        <h1 className="disp text-2xl font-bold text-ink">Cardápio</h1>
-        <section className="mt-5 rounded-card border border-border bg-white p-5">
-          <h2 className="disp text-xl font-bold text-ink">Não foi possível carregar agora</h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            Atualize a página em alguns instantes ou consulte a equipe no balcão.
-          </p>
-        </section>
-      </main>
-    );
-  const categories = categoriesResult.data;
-  const products = productsResult.data;
+  const { categories, products } = await getPublicMenu();
   const productsByCategory = new Map(
     categories.map((category) => [
       category.id,

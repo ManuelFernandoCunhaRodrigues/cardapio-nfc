@@ -1,6 +1,8 @@
 import { revalidatePath } from 'next/cache';
 import type { z } from 'zod';
 
+import { invalidateMenuCache } from '@/lib/cache/invalidate-public-cache';
+
 type ActionStateWithFieldErrors = {
   status: 'idle' | 'success' | 'error';
   message?: string;
@@ -31,6 +33,7 @@ export function formError<TState extends ActionStateWithFieldErrors>(
 }
 
 export function revalidateCatalog(areas: readonly CatalogArea[], productId?: string): void {
+  invalidateMenuCache(productId);
   revalidatePath('/', 'layout');
   revalidatePath('/admin');
   areas.forEach((area) => revalidatePath(`/admin/${area}`));

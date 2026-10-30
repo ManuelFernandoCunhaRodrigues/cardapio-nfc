@@ -10,9 +10,26 @@ const supabaseEnvSchema = z.object({
 });
 
 const siteEnvSchema = z.enum(['production', 'staging']);
+const apiEnvSchema = z.object({
+  API_URL: z.string().url('API_URL deve conter a URL válida da API.'),
+});
 
 export type SupabaseEnv = z.infer<typeof supabaseEnvSchema>;
 export type SiteEnv = z.infer<typeof siteEnvSchema>;
+export type ApiEnv = z.infer<typeof apiEnvSchema>;
+
+export function getApiEnv(): ApiEnv {
+  if (!process.env.API_URL) {
+    throw new Error('Configuração da API ausente. Defina API_URL no ambiente do servidor.');
+  }
+  const parsed = apiEnvSchema.safeParse({ API_URL: process.env.API_URL });
+  if (!parsed.success) {
+    throw new Error(
+      `Configuração da API ausente ou inválida. ${parsed.error.issues.map((issue) => issue.message).join(' ')}`,
+    );
+  }
+  return { API_URL: parsed.data.API_URL.replace(/\/$/, '') };
+}
 
 export function getSiteEnv(): SiteEnv {
   const parsed = siteEnvSchema.safeParse(process.env.NEXT_PUBLIC_SITE_ENV);

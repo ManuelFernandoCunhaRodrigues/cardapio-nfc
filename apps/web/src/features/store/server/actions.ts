@@ -7,6 +7,7 @@ import { formError } from '@/features/admin/server/action-helpers';
 import { requireAdmin } from '@/features/auth/server/require-admin';
 import { buildOpeningHours } from '@/features/admin/rules/panel';
 import { reportServerError } from '@/lib/observability';
+import { invalidateStoreCache } from '@/lib/cache/invalidate-public-cache';
 import { createClient } from '@/lib/supabase/server';
 import { storeSettingsFormSchema } from '@salgae/core/schemas/store-settings';
 
@@ -39,6 +40,7 @@ export async function updateStoreStatusOverride(
     revalidatePath('/admin', 'layout');
     revalidatePath('/admin/loja');
     revalidatePath('/', 'layout');
+    invalidateStoreCache();
     return {
       status: 'success',
       message:
@@ -101,6 +103,7 @@ export async function updateStoreSettings(
     }
     revalidatePath('/admin/loja');
     revalidatePath('/', 'layout');
+    invalidateStoreCache();
     return { status: 'success', message: 'Dados da loja salvos com sucesso.' };
   } catch (error) {
     reportServerError('store_settings_update_exception', error);

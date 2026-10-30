@@ -17,7 +17,7 @@ vi.mock('@/features/auth/server/require-admin', () => ({
   getAdminAuthorization: mocks.authorization,
 }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: mocks.createClient }));
-vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }));
+vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath, updateTag: vi.fn() }));
 vi.mock('@/lib/observability', () => ({ reportServerError: mocks.report }));
 vi.mock('@/features/media/server/video', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/features/media/server/video')>();

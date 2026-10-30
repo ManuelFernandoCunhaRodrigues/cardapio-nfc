@@ -47,7 +47,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/features/auth/server/require-admin', () => ({ requireAdmin: mocks.requireAdmin }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: mocks.createClient }));
-vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }));
+vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath, updateTag: vi.fn() }));
 vi.mock('@/lib/observability', () => ({ reportServerError: mocks.reportServerError }));
 
 const productId = '11111111-1111-4111-8111-111111111111';

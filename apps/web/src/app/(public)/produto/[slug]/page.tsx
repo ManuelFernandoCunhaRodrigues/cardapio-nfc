@@ -7,13 +7,7 @@ import { MediaVideo } from '@/features/media/components/media-video';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
 import { getBadgeLabel } from '@salgae/core/rules/badges';
-import {
-  getPublicProduct,
-  getPublicProductBySlug,
-  getPublicProductCategory,
-  getPublicProductsByCategory,
-  getPublicSitemapProducts,
-} from '@/features/menu/server/get-public-menu';
+import { getPublicProduct, getPublicSitemap } from '@/lib/api/public-api-client';
 import { sortProductsByAvailability } from '@salgae/core/rules/product-sort';
 import { getPublicImageVariantUrl, getPublicMediaUrl } from '@/features/media/rules/media-urls';
 import { getProductMetadata } from '@/lib/seo/product-metadata';
@@ -25,53 +19,26 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const result = UUID_PATTERN.test(slug)
-    ? await getPublicProduct(slug)
-    : await getPublicProductBySlug(slug);
+  const result = await getPublicProduct(slug);
   return getProductMetadata(
-    result.data,
-    getPublicImageVariantUrl('product-images', result.data?.image_path, 'detail'),
+    result?.product ?? null,
+    getPublicImageVariantUrl('product-images', result?.product.image_path, 'detail'),
   );
 }
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  const result = await getPublicSitemapProducts();
-  return result.data?.map(({ slug }) => ({ slug })) ?? [];
-}
-
-function ReadError() {
-  return (
-    <main className="p-4 pt-6">
-      <section className="rounded-card bg-white p-5">
-        <h1 className="disp text-xl font-bold text-ink">Não foi possível abrir este item</h1>
-        <p className="mt-2 text-sm leading-6 text-muted">Tente novamente em instantes.</p>
-        <BackToMenu />
-      </section>
-    </main>
-  );
+  const items = await getPublicSitemap();
+  return items.map(({ slug }) => ({ slug }));
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const isLegacyId = UUID_PATTERN.test(slug);
-  const productResult = isLegacyId
-    ? await getPublicProduct(slug)
-    : await getPublicProductBySlug(slug);
-  if (productResult.error) return <ReadError />;
-  const product = productResult.data;
-  if (!product) notFound();
+  const productPage = await getPublicProduct(slug);
+  if (!productPage) notFound();
+  const { product, category } = productPage;
   if (isLegacyId) permanentRedirect(`/produto/${product.slug}`);
-
-  const [categoryResult, categoryProductsResult] = await Promise.all([
-    getPublicProductCategory(product.category_id),
-    getPublicProductsByCategory(product.category_id),
-  ]);
-  if (categoryResult.error || categoryProductsResult.error) return <ReadError />;
-
-  const category = categoryResult.data;
-  const related = sortProductsByAvailability(
-    categoryProductsResult.data.filter((item) => item.id !== product.id),
-  );
+  const related = sortProductsByAvailability(productPage.relatedProducts);
   const badge = getBadgeLabel(product.badge);
   const cardImage = getPublicImageVariantUrl('product-images', product.image_path, 'card');
   const detailImage = getPublicImageVariantUrl('product-images', product.image_path, 'detail');

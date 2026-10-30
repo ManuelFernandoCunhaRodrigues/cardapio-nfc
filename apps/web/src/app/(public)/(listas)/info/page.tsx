@@ -2,25 +2,13 @@ import Link from 'next/link';
 
 import { Icon, type IconName } from '@/features/menu/components/icons';
 import { StoreInfoStatus, StoreOpeningHours } from '@/features/store/components/store-status-live';
-import { getPublicStoreSettings } from '@/features/menu/server/get-public-menu';
+import { getPublicStore } from '@/lib/api/public-api-client';
 import { selectPublicStoreStatusSettings } from '@/features/store/rules/client-status';
 
 export const revalidate = 60;
 
 export default async function InfoPage() {
-  const settings = await getPublicStoreSettings();
-  if (!settings)
-    return (
-      <main className="p-4 pt-1">
-        <h1 className="disp text-2xl font-bold text-ink">Informações</h1>
-        <section className="mt-5 rounded-card bg-white p-5">
-          <h2 className="disp text-xl font-bold text-ink">Informações indisponíveis agora</h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            Tente novamente em instantes ou fale com a equipe no balcão.
-          </p>
-        </section>
-      </main>
-    );
+  const settings = await getPublicStore();
 
   const initialNow = new Date().toISOString();
   const publicSettings = selectPublicStoreStatusSettings(settings);

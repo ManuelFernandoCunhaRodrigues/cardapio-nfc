@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./contracts/*": "./src/contracts/*.ts",
+    "./contracts/*.test": null,
     "./database/*": "./src/database/*.ts",
     "./rules/*": "./src/rules/*.ts",
     "./rules/*.test": null,
