@@ -16,7 +16,7 @@ Salgae_Lanchonete_Obsidian/.obsidian/workspace.json
 # Saídas do Playwright
 playwright-report/
 test-results/
-apps/web/playwright/.auth/
+e2e/playwright/.auth/
 apps/web/src/lib/supabase/database.types.local.ts
 
 # Material de apoio local (fotos, vídeos, protótipos) que o código não usa

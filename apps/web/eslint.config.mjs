@@ -10,8 +10,6 @@ const eslintConfig = [
       'node_modules/**',
       'coverage/**',
       'next-env.d.ts',
-      'playwright-report/**',
-      'test-results/**',
       'src/lib/supabase/database.types.local.ts',
     ],
   },

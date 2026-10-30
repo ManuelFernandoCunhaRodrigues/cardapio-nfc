@@ -2,8 +2,8 @@ import path from 'node:path';
 
 import { expect, test, type AdminDb, type Page } from '../fixtures';
 
-const PHOTO_FILE = path.resolve('e2e/arquivos/foto-teste.jpg');
-const VIDEO_FILE = path.resolve('e2e/arquivos/video-teste.mp4');
+const PHOTO_FILE = path.join(__dirname, '../arquivos/foto-teste.jpg');
+const VIDEO_FILE = path.join(__dirname, '../arquivos/video-teste.mp4');
 
 async function createProduct(page: Page, adminDb: AdminDb, name: string) {
   await page.goto('/admin/produtos/novo');

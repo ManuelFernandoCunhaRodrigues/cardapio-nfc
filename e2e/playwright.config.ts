@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Fora do CI, os testes usam as mesmas variáveis do app.
+// Fora do CI, os testes usam as mesmas variáveis do site.
 try {
-  process.loadEnvFile('.env.local');
+  process.loadEnvFile('../apps/web/.env.local');
 } catch {
   // No CI, as variáveis são definidas pelo próprio job.
 }
@@ -14,7 +14,7 @@ const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
 const adminStorageState = 'playwright/.auth/admin.json';
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: '.',
   // O painel altera dados que o cardápio lê: um arquivo por vez, na ordem dos projetos. Só o
   // `painel-desktop` grava; os demais projetos apenas leem.
   fullyParallel: false,
@@ -72,7 +72,8 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: `npm run start -- --port ${port}`,
+        command: `npm run start -w @salgae/web -- --port ${port}`,
+        cwd: '..',
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

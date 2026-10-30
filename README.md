@@ -110,7 +110,7 @@ Cada funcionalidade separa o que roda no servidor do que é tela:
 
 O `server/` de cada funcionalidade é o que vai para `apps/api` quando a API entrar.
 
-Os testes de ponta a ponta ficam em `apps/web/e2e`.
+Os testes de ponta a ponta ficam em `e2e/` (pacote `@salgae/e2e`), na raiz, porque testam o sistema inteiro.
 
 Na raiz, `supabase/migrations` guarda o esquema, as políticas e as funções, e `supabase/tests` os testes de RLS em SQL.
 
@@ -149,7 +149,7 @@ Na raiz, `supabase/migrations` guarda o esquema, as políticas e as funções, e
 
 - 184 testes unitários e de integração com Vitest (`npm test`), concentrados nas regras de `src/features/` e na rota de vídeo. A cobertura é medida no CI e aparece no resumo do job: em 2026-10-14, 56% das linhas e 71% das funções do código de servidor e das regras. Um piso logo abaixo disso faz o CI falhar se a cobertura cair.
 - Testes de RLS em SQL (`supabase/tests/`), que rodam dentro de uma transação desfeita no fim e conferem o que visitante, usuário comum e administrador conseguem ler e escrever.
-- 12 testes de ponta a ponta com Playwright (`e2e/`): o cardápio no celular e, no painel, entrar, criar produto, reordenar, marcar em falta e sair, conferindo o efeito no cardápio.
+- 56 testes de ponta a ponta com Playwright (`e2e/`): cardápio no celular e no computador, painel (categorias, destaques, loja, produtos, foto e vídeo), cache, formulários, acessibilidade com axe, menos movimento e sair, conferindo o efeito no cardápio.
 - CI no GitHub Actions a cada PR, em dois jobs. O primeiro confere formatação, lint, typecheck, testes e build. O segundo sobe o Supabase local, aplica todas as migrations em um banco vazio, confere se os tipos versionados batem com esse banco, roda os testes de RLS e depois os de ponta a ponta contra o build de produção.
 - Acessibilidade tratada como requisito: navegação por teclado, rótulos para leitor de tela e respeito a movimento reduzido. No Lighthouse móvel do stage, acessibilidade 100 e desempenho de 94 a 98 nas rotas públicas (medição de 2026-10-09, anterior ao redesign).
 - Cabeçalhos de segurança (`Content-Security-Policy`, `HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) e páginas de stage fora dos buscadores. A CSP (`src/lib/security/csp.ts`) só aceita scripts do próprio site, libera o Supabase apenas para imagens, vídeos e conexões, e os testes de ponta a ponta falham se alguma página tiver algo bloqueado por ela.
