@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+import { apiPort, apiURL } from './env';
+
 // Fora do CI, os testes usam as mesmas variáveis do site.
 try {
   process.loadEnvFile('../apps/web/.env.local');
@@ -7,8 +9,9 @@ try {
   // No CI, as variáveis são definidas pelo próprio job.
 }
 
-// Os testes de ponta a ponta rodam contra o build de produção (`next start`) ligado ao Supabase
-// local (`supabase start`), com os dados de `supabase/seed.sql`.
+// Os testes de ponta a ponta rodam contra os builds de produção da API e do site ligados ao
+// Supabase local (`supabase start`), com os dados de `supabase/seed.sql`. Com E2E_API_URL ou
+// E2E_BASE_URL definidos, usam o servidor que já está no ar (o CI sobe a API antes do build do site).
 const port = Number(process.env.E2E_PORT ?? 3000);
 const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
 const adminStorageState = 'playwright/.auth/admin.json';
@@ -28,6 +31,10 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
+    {
+      name: 'api',
+      testMatch: /api\/.*\.spec\.ts/,
+    },
     {
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
@@ -69,13 +76,34 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: process.env.E2E_BASE_URL
-    ? undefined
-    : {
-        command: `npm run start -w @salgae/web -- --port ${port}`,
-        cwd: '..',
-        url: baseURL,
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      },
+  webServer: [
+    ...(process.env.E2E_API_URL
+      ? []
+      : [
+          {
+            command: 'npm run start -w @salgae/api',
+            cwd: '..',
+            url: `${apiURL}/health`,
+            reuseExistingServer: !process.env.CI,
+            timeout: 60_000,
+            env: {
+              PORT: String(apiPort),
+              SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+              SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+              WEB_ORIGIN: baseURL,
+            },
+          },
+        ]),
+    ...(process.env.E2E_BASE_URL
+      ? []
+      : [
+          {
+            command: `npm run start -w @salgae/web -- --port ${port}`,
+            cwd: '..',
+            url: baseURL,
+            reuseExistingServer: !process.env.CI,
+            timeout: 120_000,
+          },
+        ]),
+  ],
 });

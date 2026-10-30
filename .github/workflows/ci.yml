@@ -39,7 +39,8 @@ jobs:
         if: always()
         working-directory: apps/web
         run: node scripts/resumo-cobertura.mjs >> "$GITHUB_STEP_SUMMARY"
-      - run: npm run build
+      # O build do site busca dados na API; ele roda só no job de ponta a ponta, com a API no ar.
+      - run: npm run build -w @salgae/api
 
   banco-e-e2e:
     name: banco local e ponta a ponta
@@ -48,6 +49,8 @@ jobs:
     env:
       # Login que só existe no banco local criado neste job.
       E2E_ADMIN_EMAIL: admin@salgae.test
+      E2E_API_URL: http://127.0.0.1:4000
+      API_URL: http://127.0.0.1:4000
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
     steps:
       - uses: actions/checkout@v7
@@ -83,7 +86,17 @@ jobs:
       - name: Testes de banco (RLS, Storage e reordenação)
         run: bash scripts/testar-banco-local.sh
       - run: npx playwright install --with-deps chromium
-      - run: npm run build
+      - run: npm run build -w @salgae/api
+      - name: Sobe a API e espera o /health
+        run: |
+          PORT=4000 SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL"             SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY"             WEB_ORIGIN="$NEXT_PUBLIC_SITE_URL"             nohup npm run start -w @salgae/api > "$RUNNER_TEMP/api.log" 2>&1 &
+          for attempt in $(seq 1 60); do
+            curl -fsS "$E2E_API_URL/health" && exit 0
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/api.log"
+          exit 1
+      - run: npm run build -w @salgae/web
       - name: Testes de ponta a ponta
         run: npm run test:e2e
       - uses: actions/upload-artifact@v7
@@ -93,4 +106,5 @@ jobs:
           path: |
             e2e/playwright-report/
             e2e/test-results/
+            ${{ runner.temp }}/api.log
           retention-days: 7
