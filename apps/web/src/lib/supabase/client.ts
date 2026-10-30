@@ -1,7 +1,7 @@
 import { createBrowserClient } from '@supabase/ssr';
 
 import { getSupabaseEnv } from '@/lib/env';
-import type { Database } from '@/lib/supabase/database.types';
+import type { Database } from '@salgae/core/database/database.types';
 
 export function createClient() {
   const env = getSupabaseEnv();

@@ -3,11 +3,11 @@
 import { z } from 'zod';
 
 import { formError, revalidateCatalog } from '@/features/admin/server/action-helpers';
-import { swapSortOrders } from '@/features/admin/rules/reorder';
+import { swapSortOrders } from '@salgae/core/rules/reorder';
 import { requireAdmin } from '@/features/auth/server/require-admin';
 import { reportServerError } from '@/lib/observability';
 import { createClient } from '@/lib/supabase/server';
-import { categoryFormSchema } from '@/features/categories/schemas/category';
+import { categoryFormSchema } from '@salgae/core/schemas/category';
 
 import type { CategoryActionState } from './action-state';
 

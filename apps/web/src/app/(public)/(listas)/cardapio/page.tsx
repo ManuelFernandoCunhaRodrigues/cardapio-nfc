@@ -3,7 +3,7 @@ import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
 import { getPublicCategories, getPublicProducts } from '@/features/menu/server/get-public-menu';
 import { formatItemCount } from '@/features/menu/rules/presentation';
-import { sortProductsByAvailability } from '@/features/menu/rules/sort';
+import { sortProductsByAvailability } from '@salgae/core/rules/product-sort';
 
 export const revalidate = 60;
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { productFormSchema, productSchema } from '@/features/products/schemas/product';
+import { productFormSchema, productSchema } from './product';
 
 const product = {
   id: 'b76b1cd3-7525-4f9f-8e90-0c14e66bd00a',

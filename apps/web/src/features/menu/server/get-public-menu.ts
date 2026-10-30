@@ -3,7 +3,7 @@ import { cache } from 'react';
 import { reportServerError } from '@/lib/observability';
 import { createPublicClient } from '@/lib/supabase/public';
 import { getStoreSettings } from '@/features/store/server/get-store-settings';
-import { productSchema } from '@/features/products/schemas/product';
+import { productSchema } from '@salgae/core/schemas/product';
 
 import type { MenuCategory, MenuHighlight, MenuProduct } from '@/features/menu/types';
 

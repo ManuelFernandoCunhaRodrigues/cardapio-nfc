@@ -8,7 +8,7 @@ import { requireAdmin } from '@/features/auth/server/require-admin';
 import { buildOpeningHours } from '@/features/admin/rules/panel';
 import { reportServerError } from '@/lib/observability';
 import { createClient } from '@/lib/supabase/server';
-import { storeSettingsFormSchema } from '@/features/store/schemas/store-settings';
+import { storeSettingsFormSchema } from '@salgae/core/schemas/store-settings';
 
 import type { StoreSettingsActionState } from './action-state';
 

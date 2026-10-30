@@ -21,5 +21,3 @@ export const categoryFormSchema = z.object({
   description: nullableText,
   is_active: z.boolean(),
 });
-
-export type CategoryFormValues = z.infer<typeof categoryFormSchema>;

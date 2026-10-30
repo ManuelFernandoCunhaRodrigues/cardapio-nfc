@@ -1,4 +1,4 @@
-import { getStoreStatus, type StatusSettings } from '@/features/store/rules/opening-hours';
+import { getStoreStatus, type StatusSettings } from '@salgae/core/rules/opening-hours';
 
 export type PublicStoreStatusSettings = StatusSettings;
 

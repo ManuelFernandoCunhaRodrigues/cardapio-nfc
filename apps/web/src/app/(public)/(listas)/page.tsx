@@ -7,7 +7,7 @@ import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import { getPublicMenu, getPublicStoreSettings } from '@/features/menu/server/get-public-menu';
-import { sortProductsForHome } from '@/features/menu/rules/sort';
+import { sortProductsForHome } from '@salgae/core/rules/product-sort';
 
 export const revalidate = 60;
 

@@ -8,7 +8,7 @@ import { updateStoreSettings } from '@/features/store/server/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { copyOpeningHourToEveryDay, type OpeningHourInput } from '@/features/admin/rules/panel';
-import type { StoreSettings } from '@/features/store/schemas/store-settings';
+import type { StoreSettings } from '@salgae/core/schemas/store-settings';
 
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 

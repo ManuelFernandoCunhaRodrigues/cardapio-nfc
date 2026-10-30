@@ -1,4 +1,4 @@
-import type { Product } from '@/features/products/schemas/product';
+import type { Product } from '@salgae/core/schemas/product';
 
 export type MenuCategory = {
   id: string;

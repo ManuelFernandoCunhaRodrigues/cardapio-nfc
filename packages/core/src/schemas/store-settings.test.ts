@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { storeSettingsFormSchema } from '@/features/store/schemas/store-settings';
+import { storeSettingsFormSchema } from './store-settings';
 
 const validSettings = {
   name: ' Salgaê Lanchonete ',

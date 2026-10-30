@@ -18,17 +18,19 @@ import { Input } from '@/components/ui/input';
 import type { AdminCategory, AdminProduct } from '@/features/admin/server/catalog';
 import {
   creationProgressSteps,
-  fieldsFromProductSituation,
-  productSituationFromFields,
   runProductCreationFlow,
   type CreationStage,
-  type ProductSituation,
 } from '@/features/admin/rules/panel';
+import {
+  fieldsFromProductSituation,
+  productSituationFromFields,
+  type ProductSituation,
+} from '@salgae/core/rules/product-situation';
 import {
   friendlyVideoError,
   uploadProductVideoFile,
 } from '@/features/media/client/product-media-client';
-import { parsePriceBRL } from '@/lib/utils/parse-price';
+import { parsePriceBRL } from '@salgae/core/rules/parse-price';
 
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';

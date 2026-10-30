@@ -1,24 +1,8 @@
 import type { AdminProduct } from '@/features/admin/server/catalog';
 
-export type ProductSituation = 'menu' | 'unavailable' | 'hidden';
 export type ProductFilter = 'all' | 'unavailable' | 'without-image' | 'hidden';
 export type AttentionReason = 'unavailable' | 'without-image';
 export type HighlightTargetKind = 'menu' | 'category' | 'product' | 'custom';
-
-export function productSituationFromFields(
-  product: Pick<AdminProduct, 'is_active' | 'is_available'>,
-): ProductSituation {
-  if (!product.is_active) return 'hidden';
-  return product.is_available ? 'menu' : 'unavailable';
-}
-
-export function fieldsFromProductSituation(
-  situation: ProductSituation,
-): Pick<AdminProduct, 'is_active' | 'is_available'> {
-  if (situation === 'menu') return { is_active: true, is_available: true };
-  if (situation === 'unavailable') return { is_active: true, is_available: false };
-  return { is_active: false, is_available: false };
-}
 
 export function attentionReasons(
   product: Pick<AdminProduct, 'is_active' | 'is_available' | 'image_path'>,

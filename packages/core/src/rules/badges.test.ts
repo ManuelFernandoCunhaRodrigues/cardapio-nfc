@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getBadgeLabel } from '@/features/menu/rules/badges';
+import { getBadgeLabel } from './badges';
 
 describe('getBadgeLabel', () => {
   it('mapeia os badges internos para os rótulos da interface', () => {

@@ -1,4 +1,4 @@
-import type { OpeningHour } from '@/features/store/schemas/store-settings';
+import type { OpeningHour } from '../schemas/store-settings';
 
 const STORE_TIME_ZONE = 'America/Sao_Paulo';
 

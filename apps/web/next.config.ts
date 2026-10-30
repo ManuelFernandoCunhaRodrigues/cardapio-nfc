@@ -8,6 +8,7 @@ import { buildContentSecurityPolicy } from './src/lib/security/csp';
 const monorepoRoot = path.resolve(__dirname, '../..');
 
 const nextConfig: NextConfig = {
+  transpilePackages: ['@salgae/core'],
   turbopack: { root: monorepoRoot },
   outputFileTracingRoot: monorepoRoot,
   serverExternalPackages: ['ffmpeg-static'],

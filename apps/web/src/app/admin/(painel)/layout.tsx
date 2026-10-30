@@ -4,7 +4,7 @@ import { AdminShell } from '@/features/admin/components/admin-shell';
 import { UnauthorizedAccess } from '@/features/auth/components/unauthorized-access';
 import { requireAdmin } from '@/features/auth/server/require-admin';
 import { getStoreSettings } from '@/features/store/server/get-store-settings';
-import { getStoreStatus } from '@/features/store/rules/opening-hours';
+import { getStoreStatus } from '@salgae/core/rules/opening-hours';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { robots: { index: false, follow: false } };

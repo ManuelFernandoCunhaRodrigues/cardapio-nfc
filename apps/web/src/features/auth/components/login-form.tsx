@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/client';
-import { loginSchema } from '@/features/auth/schemas/auth';
+import { loginSchema } from '@salgae/core/schemas/auth';
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 
 export function LoginForm() {

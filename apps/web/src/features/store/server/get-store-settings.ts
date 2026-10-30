@@ -1,9 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { reportServerError } from '@/lib/observability';
-import type { Database } from '@/lib/supabase/database.types';
+import type { Database } from '@salgae/core/database/database.types';
 import { createClient } from '@/lib/supabase/server';
-import { storeSettingsSchema, type StoreSettings } from '@/features/store/schemas/store-settings';
+import { storeSettingsSchema, type StoreSettings } from '@salgae/core/schemas/store-settings';
 
 export async function getStoreSettings(
   client?: SupabaseClient<Database>,

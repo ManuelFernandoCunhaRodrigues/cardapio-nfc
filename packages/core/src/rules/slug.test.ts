@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { slugifyPtBr } from './slugify';
+import { slugifyPtBr } from './slug';
 
 describe('slugifyPtBr', () => {
   it('remove acentos, espaços e pontuação', () => {

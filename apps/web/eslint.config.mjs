@@ -12,7 +12,7 @@ const eslintConfig = [
       'next-env.d.ts',
       'playwright-report/**',
       'test-results/**',
-      'src/lib/supabase/database.types.local.ts',
+      '../../packages/core/src/database/database.types.local.ts',
     ],
   },
 ];

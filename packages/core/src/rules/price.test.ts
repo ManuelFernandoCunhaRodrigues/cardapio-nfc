@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatPriceBRL } from '@/lib/utils/format-price';
+import { formatPriceBRL } from './price';
 
 describe('formatPriceBRL', () => {
   it('formata centavos em real brasileiro', () => {

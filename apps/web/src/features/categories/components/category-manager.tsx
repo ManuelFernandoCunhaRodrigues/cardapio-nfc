@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { AdminCategory } from '@/features/admin/server/catalog';
-import { slugifyPtBr } from '@/lib/utils/slugify';
+import { slugifyPtBr } from '@salgae/core/rules/slug';
 
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
