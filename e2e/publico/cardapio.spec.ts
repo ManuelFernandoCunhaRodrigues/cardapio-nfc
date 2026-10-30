@@ -96,7 +96,7 @@ test.describe('cardápio público', () => {
       const search = page.getByRole('searchbox', { name: 'Buscar no cardápio' });
       await search.fill('pastel');
       await expect(page.getByText('1 resultado', { exact: true })).toBeVisible();
-      await expect(page.getByRole('link', { name: /^Pastel de carne / })).toBeVisible();
+      await expect(page.getByRole('link', { name: /^Pastel de carne/ })).toBeVisible();
       await expect(page).toHaveURL(/\/busca\?q=pastel$/);
 
       await search.fill('xyzzy');
