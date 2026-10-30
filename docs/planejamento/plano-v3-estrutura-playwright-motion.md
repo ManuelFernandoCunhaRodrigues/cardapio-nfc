@@ -117,6 +117,11 @@ Domínios: `menu` (leitura pública), `products`, `categories`, `highlights`, `s
    navegador (`@supabase/ssr`, que já renova a sessão) — **nenhuma Server Action devolve token**.
    CORS só da origem do web; a CSP ganha a origem da API em `connect-src`. Depois do envio, o
    navegador chama uma Server Action leve que só faz `updateTag`.
+   **Limite de 4,5 MB no corpo de qualquer função da Vercel** (conferido na doc em 2026-10-30):
+   o arquivo de vídeo bruto continua indo do navegador direto para o Storage por URL assinada
+   (como já é hoje), e a chamada à API leva só o caminho do arquivo (JSON pequeno). A foto
+   continua reduzida no navegador e passa pela Server Action até a API; a API recusa corpo acima
+   de 4 MB com erro claro. A E1 mede uma foto no tamanho máximo que o navegador gera.
 3. **Login continua no Next** (`@supabase/ssr`, `proxy.ts` só em `/admin`). Helper único no
    web: `getUser()` (valida e renova) → `getSession()` (token já renovado) → chamada à API; sem
    sessão → "entre novamente". Nada de ler cookie à mão.
@@ -229,6 +234,21 @@ cliente; `app/layout.tsx` continua Server Component; `initial={false}` no que ve
   `docs/design/Design MVP de delivery.zip` — o protótipo atual está no Claude Design.
 - **Fica:** documentação histórica e scripts citados em documentos (`verificar-urls.mjs`,
   `lighthouse-homologacao.mjs`); nada do vault é apagado.
+
+### Inventário do `knip` na E0 (2026-10-30)
+
+- **Removido na E0:** `toggleProduct` (Server Action exportada e sem uso — uma Server Action
+  exportada é um endpoint público), `initialCategoryActionState`, `scripts/recortar-logo.mjs` e o
+  zip do design.
+- **Falso positivo** (não remover): `e2e/auth.setup.ts` (projeto `setup` do Playwright),
+  `supabase/tests/types/schema-matches-types.check.ts` (conferência de tipos do CI),
+  `docs/design/refatoracao/prototipo-v2/app.js` (protótipo documentado).
+- **Dependências não declaradas a corrigir:** `axe-core` (E2, nos testes de acessibilidade) e
+  `postcss` (E8, no `postcss.config.mjs`); binário `playwright` no CI (E2).
+- **Exports sem uso fora do módulo** (constantes e tipos exportados à toa, por exemplo
+  `getPublicHighlights`, `resolveFfmpegPath`, `attentionReasons` e as constantes de compressão):
+  deixam de ser exportados quando o código for para `core`/`api` (E3–E6); nada disso é levado
+  como export público.
 
 ## Protocolo de execução e revisão
 

@@ -1,7 +1,6 @@
 .env*
 !.env.example
 Salgae_Lanchonete_Obsidian
-Design MVP de delivery.zip
 docs
 .claude
 apps/web/public/_e2e

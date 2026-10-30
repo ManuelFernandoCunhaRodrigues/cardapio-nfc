@@ -114,33 +114,6 @@ export async function updateProduct(
   }
 }
 
-export async function toggleProduct(
-  _previous: ProductActionState,
-  formData: FormData,
-): Promise<ProductActionState> {
-  const id = z.string().uuid().safeParse(formData.get('id'));
-  const field = z.enum(['is_active', 'is_available']).safeParse(formData.get('field'));
-  const value = formData.get('value') === 'true';
-  if (!id.success || !field.success) return { status: 'error', message: 'Produto inválido.' };
-  const admin = await requireAdmin({ redirectUnauthenticated: false });
-  if (!admin)
-    return { status: 'error', message: 'Sua sessão não permite esta alteração. Entre novamente.' };
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('products')
-    .update(field.data === 'is_active' ? { is_active: value } : { is_available: value })
-    .eq('id', id.data);
-  if (error) {
-    reportServerError('product_toggle_failed', error);
-    return { status: 'error', message: 'Não foi possível atualizar o status do produto.' };
-  }
-  catalogPaths(id.data);
-  return {
-    status: 'success',
-    message: value ? 'Status do produto atualizado.' : 'Produto atualizado.',
-  };
-}
-
 export async function setProductSituation(
   _previous: ProductActionState,
   formData: FormData,
