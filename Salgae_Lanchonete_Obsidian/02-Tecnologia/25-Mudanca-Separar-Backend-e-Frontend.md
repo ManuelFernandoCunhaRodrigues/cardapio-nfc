@@ -6,7 +6,7 @@ tags:
   - arquitetura
   - ideia
   - aprovado
-atualizado: 2026-10-28
+atualizado: 2026-10-30
 ---
 # Mudança planejada — separar backend e frontend, Motion e Playwright
 
@@ -76,6 +76,12 @@ Depende do responsável: trocar o Root Directory dos projetos do site na Vercel 
   - O `server/` de cada funcionalidade é o que vai para `apps/api`; `schemas/` e `rules/` vão para `packages/core`.
   - Arquivos sem uso: nenhum arquivo de código versionado ficou sem uso (grafo de imports a partir das páginas, rotas, proxy, testes e scripts). As imagens e os vídeos não versionados em `apps/web/public/` e na raiz não são usados pelo código; ficam com o responsável decidir.
 - **Próximos:** PR 2.0 (prova de conceito do Hono com ffmpeg num projeto de teste da Vercel), PR 2.2 (`packages/core`), PR 2.3 (esqueleto de `apps/api`).
+- **2026-10-30 — Plano v3 (consenso Claude + Codex).** O responsável achou a estrutura ainda bagunçada e pediu: backend separado do frontend com camadas (controller, service, repository), remover arquivos sem uso, Playwright e Motion, código no padrão do livro *Código Limpo*, para outro desenvolvedor entender fácil. O plano foi revisado duas vezes pelo Codex (1ª: reprovado, 7 problemas; 2ª: aprovado com 3 ajustes) e está em `docs/planejamento/plano-v3-estrutura-playwright-motion.md`. Substitui as Fases 2 e 3 do plano anterior.
+  - Arquitetura: `apps/web` (Next, só tela), `apps/api` (Hono; `modules/<domínio>/` com `routes → controller → service → repository` e o service definindo a interface do repositório), `packages/core` (schemas, contratos, regras puras, tipos do banco) e `e2e/` (Playwright testando web + API).
+  - Leituras públicas pela API **sem token** (acontecem no build e na revalidação); painel pela API com o token do admin; vídeo do navegador direto para a API. Cache por etiqueta (`fetch` com `next.tags`, `updateTag` depois de salvar).
+  - Convenção de nomes: código em inglês, telas e endereços em português.
+  - Forma de trabalho: execução dividida entre Claude e Codex; o Codex revisa e testa toda etapa e devolve problemas ao Claude; tudo numa branch de integração (`refactor/estrutura-completa`) e **só vai para o stage no fim**, depois de prévia completa e revisão final.
+  - Etapas: E0 preparação · E1 prova de conceito na Vercel (barreira) · E2 Playwright na raiz · E3 `packages/core` · E4 esqueleto da API + CI · E5 leituras públicas · E6 escritas · E7 Motion · E8 fechamento · E9 prévia e stage.
 
 ## Perguntas em aberto (respondidas em 2026-10-23, ver acima)
 
