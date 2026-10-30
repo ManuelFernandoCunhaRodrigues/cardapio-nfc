@@ -15,14 +15,13 @@ import {
 } from '@/features/products/server/actions';
 import { MediaImage } from '@/features/media/components/media-image';
 import type { AdminCategory, AdminProduct } from '@/features/admin/server/catalog';
+import { filterAdminProducts, type ProductFilter } from '@/features/admin/rules/panel';
 import {
-  filterAdminProducts,
   productSituationFromFields,
-  type ProductFilter,
   type ProductSituation,
-} from '@/features/admin/rules/panel';
+} from '@salgae/core/rules/product-situation';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
-import { formatPriceBRL } from '@/lib/utils/format-price';
+import { formatPriceBRL } from '@salgae/core/rules/price';
 
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';

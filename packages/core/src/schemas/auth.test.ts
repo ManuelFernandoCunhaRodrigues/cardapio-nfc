@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { loginSchema } from '@/features/auth/schemas/auth';
+import { loginSchema } from './auth';
 
 describe('loginSchema', () => {
   it('aceita credenciais preenchidas', () => {

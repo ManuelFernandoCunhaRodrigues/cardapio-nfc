@@ -35,5 +35,3 @@ export const highlightFormSchema = z.object({
     ),
   is_active: z.boolean(),
 });
-
-export type HighlightFormValues = z.infer<typeof highlightFormSchema>;

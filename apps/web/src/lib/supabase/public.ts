@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 import { getSupabaseEnv } from '@/lib/env';
-import type { Database } from '@/lib/supabase/database.types';
+import type { Database } from '@salgae/core/database/database.types';
 
 export const PUBLIC_FETCH_TIMEOUT_MS = 10_000;
 

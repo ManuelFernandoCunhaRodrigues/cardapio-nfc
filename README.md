@@ -75,7 +75,7 @@ apps/
   web/          site em Next.js: cardápio e painel (@salgae/web)
   api/          API em Hono — a caminho (Fase 2 da separação backend/frontend)
 packages/
-  core/         validações, tipos do banco e regras comuns — a caminho
+  core/         schemas Zod, tipos do banco e regras puras comuns (@salgae/core)
 supabase/       migrations, seed e testes SQL (compartilhado)
 docs/           documentação técnica; Salgae_Lanchonete_Obsidian/ — vault do projeto
 ```

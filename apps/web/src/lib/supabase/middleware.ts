@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { getSupabaseEnv } from '@/lib/env';
-import type { Database } from '@/lib/supabase/database.types';
+import type { Database } from '@salgae/core/database/database.types';
 
 export async function updateSession(request: NextRequest) {
   const env = getSupabaseEnv();

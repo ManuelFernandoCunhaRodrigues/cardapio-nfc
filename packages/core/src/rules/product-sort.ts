@@ -1,13 +1,24 @@
-import type { MenuProduct } from '@/features/menu/types';
+type ProductForHomeSorting = {
+  badge: 'mais_pedido' | 'novo' | 'quentinho' | null;
+  name: string;
+  sort_order: number;
+};
 
-export function sortProductsForHome(products: MenuProduct[]): MenuProduct[] {
+type ProductForAvailabilitySorting = {
+  is_available: boolean;
+  sort_order: number;
+};
+
+export function sortProductsForHome<T extends ProductForHomeSorting>(products: readonly T[]): T[] {
   return [...products].sort((a, b) => {
     const badgeDifference = Number(b.badge === 'mais_pedido') - Number(a.badge === 'mais_pedido');
     return badgeDifference || a.sort_order - b.sort_order || a.name.localeCompare(b.name, 'pt-BR');
   });
 }
 
-export function sortProductsByAvailability(products: readonly MenuProduct[]): MenuProduct[] {
+export function sortProductsByAvailability<T extends ProductForAvailabilitySorting>(
+  products: readonly T[],
+): T[] {
   return products
     .map((product, originalIndex) => ({ product, originalIndex }))
     .sort(

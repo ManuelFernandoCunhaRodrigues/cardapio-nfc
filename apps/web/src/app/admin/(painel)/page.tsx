@@ -8,8 +8,8 @@ import { productsNeedingAttention } from '@/features/admin/rules/panel';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import { getSaoPauloWeekday } from '@/features/menu/rules/presentation';
 import { getStoreSettings } from '@/features/store/server/get-store-settings';
-import { getStoreStatus } from '@/features/store/rules/opening-hours';
-import { formatPriceBRL } from '@/lib/utils/format-price';
+import { getStoreStatus } from '@salgae/core/rules/opening-hours';
+import { formatPriceBRL } from '@salgae/core/rules/price';
 
 export const dynamic = 'force-dynamic';
 

@@ -3,14 +3,14 @@
 import { z } from 'zod';
 
 import { formError, revalidateCatalog } from '@/features/admin/server/action-helpers';
-import { swapSortOrders } from '@/features/admin/rules/reorder';
-import { fieldsFromProductSituation } from '@/features/admin/rules/panel';
+import { swapSortOrders } from '@salgae/core/rules/reorder';
+import { fieldsFromProductSituation } from '@salgae/core/rules/product-situation';
 import { requireAdmin } from '@/features/auth/server/require-admin';
 import { reportServerError } from '@/lib/observability';
 import { cleanupVideoOrphans } from '@/features/media/server/video/storage-cleanup';
 import { createClient } from '@/lib/supabase/server';
-import { parsePriceBRL } from '@/lib/utils/parse-price';
-import { productFormSchema } from '@/features/products/schemas/product';
+import { parsePriceBRL } from '@salgae/core/rules/parse-price';
+import { productFormSchema } from '@salgae/core/schemas/product';
 
 import type { ProductActionState } from './action-state';
 

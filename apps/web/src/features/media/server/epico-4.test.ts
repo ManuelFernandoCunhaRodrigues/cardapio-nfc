@@ -11,7 +11,7 @@ import {
   uploadProductImage,
 } from '@/features/media/server/actions';
 import { createHighlight } from '@/features/highlights/server/actions';
-import { swapSortOrders } from '@/features/admin/rules/reorder';
+import { swapSortOrders } from '@salgae/core/rules/reorder';
 import {
   CLIENT_IMAGE_MAX_BYTES,
   fitImageWithin as fitClientImage,
@@ -36,7 +36,7 @@ import {
   isMediaUnreferenced,
   mediaObjectPaths,
 } from '@/features/media/server/workflow';
-import { highlightFormSchema } from '@/features/highlights/schemas/highlight';
+import { highlightFormSchema } from '@salgae/core/schemas/highlight';
 
 const mocks = vi.hoisted(() => ({
   requireAdmin: vi.fn(),

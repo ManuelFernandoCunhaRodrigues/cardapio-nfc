@@ -20,8 +20,6 @@ export const productFormSchema = z.object({
   is_available: z.boolean(),
 });
 
-export type ProductFormValues = z.infer<typeof productFormSchema>;
-
 export const productSchema = z
   .object({
     id: z.string().uuid(),

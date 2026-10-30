@@ -6,7 +6,7 @@ import { Icon } from '@/features/menu/components/icons';
 import { MediaVideo } from '@/features/media/components/media-video';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
-import { getBadgeLabel } from '@/features/menu/rules/badges';
+import { getBadgeLabel } from '@salgae/core/rules/badges';
 import {
   getPublicProduct,
   getPublicProductBySlug,
@@ -14,10 +14,10 @@ import {
   getPublicProductsByCategory,
   getPublicSitemapProducts,
 } from '@/features/menu/server/get-public-menu';
-import { sortProductsByAvailability } from '@/features/menu/rules/sort';
+import { sortProductsByAvailability } from '@salgae/core/rules/product-sort';
 import { getPublicImageVariantUrl, getPublicMediaUrl } from '@/features/media/rules/media-urls';
 import { getProductMetadata } from '@/lib/seo/product-metadata';
-import { formatPriceBRL } from '@/lib/utils/format-price';
+import { formatPriceBRL } from '@salgae/core/rules/price';
 
 export const revalidate = 60;
 type ProductPageProps = { params: Promise<{ slug: string }> };

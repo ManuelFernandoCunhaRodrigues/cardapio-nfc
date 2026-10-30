@@ -1,4 +1,4 @@
-import type { Product } from '@/features/products/schemas/product';
+import type { Product } from '../schemas/product';
 
 const labels = {
   mais_pedido: 'MAIS PEDIDO',

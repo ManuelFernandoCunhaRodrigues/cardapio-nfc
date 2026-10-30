@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import type { MenuProduct } from '@/features/menu/types';
-import { formatPriceBRL } from '@/lib/utils/format-price';
+import { formatPriceBRL } from '@salgae/core/rules/price';
 
 const defaultTitle = 'Produto | Salgaê';
 

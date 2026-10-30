@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 
-import { getBadgeLabel } from '@/features/menu/rules/badges';
+import { getBadgeLabel } from '@salgae/core/rules/badges';
 import { rememberProductOrigin } from '@/features/menu/rules/product-origin';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import type { MenuProduct } from '@/features/menu/types';
-import { formatPriceBRL } from '@/lib/utils/format-price';
+import { formatPriceBRL } from '@salgae/core/rules/price';
 
 import { Icon } from './icons';
 import { MediaImage } from '@/features/media/components/media-image';

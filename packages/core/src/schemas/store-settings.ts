@@ -25,7 +25,7 @@ const optionalUrl = z
   .refine((value) => value === null || /^https?:\/\//i.test(value), 'Informe uma URL válida.')
   .refine((value) => value === null || z.url().safeParse(value).success, 'Informe uma URL válida.');
 
-export const openingHourSchema = z
+const openingHourSchema = z
   .object({
     day: z.number().int().min(0).max(6),
     closed: z.boolean(),
@@ -80,4 +80,3 @@ export const storeSettingsSchema = storeSettingsFormSchema.safeExtend({
 
 export type OpeningHour = z.infer<typeof openingHourSchema>;
 export type StoreSettings = z.infer<typeof storeSettingsSchema>;
-export type StoreSettingsFormValues = z.infer<typeof storeSettingsFormSchema>;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { sortProductsByAvailability, sortProductsForHome } from '@/features/menu/rules/sort';
-import type { MenuProduct } from '@/features/menu/types';
+import { sortProductsByAvailability, sortProductsForHome } from './product-sort';
+import type { Product } from '../schemas/product';
 
 const base = {
   id: 'b76b1cd3-7525-4f9f-8e90-0c14e66bd00a',
@@ -17,7 +17,7 @@ const base = {
 
 describe('ordenacao do cardapio', () => {
   it('prioriza mais pedidos e mantem a ordem editorial nos demais', () => {
-    const products: MenuProduct[] = [
+    const products: Product[] = [
       { ...base, name: 'Novo', badge: 'novo', sort_order: 1 },
       {
         ...base,
@@ -42,7 +42,7 @@ describe('ordenacao do cardapio', () => {
   });
 
   it('move indisponiveis para o fim sem perder sort_order nem estabilidade', () => {
-    const products: MenuProduct[] = [
+    const products: Product[] = [
       {
         ...base,
         id: 'a76b1cd3-7525-4f9f-8e90-0c14e66bd00a',

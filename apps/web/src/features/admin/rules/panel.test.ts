@@ -5,13 +5,15 @@ import {
   buildOpeningHours,
   creationProgressSteps,
   copyOpeningHourToEveryDay,
-  fieldsFromProductSituation,
   filterAdminProducts,
-  productSituationFromFields,
   productsNeedingAttention,
   runProductCreationFlow,
   singleFlight,
 } from './panel';
+import {
+  fieldsFromProductSituation,
+  productSituationFromFields,
+} from '@salgae/core/rules/product-situation';
 import type { AdminProduct } from '@/features/admin/server/catalog';
 
 const base: AdminProduct = {

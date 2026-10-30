@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getStoreStatus } from '@/features/store/rules/opening-hours';
+import { getStoreStatus } from './opening-hours';
 
 const hours = [
   { day: 0, closed: true, open: '08:00', close: '18:00' },

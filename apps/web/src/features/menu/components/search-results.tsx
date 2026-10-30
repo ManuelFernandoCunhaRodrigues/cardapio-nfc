@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { filterMenuProducts } from '@/features/menu/rules/search';
-import { sortProductsForHome } from '@/features/menu/rules/sort';
+import { sortProductsForHome } from '@salgae/core/rules/product-sort';
 import type { MenuCategory, MenuProduct } from '@/features/menu/types';
 
 import { Icon } from './icons';
