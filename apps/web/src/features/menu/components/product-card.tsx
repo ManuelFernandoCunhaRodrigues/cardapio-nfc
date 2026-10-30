@@ -25,12 +25,11 @@ export function ProductCard({
   const href = `/produto/${product.slug}`;
   const card = (
     <Link
-      aria-label={`${product.name}, ${formatPriceBRL(product.price_cents)}${product.is_available ? '' : ', indisponível'}`}
       className={`group block min-w-0 overflow-hidden rounded-product bg-white shadow-card focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/40 ${compact ? 'h-full' : 'min-h-[218px]'}`}
       href={href}
       onClick={() => rememberProductOrigin(href)}
     >
-      <article className="flex h-full flex-col">
+      <article className="relative flex h-full flex-col">
         <div
           className={`relative h-[108px] shrink-0 overflow-hidden ${product.is_available ? 'bg-[linear-gradient(180deg,#FFF6E6,#FBE5C8)]' : 'bg-[linear-gradient(180deg,#F5F0E5,#E8E0CF)]'}`}
         >
@@ -41,18 +40,6 @@ export function ProductCard({
             sizes={compact ? '(max-width: 480px) 40vw, 180px' : '(max-width: 640px) 50vw, 240px'}
             src={getPublicImageVariantUrl('product-images', product.image_path, 'card')}
           />
-          {label && product.is_available ? (
-            <span
-              className={`absolute left-2 top-2 rounded-full px-2 py-1 font-[family-name:var(--font-poppins)] text-[10px] font-semibold tracking-[0.08em] text-white ${product.badge ? badgeColor[product.badge] : 'bg-ink'}`}
-            >
-              {label}
-            </span>
-          ) : null}
-          {!product.is_available ? (
-            <span className="absolute left-2 top-2 rounded-full bg-danger px-2 py-1 font-[family-name:var(--font-poppins)] text-[10px] font-semibold tracking-[0.06em] text-white">
-              INDISPONÍVEL
-            </span>
-          ) : null}
         </div>
         <div className={`flex min-h-0 flex-1 flex-col px-3 pb-3 pt-2.5`}>
           <h3
@@ -77,6 +64,19 @@ export function ProductCard({
             </span>
           </div>
         </div>
+        {/* Depois do texto no DOM para o leitor de tela ouvir primeiro o nome; a posição na tela é absoluta. */}
+        {label && product.is_available ? (
+          <span
+            className={`absolute left-2 top-2 rounded-full px-2 py-1 font-[family-name:var(--font-poppins)] text-[10px] font-semibold tracking-[0.08em] text-white ${product.badge ? badgeColor[product.badge] : 'bg-ink'}`}
+          >
+            {label}
+          </span>
+        ) : null}
+        {!product.is_available ? (
+          <span className="absolute left-2 top-2 rounded-full bg-danger px-2 py-1 font-[family-name:var(--font-poppins)] text-[10px] font-semibold tracking-[0.06em] text-white">
+            INDISPONÍVEL
+          </span>
+        ) : null}
       </article>
     </Link>
   );

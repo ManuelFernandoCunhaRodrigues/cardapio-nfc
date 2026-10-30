@@ -14,10 +14,10 @@ export function PublicHeader({
     <header className="grid h-[68px] grid-cols-[104px_1fr_104px] items-center px-4">
       {settings ? <StoreHeaderStatus initialNow={initialNow} settings={settings} /> : <span />}
       <Link
-        aria-label="Página inicial da Salgaê"
         className="grid justify-items-center focus-visible:rounded-lg focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
         href="/"
       >
+        <span className="sr-only">Página inicial da</span>
         <Image
           alt="Salgaê"
           className="h-11 w-auto"

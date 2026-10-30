@@ -351,7 +351,6 @@ export function HighlightsManager({
         {highlights.map((highlight, index) => (
           <article className="rounded-card bg-white p-4 shadow-card" key={highlight.id}>
             <button
-              aria-label={`Editar ${highlight.title}`}
               className="flex min-h-16 w-full gap-3 text-left"
               onClick={() => edit(highlight)}
               type="button"
@@ -363,6 +362,7 @@ export function HighlightsManager({
                 src={getPublicImageVariantUrl('highlight-images', highlight.image_path, 'card')}
               />
               <span className="min-w-0 flex-1">
+                <span className="sr-only">Editar </span>
                 <strong className="block truncate font-[family-name:var(--font-poppins)] text-base text-ink">
                   {highlight.title}
                 </strong>
