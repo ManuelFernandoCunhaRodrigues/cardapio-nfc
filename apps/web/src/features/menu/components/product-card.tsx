@@ -29,7 +29,7 @@ export function ProductCard({
       href={href}
       onClick={() => rememberProductOrigin(href)}
     >
-      <article className="relative flex h-full flex-col">
+      <div className="relative flex h-full flex-col">
         <div
           className={`relative h-[108px] shrink-0 overflow-hidden ${product.is_available ? 'bg-[linear-gradient(180deg,#FFF6E6,#FBE5C8)]' : 'bg-[linear-gradient(180deg,#F5F0E5,#E8E0CF)]'}`}
         >
@@ -77,7 +77,7 @@ export function ProductCard({
             INDISPONÍVEL
           </span>
         ) : null}
-      </article>
+      </div>
     </Link>
   );
   return compact ? (
