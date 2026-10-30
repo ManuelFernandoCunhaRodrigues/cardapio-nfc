@@ -18,3 +18,4 @@ test-results
 # Gerado pela CLI do Supabase; não formatar à mão
 apps/web/src/lib/supabase/database.types.ts
 apps/web/src/lib/supabase/database.types.local.ts
+apps/api/dist

@@ -21,3 +21,6 @@ packages/core/src/database/database.types.local.ts
 
 # Material de apoio local (fotos, vídeos, protótipos) que o código não usa
 materiais/
+
+# Build da API
+apps/api/dist/
