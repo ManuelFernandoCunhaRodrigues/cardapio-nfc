@@ -2,31 +2,13 @@
 
 import { useEffect, useEffectEvent, useState, useSyncExternalStore, type RefObject } from 'react';
 
+import { createLayerStack } from '@/features/admin/rules/layer-stack';
+
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-// Camadas abertas, da mais antiga para a de cima (ex.: "Remover foto" aberta sobre a gaveta do
-// destaque). Só a de cima responde ao teclado; as de baixo ficam cobertas.
-const openLayers: symbol[] = [];
-const layerListeners = new Set<() => void>();
-
-function notifyLayerChange() {
-  layerListeners.forEach((listener) => listener());
-}
-
-function subscribeToLayers(listener: () => void) {
-  layerListeners.add(listener);
-  return () => layerListeners.delete(listener);
-}
-
-function isTopLayer(layer: symbol) {
-  return openLayers.at(-1) === layer;
-}
-
-function isCoveredLayer(layer: symbol) {
-  const position = openLayers.indexOf(layer);
-  return position !== -1 && position < openLayers.length - 1;
-}
+// Uma pilha só para todo o painel: a confirmação aberta sobre a gaveta cobre a gaveta.
+const openLayers = createLayerStack();
 
 // Mantém o Tab dentro da camada aberta, fecha com Escape e foca o primeiro controle ao abrir.
 // Devolve `covered` quando outra camada abriu por cima desta.
@@ -44,19 +26,15 @@ export function useFocusTrap({
   const [layer] = useState(() => Symbol('admin-layer'));
   const escape = useEffectEvent(onEscape);
   const covered = useSyncExternalStore(
-    subscribeToLayers,
-    () => isCoveredLayer(layer),
+    openLayers.subscribe,
+    () => openLayers.isCovered(layer),
     () => false,
   );
 
   useEffect(() => {
     if (!active) return;
-    openLayers.push(layer);
-    notifyLayerChange();
-    return () => {
-      openLayers.splice(openLayers.indexOf(layer), 1);
-      notifyLayerChange();
-    };
+    openLayers.open(layer);
+    return () => openLayers.close(layer);
   }, [active, layer]);
 
   useEffect(() => {
@@ -70,7 +48,7 @@ export function useFocusTrap({
     function keepFocusInside(event: KeyboardEvent) {
       // `defaultPrevented`: a camada de cima já tratou a tecla e pode ter saído da pilha antes
       // deste listener rodar.
-      if (event.defaultPrevented || !isTopLayer(layer)) return;
+      if (event.defaultPrevented || !openLayers.isTop(layer)) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         escape();

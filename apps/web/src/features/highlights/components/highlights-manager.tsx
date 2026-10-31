@@ -116,6 +116,9 @@ function HighlightEditor({
     getPublicImageVariantUrl('highlight-images', highlight?.image_path, 'card'),
   );
   const [mediaMessage, setMediaMessage] = useState<string>();
+  // Estado local, não a prop: a revalidação chega junto com o resultado da remoção e
+  // desmontaria a confirmação antes de ela fechar e devolver o foco.
+  const [hasStoredPhoto, setHasStoredPhoto] = useState(Boolean(highlight?.image_path));
   const uploading = useRef(false);
   const photoTitleRef = useRef<HTMLSpanElement>(null);
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
@@ -280,7 +283,7 @@ function HighlightEditor({
             Escolher foto
           </label>
         </div>
-        {highlight?.image_path ? (
+        {highlight && hasStoredPhoto ? (
           <div className="mt-2">
             <ConfirmDialog
               action={removeHighlightImage}
@@ -289,6 +292,7 @@ function HighlightEditor({
               fallbackFocusRef={photoTitleRef}
               fieldName="highlight_id"
               onSuccess={() => {
+                setHasStoredPhoto(false);
                 setPreview(null);
                 setMediaMessage('Foto removida.');
               }}
@@ -298,7 +302,8 @@ function HighlightEditor({
           </div>
         ) : null}
       </div>
-      <AdminNotice kind={state.status === 'error' ? 'error' : 'success'} message={state.message} />
+      {/* O sucesso fecha a gaveta e aparece no aviso da lista; aqui fica só o erro. */}
+      <AdminNotice kind="error" message={state.status === 'error' ? state.message : undefined} />
       <AdminNotice kind="info" message={mediaMessage} />
       <SaveButton editing={editing} />
       {editing ? (

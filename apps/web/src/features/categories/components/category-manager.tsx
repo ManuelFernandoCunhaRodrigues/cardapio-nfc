@@ -144,7 +144,8 @@ function CategoryEditor({
           type="checkbox"
         />
       </label>
-      <AdminNotice kind={state.status === 'error' ? 'error' : 'success'} message={state.message} />
+      {/* O sucesso fecha a gaveta e aparece no aviso da lista; aqui fica só o erro. */}
+      <AdminNotice kind="error" message={state.status === 'error' ? state.message : undefined} />
       <SubmitButton editing={editing} />
       {editing ? (
         <Button className="w-full" onClick={onClose} type="button" variant="neutral">
