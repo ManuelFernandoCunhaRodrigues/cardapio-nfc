@@ -18,8 +18,8 @@ const adminStorageState = 'playwright/.auth/admin.json';
 
 export default defineConfig({
   testDir: '.',
-  // O painel altera dados que o cardápio lê: um arquivo por vez, na ordem dos projetos. Só o
-  // `painel-desktop` grava; os demais projetos apenas leem.
+  // O painel altera dados que o cardápio lê: um arquivo por vez, na ordem dos projetos. Gravam
+  // só o `painel-desktop` e os projetos de movimento, que rodam depois das leituras.
   fullyParallel: false,
   workers: 1,
   forbidOnly: Boolean(process.env.CI),
@@ -63,18 +63,6 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'publico-movimento-celular',
-      testMatch: /movimento\/.*\.spec\.ts/,
-      dependencies: ['setup'],
-      use: { ...devices['Pixel 7'] },
-    },
-    {
-      name: 'publico-movimento-desktop',
-      testMatch: /movimento\/.*\.spec\.ts/,
-      dependencies: ['setup'],
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
       name: 'painel-celular',
       testMatch: /painel\/.*\.spec\.ts/,
       grep: /@leitura/,
@@ -82,9 +70,21 @@ export default defineConfig({
       use: { ...devices['Pixel 7'], storageState: adminStorageState },
     },
     {
+      name: 'movimento-celular',
+      testMatch: /movimento\/.*\.spec\.ts/,
+      dependencies: ['publico-desktop', 'painel-celular'],
+      use: { ...devices['Pixel 7'], storageState: adminStorageState },
+    },
+    {
+      name: 'movimento-desktop',
+      testMatch: /movimento\/.*\.spec\.ts/,
+      dependencies: ['movimento-celular'],
+      use: { ...devices['Desktop Chrome'], storageState: adminStorageState },
+    },
+    {
       name: 'sair',
       testMatch: /sessao\/.*\.spec\.ts/,
-      dependencies: ['publico-desktop', 'painel-celular'],
+      dependencies: ['movimento-desktop'],
       use: { ...devices['Desktop Chrome'] },
     },
   ],

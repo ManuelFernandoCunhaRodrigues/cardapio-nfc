@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import * as m from 'motion/react-m';
 
@@ -10,15 +9,11 @@ import {
   HighlightCarouselController,
   previousHighlightIndex,
 } from '@/features/menu/rules/highlight-carousel';
-import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import type { MenuHighlight } from '@/features/menu/types';
-import { splitLastWord } from '@/features/menu/rules/presentation';
-import { rememberProductOrigin } from '@/features/menu/rules/product-origin';
 import { useHighlightDrag } from '@/features/menu/hooks/use-highlight-drag';
 
-import { CoxinhaArt } from './coxinha-art';
+import { HighlightSlide } from './highlight-slide';
 import { Icon } from './icons';
-import { MediaImage } from '@/features/media/components/media-image';
 
 // Acima disso os pontos não cabem na largura do banner e dão lugar a um contador.
 const MAX_DOTS = 8;
@@ -46,7 +41,7 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
   const controllerRef = useRef<HighlightCarouselController | null>(null);
   const reducedMotionRef = useRef(false);
   const programmedScrollRef = useRef<{ index: number; offset: number } | null>(null);
-  const onDragEnd = useHighlightDrag({
+  const drag = useHighlightDrag({
     activeIndex: active,
     itemCount: items.length,
     onSelect: goTo,
@@ -156,73 +151,27 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
         className="flex snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         drag={enhanced && interactive ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
+        dragControls={drag.dragControls}
         dragElastic={0.12}
+        dragListener={false}
         dragTransition={{ bounceStiffness: 360, bounceDamping: 32 }}
-        onDragEnd={onDragEnd}
+        onClickCapture={drag.blockClickAfterDrag}
+        onDragEnd={drag.selectDraggedHighlight}
+        onDragStart={drag.markDragged}
+        onDragStartCapture={drag.preventNativeDrag}
+        onPointerDown={drag.startMouseDrag}
         onScroll={syncFromScroll}
         ref={trackRef}
       >
-        {items.map((highlight, index) => {
-          const title = splitLastWord(highlight.title);
-          const isActive = !enhanced || active === index;
-          const imageSrc = highlight.image_path?.startsWith('/')
-            ? highlight.image_path
-            : getPublicImageVariantUrl('highlight-images', highlight.image_path, 'detail');
-          return (
-            <div
-              aria-hidden={!isActive}
-              className="relative h-[270px] min-w-full snap-center min-[390px]:h-[252px] sm:h-[240px]"
-              inert={!isActive}
-              key={highlight.id}
-              role="group"
-              aria-label={`${index + 1} de ${items.length}`}
-            >
-              <Link
-                className="relative block h-full overflow-hidden rounded-[24px] bg-ink p-5 text-white focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/40"
-                href={highlight.target || '/cardapio'}
-                onClick={() => {
-                  if (highlight.target?.startsWith('/produto/'))
-                    rememberProductOrigin(highlight.target);
-                }}
-                tabIndex={isActive ? 0 : -1}
-              >
-                {imageSrc ? (
-                  <MediaImage
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-cover object-center"
-                    name={highlight.title}
-                    priority={index === 0}
-                    sizes="(max-width: 480px) 100vw, 480px"
-                    src={imageSrc}
-                  />
-                ) : (
-                  <CoxinhaArt className="absolute inset-0 h-full w-full" variant="banner" />
-                )}
-                <div
-                  aria-hidden="true"
-                  className="absolute inset-0 bg-[linear-gradient(90deg,rgba(23,17,13,0.72)_0%,rgba(23,17,13,0.6)_34%,rgba(23,17,13,0.38)_58%,rgba(23,17,13,0.1)_78%,rgba(23,17,13,0)_100%)]"
-                />
-                <div className="relative z-10 max-w-[78%] sm:max-w-[60%]">
-                  <span className="inline-flex rounded-full bg-brand-strong px-2.5 py-1 font-[family-name:var(--font-poppins)] text-[10px] font-semibold tracking-[0.08em]">
-                    DESTAQUE DA CASA
-                  </span>
-                  <h2 className="display mt-2 line-clamp-3 text-[clamp(24px,7vw,30px)] leading-[1.12]">
-                    {title.leading ? <>{title.leading} </> : null}
-                    <span className="text-amber">{title.last}</span>
-                  </h2>
-                  {highlight.description ? (
-                    <p className="mt-1.5 line-clamp-2 text-xs leading-4 text-sand">
-                      {highlight.description}
-                    </p>
-                  ) : null}
-                  <span className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-strong px-4 font-[family-name:var(--font-poppins)] text-sm font-semibold">
-                    Conferir <Icon height={16} name="arrow" width={16} />
-                  </span>
-                </div>
-              </Link>
-            </div>
-          );
-        })}
+        {items.map((highlight, index) => (
+          <HighlightSlide
+            highlight={highlight}
+            isActive={!enhanced || active === index}
+            key={highlight.id}
+            position={index + 1}
+            total={items.length}
+          />
+        ))}
       </m.div>
       {interactive && enhanced ? (
         <>
