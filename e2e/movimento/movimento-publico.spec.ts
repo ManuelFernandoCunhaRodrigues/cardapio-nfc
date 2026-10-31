@@ -126,6 +126,7 @@ test.describe('movimento público sem redução', () => {
     await createHighlights(browser, adminDb, [uniqueName('pausa-a'), uniqueName('pausa-b')]);
     await page.clock.install();
     await page.goto('/');
+    await expect(activeSlide(page)).toHaveCount(1);
     await expect(activeSlide(page)).toHaveAttribute('aria-label', /^1 de/);
 
     await carousel(page).hover();
