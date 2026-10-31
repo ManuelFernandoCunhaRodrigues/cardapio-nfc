@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-10-10
+atualizado: 2026-10-31
 ---
 # Ambientes e deploy
 
@@ -50,6 +50,13 @@ Cada projeto Vercel deve receber apenas as chaves do seu ambiente:
 - `NEXT_PUBLIC_SITE_ENV`: `production` somente no projeto de produção. Ausente ou com outro valor, o site se comporta como homologação e bloqueia a indexação (`robots.txt` com `Disallow: /` e `noindex`);
 - `NEXT_PUBLIC_SITE_URL`: endereço público do ambiente, usado como base dos metadados;
 - qualquer segredo de servidor somente no ambiente privado.
+
+Com a API própria (plano v3, 2026-10-31), cada ambiente tem também a API:
+
+- **Site:** além das acima, `API_URL` (endereço da API, usado no servidor e no build) e, quando o vídeo passar para a API, `NEXT_PUBLIC_API_URL`.
+- **API:** `SUPABASE_URL`, `SUPABASE_ANON_KEY` (a mesma chave pública do site) e `WEB_ORIGIN` (origem do site, para o CORS). Nenhum segredo novo.
+- **Ordem:** a API precisa estar no ar antes do build do site, porque as páginas públicas são geradas com os dados dela.
+- **Vercel:** projetos de teste `salgae-api-stage` e `salgae-web-previa` para a prévia (etapa E9); os projetos atuais só mudam no fim, com Root Directory `apps/web` no site. **VPS:** a API tem `Dockerfile`; o passo a passo está no `README.md` ("Servidor próprio").
 
 Nunca copiar arquivo `.env` de produção para homologação sem revisar cada valor. Nunca commitar `.env` ou segredo no Git.
 

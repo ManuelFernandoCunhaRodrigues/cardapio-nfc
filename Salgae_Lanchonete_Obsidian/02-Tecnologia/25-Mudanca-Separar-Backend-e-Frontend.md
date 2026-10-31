@@ -6,7 +6,7 @@ tags:
   - arquitetura
   - ideia
   - aprovado
-atualizado: 2026-10-30
+atualizado: 2026-10-31
 ---
 # Mudança planejada — separar backend e frontend, Motion e Playwright
 
@@ -82,6 +82,12 @@ Depende do responsável: trocar o Root Directory dos projetos do site na Vercel 
   - Convenção de nomes: código em inglês, telas e endereços em português.
   - Forma de trabalho: execução dividida entre Claude e Codex; o Codex revisa e testa toda etapa e devolve problemas ao Claude; tudo numa branch de integração (`refactor/estrutura-completa`) e **só vai para o stage no fim**, depois de prévia completa e revisão final.
   - Etapas: E0 preparação · E1 prova de conceito na Vercel (barreira) · E2 Playwright na raiz · E3 `packages/core` · E4 esqueleto da API + CI · E5 leituras públicas · E6 escritas · E7 Motion · E8 fechamento · E9 prévia e stage.
+
+- **2026-10-31 — Execução do plano v3 (E0 a E8).** Tudo numa branch de integração (`refactor/estrutura-completa`, PR rascunho #74); cada etapa revisada pelo Codex até "aprovado" e com o CI verde antes de seguir. Nada entrou na `develop` ainda.
+  - **Feito:** E0 (workspaces e limpeza), E2 (Playwright na raiz, axe 4.14), E3 (`packages/core`), E4 (esqueleto da API e CI na ordem Supabase → API → build do site → E2E), E5 (leituras públicas pela API, com o cardápio mantido em cache se a API cair), E6 (escritas do painel pela API: loja, categorias, destaques, produtos e foto), E7 (Motion no cardápio e no painel) e E8 (`knip` no CI, fronteiras como erro no ESLint, README).
+  - **Motion:** carrossel com arrasto pelo mouse (no toque fica a rolagem nativa), cards do cardápio entrando em cascata na primeira visita, indicador deslizando na barra inferior, resultados da busca, e no painel a gaveta e a confirmação com entrada e saída (a camada que sai ou fica coberta é inerte para leitor de tela e teclado; o foco volta a quem abriu), avisos e reordenação. Tudo respeita "menos movimento".
+  - **Bloqueado:** E1 (prova de conceito na Vercel) — o computador está logado em outra conta da Vercel; pergunta enviada por e-mail. Por isso o **vídeo** continua como rota do Next por enquanto, e a E9 (prévia e stage) depende desse acesso.
+  - **Para conferir na E9:** no Pixel 7 emulado do Playwright, o botão "Criar destaque" do fim do formulário da gaveta fica encoberto; conferir num celular de verdade.
 
 ## Perguntas em aberto (respondidas em 2026-10-23, ver acima)
 
