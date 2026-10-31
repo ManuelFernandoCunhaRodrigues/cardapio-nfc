@@ -1,10 +1,29 @@
 import { Hono } from 'hono';
 
+import { requireAdmin } from '../../shared/auth/index.js';
+import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory.js';
 import type { AppHonoEnv } from '../../shared/types.js';
-import type { createStoreController } from './store.controller.js';
+import type {
+  createAdminStoreController,
+  createPublicStoreController,
+} from './store.controller.js';
 
-type StoreController = ReturnType<typeof createStoreController>;
+type StoreControllers = {
+  publicController: ReturnType<typeof createPublicStoreController>;
+  adminController: ReturnType<typeof createAdminStoreController>;
+};
 
-export function createStoreRoutes(controller: StoreController) {
-  return new Hono<AppHonoEnv>().get('/store', controller);
+export function createPublicStoreRoutes(controller: StoreControllers['publicController']) {
+  return new Hono<AppHonoEnv>().get('/', controller.getSettings);
+}
+
+export function createAdminStoreRoutes(
+  clients: SupabaseClientFactory,
+  controller: StoreControllers['adminController'],
+) {
+  return new Hono<AppHonoEnv>()
+    .use('*', requireAdmin(clients))
+    .get('/', controller.getSettings)
+    .put('/', controller.updateSettings)
+    .put('/status', controller.updateStatusOverride);
 }

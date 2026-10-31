@@ -1,5 +1,5 @@
 import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory.js';
-import type { StoreRepository } from './store.service.js';
+import type { StoreRepository, StoreSettingsInput } from './store.service.js';
 
 const STORE_COLUMNS =
   'id, name, tagline, address, maps_url, phone, whatsapp, instagram, opening_hours, status_override, notice, updated_at';
@@ -7,7 +7,7 @@ const STORE_COLUMNS =
 export class SupabaseStoreRepository implements StoreRepository {
   constructor(private readonly supabase: AppSupabaseClient) {}
 
-  async findPublicSettings() {
+  async findSettings() {
     const { data, error } = await this.supabase
       .from('store_settings')
       .select(STORE_COLUMNS)
@@ -15,5 +15,16 @@ export class SupabaseStoreRepository implements StoreRepository {
       .maybeSingle();
     if (error) throw error;
     return data;
+  }
+
+  async updateSettings(input: Partial<StoreSettingsInput>) {
+    const { data, error } = await this.supabase
+      .from('store_settings')
+      .update(input)
+      .eq('id', true)
+      .select('id')
+      .maybeSingle();
+    if (error) throw error;
+    return data !== null;
   }
 }

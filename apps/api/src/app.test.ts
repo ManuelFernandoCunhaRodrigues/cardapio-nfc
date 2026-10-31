@@ -17,7 +17,7 @@ const env: ApiEnv = {
 type FakeClientOptions = {
   user?: User | null;
   authError?: Error | null;
-  profile?: { role: string; is_active: boolean } | null;
+  profile?: { role: string; is_active: boolean; name?: string | null } | null;
   profileError?: Error | null;
   healthError?: Error | null;
 };
@@ -35,7 +35,7 @@ function createFakeClient(options: FakeClientOptions = {}): AppSupabaseClient {
     select: vi.fn(),
     eq: vi.fn(),
     maybeSingle: vi.fn().mockResolvedValue({
-      data: options.profile ?? { role: 'admin', is_active: true },
+      data: options.profile ?? { role: 'admin', is_active: true, name: 'Ana' },
       error: options.profileError ?? null,
     }),
   };
@@ -189,6 +189,7 @@ describe('GET /v1/admin/session', () => {
     expect(await response.json()).toEqual({
       userId: 'user-123',
       email: 'admin@salgae.example',
+      name: 'Ana',
       role: 'admin',
     });
     expect(factory.createUserClient).toHaveBeenCalledWith('admin-token');

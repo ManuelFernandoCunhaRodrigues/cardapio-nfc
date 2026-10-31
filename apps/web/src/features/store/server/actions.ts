@@ -1,115 +1,82 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
+import {
+  adminApiPaths,
+  storeStatusInputSchema,
+  type StoreStatusInput,
+} from '@salgae/core/contracts/admin-api';
 
-import { formError } from '@/features/admin/server/action-helpers';
-import { requireAdmin } from '@/features/auth/server/require-admin';
 import { buildOpeningHours } from '@/features/admin/rules/panel';
-import { reportServerError } from '@/lib/observability';
+import { readFormText, runAdminAction } from '@/features/admin/server/run-admin-action';
+import { adminApi } from '@/lib/api/admin-api-client';
 import { invalidateStoreCache } from '@/lib/cache/invalidate-public-cache';
-import { createClient } from '@/lib/supabase/server';
-import { storeSettingsFormSchema } from '@salgae/core/schemas/store-settings';
+import { refreshAdminPanel } from '@/lib/cache/refresh-admin-panel';
 
 import type { StoreSettingsActionState } from './action-state';
+
+const statusOverrideMessages: Record<StoreStatusInput['status_override'], string> = {
+  auto: 'A loja voltou a seguir os horários.',
+  open: 'Loja aberta manualmente.',
+  closed: 'Loja fechada manualmente.',
+};
+
+function readStoreSettingsForm(formData: FormData) {
+  const textFields = Object.fromEntries(
+    Array.from(formData.entries()).filter(([, value]) => typeof value === 'string'),
+  ) as Record<string, string>;
+  return {
+    name: readFormText(formData, 'name'),
+    tagline: readFormText(formData, 'tagline'),
+    address: readFormText(formData, 'address'),
+    maps_url: readFormText(formData, 'maps_url'),
+    phone: readFormText(formData, 'phone'),
+    whatsapp: readFormText(formData, 'whatsapp'),
+    instagram: readFormText(formData, 'instagram'),
+    opening_hours: buildOpeningHours(textFields),
+    status_override: readFormText(formData, 'status_override'),
+    notice: readFormText(formData, 'notice'),
+  };
+}
+
+function refreshAfterStoreChange(message: string): StoreSettingsActionState {
+  invalidateStoreCache();
+  refreshAdminPanel();
+  return { status: 'success', message };
+}
 
 export async function updateStoreStatusOverride(
   _previousState: StoreSettingsActionState,
   formData: FormData,
 ): Promise<StoreSettingsActionState> {
-  const parsed = z.enum(['auto', 'open', 'closed']).safeParse(formData.get('status_override'));
-  if (!parsed.success) return { status: 'error', message: 'Escolha um estado válido para a loja.' };
-  const admin = await requireAdmin({ redirectUnauthenticated: false });
-  if (!admin)
-    return { status: 'error', message: 'Sua sessão não permite esta alteração. Entre novamente.' };
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('store_settings')
-      .update({ status_override: parsed.data })
-      .eq('id', true)
-      .select('id')
-      .maybeSingle();
-    if (error || !data) {
-      reportServerError(
-        'store_status_override_failed',
-        error ?? new Error('store settings row not found'),
-      );
-      return { status: 'error', message: 'Não foi possível mudar o estado da loja agora.' };
-    }
-    revalidatePath('/admin', 'layout');
-    revalidatePath('/admin/loja');
-    revalidatePath('/', 'layout');
-    invalidateStoreCache();
-    return {
-      status: 'success',
-      message:
-        parsed.data === 'auto'
-          ? 'A loja voltou a seguir os horários.'
-          : parsed.data === 'open'
-            ? 'Loja aberta manualmente.'
-            : 'Loja fechada manualmente.',
-    };
-  } catch (error) {
-    reportServerError('store_status_override_exception', error);
-    return { status: 'error', message: 'Não foi possível mudar o estado da loja agora.' };
-  }
+  const parsed = storeStatusInputSchema.safeParse({
+    status_override: readFormText(formData, 'status_override'),
+  });
+  if (!parsed.success) return { status: 'error', message: parsed.error.issues[0].message };
+  const input = parsed.data;
+  return runAdminAction(
+    async () => {
+      await adminApi().write('PUT', adminApiPaths.storeStatus, input);
+      return refreshAfterStoreChange(statusOverrideMessages[input.status_override]);
+    },
+    {
+      event: 'store_status_override_failed',
+      failureMessage: 'Não foi possível mudar o estado da loja agora.',
+    },
+  );
 }
 
 export async function updateStoreSettings(
   _previousState: StoreSettingsActionState,
   formData: FormData,
 ): Promise<StoreSettingsActionState> {
-  const hourValues = Object.fromEntries(
-    Array.from(formData.entries()).filter(([, value]) => typeof value === 'string'),
-  ) as Record<string, string>;
-  const openingHours = buildOpeningHours(hourValues);
-  const parsed = storeSettingsFormSchema.safeParse({
-    name: formData.get('name'),
-    tagline: formData.get('tagline'),
-    address: formData.get('address'),
-    maps_url: formData.get('maps_url'),
-    phone: formData.get('phone'),
-    whatsapp: formData.get('whatsapp'),
-    instagram: formData.get('instagram'),
-    opening_hours: openingHours,
-    status_override: formData.get('status_override'),
-    notice: formData.get('notice'),
-  });
-  if (!parsed.success) return formError<StoreSettingsActionState>(parsed.error);
-  try {
-    const admin = await requireAdmin({ redirectUnauthenticated: false });
-    if (!admin)
-      return {
-        status: 'error',
-        message: 'Sua sessão não permite esta alteração. Entre novamente.',
-      };
-    const supabase = await createClient();
-    const { data: updatedSettings, error: updateError } = await supabase
-      .from('store_settings')
-      .update(parsed.data)
-      .eq('id', true)
-      .select('id')
-      .maybeSingle();
-    if (updateError || !updatedSettings) {
-      reportServerError(
-        'store_settings_update_failed',
-        updateError ?? new Error('store settings row not found'),
-      );
-      return {
-        status: 'error',
-        message: 'Não foi possível salvar agora. Tente novamente em instantes.',
-      };
-    }
-    revalidatePath('/admin/loja');
-    revalidatePath('/', 'layout');
-    invalidateStoreCache();
-    return { status: 'success', message: 'Dados da loja salvos com sucesso.' };
-  } catch (error) {
-    reportServerError('store_settings_update_exception', error);
-    return {
-      status: 'error',
-      message: 'Não foi possível salvar agora. Tente novamente em instantes.',
-    };
-  }
+  return runAdminAction(
+    async () => {
+      await adminApi().write('PUT', adminApiPaths.store, readStoreSettingsForm(formData));
+      return refreshAfterStoreChange('Dados da loja salvos com sucesso.');
+    },
+    {
+      event: 'store_settings_update_failed',
+      failureMessage: 'Não foi possível salvar agora. Tente novamente em instantes.',
+    },
+  );
 }

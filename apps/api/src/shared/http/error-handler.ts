@@ -13,5 +13,9 @@ export const errorHandler: ErrorHandler<AppHonoEnv> = (error, context) => {
       requestId: context.get('requestId'),
     });
   }
-  return context.json({ status: 'error' as const, message: httpError.message }, httpError.status);
+  const { status, message, fieldErrors } = httpError;
+  return context.json(
+    { status: 'error' as const, message, ...(fieldErrors ? { fieldErrors } : {}) },
+    status,
+  );
 };

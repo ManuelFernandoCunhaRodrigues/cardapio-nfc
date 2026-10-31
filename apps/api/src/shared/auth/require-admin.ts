@@ -23,7 +23,7 @@ export function requireAdmin(clients: SupabaseClientFactory): MiddlewareHandler<
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('role, is_active')
+      .select('role, is_active, name')
       .eq('id', authData.user.id)
       .maybeSingle();
     if (profileError) throw profileError;
@@ -32,6 +32,7 @@ export function requireAdmin(clients: SupabaseClientFactory): MiddlewareHandler<
     }
 
     context.set('user', authData.user);
+    context.set('adminName', profile.name);
     context.set('supabase', supabase);
     await next();
   };

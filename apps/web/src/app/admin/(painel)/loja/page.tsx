@@ -1,11 +1,11 @@
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { StoreSettingsForm } from '@/features/store/components/store-settings-form';
-import { getStoreSettings } from '@/features/store/server/get-store-settings';
+import { getAdminStoreSettings } from '@/features/store/server/get-store-settings';
 
 export const dynamic = 'force-dynamic';
 
 export default async function StoreSettingsPage() {
-  const settings = await getStoreSettings();
+  const settings = await getAdminStoreSettings();
   return (
     <>
       <header className="mb-5">

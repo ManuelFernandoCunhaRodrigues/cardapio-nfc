@@ -2,9 +2,11 @@ import { Hono } from 'hono';
 
 import type { ApiEnv } from './config/env.js';
 import { createHealthModule } from './modules/health/health.module.js';
+import { createCategoriesModule } from './modules/categories/categories.module.js';
+import { createHighlightsModule } from './modules/highlights/highlights.module.js';
 import { createMenuModule } from './modules/menu/menu.module.js';
 import { createSessionModule } from './modules/session/session.module.js';
-import { createStoreModule } from './modules/store/store.module.js';
+import { createAdminStoreModule, createPublicStoreModule } from './modules/store/store.module.js';
 import {
   corsMiddleware,
   errorHandler,
@@ -32,7 +34,10 @@ export function createApp({ env, supabase }: AppDependencies) {
 
   app.route('/health', createHealthModule(publicClient));
   app.route('/v1', createMenuModule(publicClient));
-  app.route('/v1', createStoreModule(publicClient));
+  app.route('/v1/store', createPublicStoreModule(publicClient));
   app.route('/v1/admin/session', createSessionModule(supabase));
+  app.route('/v1/admin/store', createAdminStoreModule(supabase));
+  app.route('/v1/admin/categories', createCategoriesModule(supabase));
+  app.route('/v1/admin/highlights', createHighlightsModule(supabase));
   return app;
 }

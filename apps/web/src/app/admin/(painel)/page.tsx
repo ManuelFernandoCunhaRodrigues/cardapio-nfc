@@ -7,7 +7,7 @@ import { getAdminCategories, getAdminProducts } from '@/features/admin/server/ca
 import { productsNeedingAttention } from '@/features/admin/rules/panel';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import { getSaoPauloWeekday } from '@/features/menu/rules/presentation';
-import { getStoreSettings } from '@/features/store/server/get-store-settings';
+import { getAdminStoreSettings } from '@/features/store/server/get-store-settings';
 import { getStoreStatus } from '@salgae/core/rules/opening-hours';
 import { formatPriceBRL } from '@salgae/core/rules/price';
 
@@ -19,7 +19,7 @@ export default async function AdminDashboardPage() {
   const [products, categories, settings] = await Promise.all([
     getAdminProducts(),
     getAdminCategories(),
-    getStoreSettings(),
+    getAdminStoreSettings(),
   ]);
   const active = products.filter((product) => product.is_active).length;
   const unavailable = products.filter(

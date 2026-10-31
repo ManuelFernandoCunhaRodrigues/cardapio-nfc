@@ -15,7 +15,8 @@ import { initialMediaActionState } from '@/features/media/server/action-state';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { AdminCategory, AdminProduct } from '@/features/admin/server/catalog';
+import type { AdminProduct } from '@/features/admin/server/catalog';
+import type { AdminCategory } from '@salgae/core/contracts/admin-api';
 import {
   creationProgressSteps,
   runProductCreationFlow,

@@ -20,7 +20,8 @@ import { initialMediaActionState } from '@/features/media/server/action-state';
 import { MediaImage } from '@/features/media/components/media-image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { AdminCategory, AdminHighlight, AdminProduct } from '@/features/admin/server/catalog';
+import type { AdminProduct } from '@/features/admin/server/catalog';
+import type { AdminCategory, AdminHighlight } from '@salgae/core/contracts/admin-api';
 import {
   buildHighlightTarget,
   highlightTargetKind,

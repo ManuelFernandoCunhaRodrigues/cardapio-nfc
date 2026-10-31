@@ -1,6 +1,8 @@
+import { adminApiPaths, adminSessionResponseSchema } from '@salgae/core/contracts/admin-api';
 import { redirect } from 'next/navigation';
 
-import { createClient } from '@/lib/supabase/server';
+import { adminApi } from '@/lib/api/admin-api-client';
+import { ApiRequestError } from '@/lib/api/api-request-error';
 
 export type AdminSession = {
   userId: string;
@@ -12,20 +14,18 @@ export type AdminAuthorization =
   | { status: 'forbidden' }
   | { status: 'authorized'; admin: AdminSession };
 
+/** A API confere o token e o perfil (`role = admin` e ativo); aqui só lemos o veredito. */
 export async function getAdminAuthorization(): Promise<AdminAuthorization> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: 'unauthenticated' };
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, is_active, name')
-    .eq('id', user.id)
-    .maybeSingle();
-  if (profile?.role !== 'admin' || !profile.is_active) return { status: 'forbidden' };
-  return { status: 'authorized', admin: { userId: user.id, name: profile.name } };
+  try {
+    const session = await adminApi().read(adminApiPaths.session, adminSessionResponseSchema);
+    return { status: 'authorized', admin: { userId: session.userId, name: session.name } };
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 401) {
+      return { status: 'unauthenticated' };
+    }
+    if (error instanceof ApiRequestError && error.status === 403) return { status: 'forbidden' };
+    throw error;
+  }
 }
 
 /** Centraliza a autorização da interface e das Server Actions do painel. */

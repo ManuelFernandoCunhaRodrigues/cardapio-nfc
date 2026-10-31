@@ -21,6 +21,17 @@ describe('mapErrorToHttp', () => {
     expect(mapErrorToHttp(error)).toEqual({ status, message: error.message, report: false });
   });
 
+  it('repassa os erros por campo de um erro de domínio', () => {
+    const error = new ConflictError('Esse endereço curto já está em uso. Escolha outro.', {
+      slug: ['Esse endereço curto já está em uso.'],
+    });
+
+    expect(mapErrorToHttp(error)).toMatchObject({
+      status: 409,
+      fieldErrors: { slug: ['Esse endereço curto já está em uso.'] },
+    });
+  });
+
   it('mapeia o timeout do Hono sem expor sua mensagem interna', () => {
     const result = mapErrorToHttp(new HTTPException(504, { message: 'internal timeout' }));
 

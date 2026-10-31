@@ -14,7 +14,8 @@ import {
   setProductSituation,
 } from '@/features/products/server/actions';
 import { MediaImage } from '@/features/media/components/media-image';
-import type { AdminCategory, AdminProduct } from '@/features/admin/server/catalog';
+import type { AdminProduct } from '@/features/admin/server/catalog';
+import type { AdminCategory } from '@salgae/core/contracts/admin-api';
 import { filterAdminProducts, type ProductFilter } from '@/features/admin/rules/panel';
 import {
   productSituationFromFields,

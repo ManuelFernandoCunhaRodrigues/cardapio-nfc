@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { AdminShell } from '@/features/admin/components/admin-shell';
 import { UnauthorizedAccess } from '@/features/auth/components/unauthorized-access';
 import { requireAdmin } from '@/features/auth/server/require-admin';
-import { getStoreSettings } from '@/features/store/server/get-store-settings';
+import { getAdminStoreSettings } from '@/features/store/server/get-store-settings';
 import { getStoreStatus } from '@salgae/core/rules/opening-hours';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ export default async function AdminPanelLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const admin = await requireAdmin();
   if (!admin) return <UnauthorizedAccess />;
-  const settings = await getStoreSettings();
+  const settings = await getAdminStoreSettings();
   const storeOpen = settings ? getStoreStatus(settings, new Date()).isOpen : null;
   return (
     <AdminShell

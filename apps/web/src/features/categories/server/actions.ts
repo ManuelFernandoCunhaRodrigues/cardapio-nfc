@@ -1,182 +1,111 @@
 'use server';
 
-import { z } from 'zod';
+import { adminApiPaths } from '@salgae/core/contracts/admin-api';
 
-import { formError, revalidateCatalog } from '@/features/admin/server/action-helpers';
-import { swapSortOrders } from '@salgae/core/rules/reorder';
-import { requireAdmin } from '@/features/auth/server/require-admin';
-import { reportServerError } from '@/lib/observability';
-import { createClient } from '@/lib/supabase/server';
-import { categoryFormSchema } from '@salgae/core/schemas/category';
+import { readFormText, runAdminAction } from '@/features/admin/server/run-admin-action';
+import { adminApi } from '@/lib/api/admin-api-client';
+import { invalidateMenuCache } from '@/lib/cache/invalidate-public-cache';
+import { refreshAdminPanel } from '@/lib/cache/refresh-admin-panel';
 
 import type { CategoryActionState } from './action-state';
 
-function catalogPaths(): void {
-  revalidateCatalog(['categorias', 'produtos']);
+function readCategoryForm(formData: FormData) {
+  return {
+    name: readFormText(formData, 'name'),
+    slug: readFormText(formData, 'slug'),
+    description: readFormText(formData, 'description'),
+    is_active: formData.get('is_active') === 'on',
+  };
+}
+
+function refreshAfterCategoryChange(message: string): CategoryActionState {
+  invalidateMenuCache();
+  refreshAdminPanel();
+  return { status: 'success', message };
 }
 
 export async function createCategory(
   _previous: CategoryActionState,
   formData: FormData,
 ): Promise<CategoryActionState> {
-  const parsed = categoryFormSchema.safeParse({
-    name: formData.get('name'),
-    slug: formData.get('slug'),
-    description: formData.get('description'),
-    is_active: formData.get('is_active') === 'on',
-  });
-  if (!parsed.success) return formError<CategoryActionState>(parsed.error);
-  const admin = await requireAdmin({ redirectUnauthenticated: false });
-  if (!admin)
-    return { status: 'error', message: 'Sua sessão não permite esta alteração. Entre novamente.' };
-
-  try {
-    const supabase = await createClient();
-    const { error } = await supabase.from('categories').insert(parsed.data);
-    if (error) {
-      if (error.code === '23505')
-        return {
-          status: 'error',
-          message: 'Esse endereço curto já está em uso. Escolha outro.',
-          fieldErrors: { slug: ['Esse endereço curto já está em uso.'] },
-        };
-      reportServerError('category_create_failed', error);
-      return {
-        status: 'error',
-        message: 'Não foi possível criar a categoria agora. Tente novamente.',
-      };
-    }
-    catalogPaths();
-    return { status: 'success', message: 'Categoria criada com sucesso.' };
-  } catch (error) {
-    reportServerError('category_create_exception', error);
-    return {
-      status: 'error',
-      message: 'Não foi possível criar a categoria agora. Tente novamente.',
-    };
-  }
+  return runAdminAction(
+    async () => {
+      await adminApi().create(adminApiPaths.categories, readCategoryForm(formData));
+      return refreshAfterCategoryChange('Categoria criada com sucesso.');
+    },
+    {
+      event: 'category_create_failed',
+      failureMessage: 'Não foi possível criar a categoria agora. Tente novamente.',
+    },
+  );
 }
 
 export async function updateCategory(
   _previous: CategoryActionState,
   formData: FormData,
 ): Promise<CategoryActionState> {
-  const id = z.string().uuid().safeParse(formData.get('id'));
-  const parsed = categoryFormSchema.safeParse({
-    name: formData.get('name'),
-    slug: formData.get('slug'),
-    description: formData.get('description'),
-    is_active: formData.get('is_active') === 'on',
-  });
-  if (!id.success || !parsed.success)
-    return !parsed.success
-      ? formError<CategoryActionState>(parsed.error)
-      : { status: 'error', message: 'Categoria inválida.' };
-  const admin = await requireAdmin({ redirectUnauthenticated: false });
-  if (!admin)
-    return { status: 'error', message: 'Sua sessão não permite esta alteração. Entre novamente.' };
-  try {
-    const supabase = await createClient();
-    const { error } = await supabase.from('categories').update(parsed.data).eq('id', id.data);
-    if (error) {
-      if (error.code === '23505')
-        return {
-          status: 'error',
-          message: 'Esse endereço curto já está em uso. Escolha outro.',
-          fieldErrors: { slug: ['Esse endereço curto já está em uso.'] },
-        };
-      reportServerError('category_update_failed', error);
-      return {
-        status: 'error',
-        message: 'Não foi possível salvar a categoria agora. Tente novamente.',
-      };
-    }
-    catalogPaths();
-    return { status: 'success', message: 'Categoria atualizada com sucesso.' };
-  } catch (error) {
-    reportServerError('category_update_exception', error);
-    return {
-      status: 'error',
-      message: 'Não foi possível salvar a categoria agora. Tente novamente.',
-    };
-  }
+  const id = readFormText(formData, 'id');
+  return runAdminAction(
+    async () => {
+      await adminApi().write('PUT', adminApiPaths.category(id), readCategoryForm(formData));
+      return refreshAfterCategoryChange('Categoria atualizada com sucesso.');
+    },
+    {
+      event: 'category_update_failed',
+      failureMessage: 'Não foi possível salvar a categoria agora. Tente novamente.',
+    },
+  );
 }
 
 export async function toggleCategory(
   _previous: CategoryActionState,
   formData: FormData,
 ): Promise<CategoryActionState> {
-  const id = z.string().uuid().safeParse(formData.get('id'));
-  const active = formData.get('is_active') === 'true';
-  if (!id.success) return { status: 'error', message: 'Categoria inválida.' };
-  const admin = await requireAdmin({ redirectUnauthenticated: false });
-  if (!admin)
-    return { status: 'error', message: 'Sua sessão não permite esta alteração. Entre novamente.' };
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('categories')
-    .update({ is_active: active })
-    .eq('id', id.data);
-  if (error) {
-    reportServerError('category_toggle_failed', error);
-    return { status: 'error', message: 'Não foi possível atualizar o status da categoria.' };
-  }
-  catalogPaths();
-  return { status: 'success', message: active ? 'Categoria ativada.' : 'Categoria desativada.' };
+  const id = readFormText(formData, 'id');
+  const isActive = formData.get('is_active') === 'true';
+  return runAdminAction(
+    async () => {
+      await adminApi().write('PUT', adminApiPaths.categoryActivation(id), { is_active: isActive });
+      return refreshAfterCategoryChange(isActive ? 'Categoria ativada.' : 'Categoria desativada.');
+    },
+    {
+      event: 'category_toggle_failed',
+      failureMessage: 'Não foi possível atualizar o status da categoria.',
+    },
+  );
 }
 
 export async function reorderCategory(
   _previous: CategoryActionState,
   formData: FormData,
 ): Promise<CategoryActionState> {
-  const id = z.string().uuid().safeParse(formData.get('id'));
-  const direction = z.enum(['up', 'down']).safeParse(formData.get('direction'));
-  if (!id.success || !direction.success)
-    return { status: 'error', message: 'Não foi possível alterar a ordem.' };
-  const admin = await requireAdmin({ redirectUnauthenticated: false });
-  if (!admin)
-    return { status: 'error', message: 'Sua sessão não permite esta alteração. Entre novamente.' };
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('categories')
-    .select('id, sort_order')
-    .order('sort_order')
-    .order('name');
-  const pair = error ? null : swapSortOrders(data ?? [], id.data, direction.data);
-  if (!pair) return { status: 'error', message: 'Esta categoria já está no limite da lista.' };
-  const { error: reorderError } = await supabase.rpc('swap_category_sort_orders', {
-    p_source_id: id.data,
-    p_neighbor_id: pair[1].id,
-  });
-  if (reorderError) {
-    reportServerError('category_reorder_failed', reorderError);
-    return { status: 'error', message: 'Não foi possível alterar a ordem agora.' };
-  }
-  catalogPaths();
-  return { status: 'success', message: 'Ordem da categoria atualizada.' };
+  const id = readFormText(formData, 'id');
+  const direction = readFormText(formData, 'direction');
+  return runAdminAction(
+    async () => {
+      await adminApi().write('POST', adminApiPaths.categoryOrder(id), { direction });
+      return refreshAfterCategoryChange('Ordem da categoria atualizada.');
+    },
+    {
+      event: 'category_reorder_failed',
+      failureMessage: 'Não foi possível alterar a ordem agora.',
+    },
+  );
 }
 
 export async function deleteCategory(
   _previous: CategoryActionState,
   formData: FormData,
 ): Promise<CategoryActionState> {
-  const id = z.string().uuid().safeParse(formData.get('id'));
-  if (!id.success) return { status: 'error', message: 'Categoria inválida.' };
-  const admin = await requireAdmin({ redirectUnauthenticated: false });
-  if (!admin)
-    return { status: 'error', message: 'Sua sessão não permite esta alteração. Entre novamente.' };
-  const supabase = await createClient();
-  const { error } = await supabase.from('categories').delete().eq('id', id.data);
-  if (error) {
-    if (error.code === '23503')
-      return {
-        status: 'error',
-        message:
-          'Esta categoria possui produtos vinculados. Mova os produtos para outra categoria ou desative-a.',
-      };
-    reportServerError('category_delete_failed', error);
-    return { status: 'error', message: 'Não foi possível excluir a categoria agora.' };
-  }
-  catalogPaths();
-  return { status: 'success', message: 'Categoria excluída.' };
+  const id = readFormText(formData, 'id');
+  return runAdminAction(
+    async () => {
+      await adminApi().write('DELETE', adminApiPaths.category(id));
+      return refreshAfterCategoryChange('Categoria excluída.');
+    },
+    {
+      event: 'category_delete_failed',
+      failureMessage: 'Não foi possível excluir a categoria agora.',
+    },
+  );
 }

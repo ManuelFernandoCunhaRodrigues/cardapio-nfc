@@ -11,11 +11,8 @@ import {
   VIDEO_RAW_MAX_BYTES,
 } from '@/features/media/server/video/constants';
 import { cleanupVideoOrphans } from '@/features/media/server/video/storage-cleanup';
-import {
-  commitStagedMedia,
-  isMediaUnreferenced,
-  mediaObjectPaths,
-} from '@/features/media/server/workflow';
+import { commitStagedMedia, isMediaUnreferenced } from '@/features/media/server/workflow';
+import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
 import { reportServerError } from '@/lib/observability';
 import { createClient } from '@/lib/supabase/server';
 

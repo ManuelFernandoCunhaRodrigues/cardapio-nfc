@@ -10,7 +10,8 @@ type ErrorDetails = {
 type ServerErrorContext = {
   event: string;
   error: unknown;
-  requestId: string;
+  /** Ausente quando quem relata não enxerga a requisição (um service, por exemplo). */
+  requestId?: string;
 };
 
 function pickText(source: Record<string, unknown>, key: 'code' | 'details' | 'hint') {

@@ -1,36 +1,18 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { adminApiPaths, adminStoreResponseSchema } from '@salgae/core/contracts/admin-api';
+import type { StoreSettings } from '@salgae/core/schemas/store-settings';
 
+import { adminApi } from '@/lib/api/admin-api-client';
 import { reportServerError } from '@/lib/observability';
-import type { Database } from '@salgae/core/database/database.types';
-import { createClient } from '@/lib/supabase/server';
-import { storeSettingsSchema, type StoreSettings } from '@salgae/core/schemas/store-settings';
 
-export async function getStoreSettings(
-  client?: SupabaseClient<Database>,
-): Promise<StoreSettings | null> {
+/**
+ * Dados da loja para o painel. Sem eles o painel continua usável (a tela da loja avisa e deixa
+ * preencher de novo), então a falha é registrada e a resposta é `null` em vez de derrubar a tela.
+ */
+export async function getAdminStoreSettings(): Promise<StoreSettings | null> {
   try {
-    const supabase = client ?? (await createClient());
-    const { data, error } = await supabase
-      .from('store_settings')
-      .select(
-        'id, name, tagline, address, maps_url, phone, whatsapp, instagram, opening_hours, status_override, notice, updated_at',
-      )
-      .eq('id', true)
-      .maybeSingle();
-
-    if (error || !data) {
-      if (error) reportServerError('store_settings_read_failed', error);
-      return null;
-    }
-
-    const parsed = storeSettingsSchema.safeParse(data);
-    if (!parsed.success) {
-      reportServerError('store_settings_invalid', parsed.error);
-      return null;
-    }
-    return parsed.data;
+    return await adminApi().read(adminApiPaths.store, adminStoreResponseSchema);
   } catch (error) {
-    reportServerError('store_settings_read_exception', error);
+    reportServerError('admin_store_settings_read_failed', error);
     return null;
   }
 }

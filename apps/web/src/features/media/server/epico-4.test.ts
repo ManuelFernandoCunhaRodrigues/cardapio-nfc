@@ -10,8 +10,6 @@ import {
   uploadHighlightImage,
   uploadProductImage,
 } from '@/features/media/server/actions';
-import { createHighlight } from '@/features/highlights/server/actions';
-import { swapSortOrders } from '@salgae/core/rules/reorder';
 import {
   CLIENT_IMAGE_MAX_BYTES,
   fitImageWithin as fitClientImage,
@@ -31,11 +29,8 @@ import {
   webpQualityCandidates,
 } from '@/features/media/server/compress';
 import { getImageVariantPath } from '@/features/media/rules/media-urls';
-import {
-  commitStagedMedia,
-  isMediaUnreferenced,
-  mediaObjectPaths,
-} from '@/features/media/server/workflow';
+import { commitStagedMedia, isMediaUnreferenced } from '@/features/media/server/workflow';
+import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
 import { highlightFormSchema } from '@salgae/core/schemas/highlight';
 
 const mocks = vi.hoisted(() => ({
@@ -374,42 +369,6 @@ describe('Épico 4 — Server Actions com fakes de Supabase/Storage', () => {
     );
     expect(result).toMatchObject({ status: 'error', message: expect.stringContaining('50 MB') });
     expect(client).not.toHaveBeenCalled();
-  });
-
-  it('13. cria destaque sem enviar posição e a troca de ordem continua limitada ao par', async () => {
-    const inserted: Array<Record<string, unknown>> = [];
-    const highlights = {
-      insert: (values: Record<string, unknown>) => {
-        inserted.push(values);
-        return {
-          select: () => ({ single: async () => ({ data: { id: highlightId }, error: null }) }),
-        };
-      },
-    };
-    mocks.createClient.mockResolvedValue({
-      from: () => highlights,
-    });
-    const result = await createHighlight(
-      { status: 'idle' },
-      form({ title: 'Combo da casa', description: '', target: '/cardapio', is_active: 'on' }),
-    );
-    expect(result).toMatchObject({ status: 'success', entityId: highlightId });
-    expect(inserted[0]).toMatchObject({ title: 'Combo da casa' });
-    expect(inserted[0]).not.toHaveProperty('sort_order');
-    expect(
-      swapSortOrders(
-        [
-          { id: 'a', sort_order: 0 },
-          { id: 'b', sort_order: 1 },
-          { id: 'c', sort_order: 2 },
-        ],
-        'b',
-        'up',
-      ),
-    ).toEqual([
-      { id: 'b', sort_order: 0 },
-      { id: 'a', sort_order: 1 },
-    ]);
   });
 
   it('14. bloqueia toda mutação de mídia antes de chamar Supabase sem administrador', async () => {

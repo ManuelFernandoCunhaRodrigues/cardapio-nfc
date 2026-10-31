@@ -1,7 +1,9 @@
+import type { FieldErrors } from '@salgae/core/contracts/admin-api';
 import { HTTPException } from 'hono/http-exception';
 
 import {
   ConflictError,
+  type DomainError,
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
@@ -13,11 +15,12 @@ type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 500 | 504;
 type HttpError = {
   status: ErrorStatus;
   message: string;
+  fieldErrors?: FieldErrors;
   report: boolean;
 };
 
 const domainErrorMappings: Array<{
-  type: new (message: string) => Error;
+  type: abstract new (...args: never[]) => DomainError;
   status: ErrorStatus;
 }> = [
   { type: ValidationError, status: 400 },
@@ -27,10 +30,20 @@ const domainErrorMappings: Array<{
   { type: ConflictError, status: 409 },
 ];
 
+function findDomainMapping(error: Error) {
+  return domainErrorMappings.find(({ type }) => error instanceof type);
+}
+
 export function mapErrorToHttp(error: Error): HttpError {
-  const domainMapping = domainErrorMappings.find(({ type }) => error instanceof type);
+  const domainMapping = findDomainMapping(error);
   if (domainMapping) {
-    return { status: domainMapping.status, message: error.message, report: false };
+    const { fieldErrors } = error as DomainError;
+    return {
+      status: domainMapping.status,
+      message: error.message,
+      ...(fieldErrors ? { fieldErrors } : {}),
+      report: false,
+    };
   }
 
   if (error instanceof HTTPException && error.status === 504) {
