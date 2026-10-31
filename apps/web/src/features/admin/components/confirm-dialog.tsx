@@ -6,6 +6,7 @@ import {
   useActionState,
   useCallback,
   useEffect,
+  useEffectEvent,
   useId,
   useRef,
   useState,
@@ -73,12 +74,15 @@ export function ConfirmDialog({
     window.setTimeout(restoreTriggerFocus, 0);
   }, [restoreTriggerFocus]);
 
+  const notifySuccess = useEffectEvent(() => onSuccess?.());
+
+  // Uma vez por resultado da ação. O fechamento não é cancelado se o `onSuccess` desmontar esta
+  // confirmação (ex.: o vídeo removido some da tela): o foco ainda vai para o `fallbackFocusRef`.
   useEffect(() => {
-    if (state.status !== 'success' || !open) return;
-    onSuccess?.();
-    const timeout = window.setTimeout(closeDialog, 0);
-    return () => window.clearTimeout(timeout);
-  }, [closeDialog, onSuccess, open, state.status]);
+    if (state.status !== 'success') return;
+    window.setTimeout(closeDialog, 0);
+    notifySuccess();
+  }, [closeDialog, state]);
 
   return (
     <>

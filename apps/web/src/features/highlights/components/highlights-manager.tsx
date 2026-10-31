@@ -117,6 +117,7 @@ function HighlightEditor({
   );
   const [mediaMessage, setMediaMessage] = useState<string>();
   const uploading = useRef(false);
+  const photoTitleRef = useRef<HTMLSpanElement>(null);
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
   useEffect(() => {
     const entityId = state.entityId;
@@ -254,7 +255,9 @@ function HighlightEditor({
         />
       </label>
       <div>
-        <span className="block text-sm font-bold text-ink">Foto do banner</span>
+        <span className="block text-sm font-bold text-ink" ref={photoTitleRef} tabIndex={-1}>
+          Foto do banner
+        </span>
         <div className="mt-2 flex items-center gap-3">
           {preview ? (
             <img
@@ -283,6 +286,7 @@ function HighlightEditor({
               action={removeHighlightImage}
               description="A foto deixará de aparecer no banner."
               entityId={highlight.id}
+              fallbackFocusRef={photoTitleRef}
               fieldName="highlight_id"
               onSuccess={() => {
                 setPreview(null);

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- prévias locais usam URLs blob */
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { removeProductVideo } from '@/features/media/server/actions';
 import { removeProductImage, uploadProductImage } from '@/features/media/server/image-actions';
@@ -67,6 +67,7 @@ export function ProductMediaManager({
   const [busy, setBusy] = useState(false);
   const [hasImage, setHasImage] = useState(Boolean(imagePath || preparedPreview));
   const [hasVideo, setHasVideo] = useState(Boolean(videoPath));
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   async function selectImage(file: File | undefined) {
     if (!file) return;
@@ -134,7 +135,9 @@ export function ProductMediaManager({
 
   return (
     <section aria-busy={busy} className="rounded-card bg-white p-4 shadow-card">
-      <h2 className="disp text-lg font-semibold text-ink">Foto e vídeo</h2>
+      <h2 className="disp text-lg font-semibold text-ink" ref={titleRef} tabIndex={-1}>
+        Foto e vídeo
+      </h2>
       <p className="mt-1 text-xs leading-5 text-muted">
         Foto pela câmera ou galeria. Vídeo opcional, até 15 segundos.
       </p>
@@ -171,6 +174,7 @@ export function ProductMediaManager({
               description="A foto deixará de aparecer no cardápio. Remova o vídeo antes, se existir."
               disabled={busy}
               entityId={productId}
+              fallbackFocusRef={titleRef}
               fieldName="product_id"
               onSuccess={() => {
                 setPreview(null);
@@ -222,6 +226,7 @@ export function ProductMediaManager({
               description="O vídeo deixará de aparecer no produto."
               disabled={busy}
               entityId={productId}
+              fallbackFocusRef={titleRef}
               fieldName="product_id"
               onSuccess={() => {
                 setVideoPreview(null);
