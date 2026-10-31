@@ -37,6 +37,10 @@ function testApp(repository = fakeRepository()) {
     createHighlightsRoutes(
       fakeAdminClients(),
       createHighlightsController(() => service),
+      {
+        upload: async (context) => context.json({ path: 'highlights/test/image' }, 201),
+        remove: async (context) => context.body(null, 204),
+      },
     ),
   );
   return app;

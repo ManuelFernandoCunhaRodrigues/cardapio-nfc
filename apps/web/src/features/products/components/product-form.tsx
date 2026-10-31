@@ -10,7 +10,7 @@ import {
   type ProductActionState,
 } from '@/features/products/server/action-state';
 import { createProduct, updateProduct } from '@/features/products/server/actions';
-import { uploadProductImage } from '@/features/media/server/actions';
+import { uploadProductImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { Button } from '@/components/ui/button';

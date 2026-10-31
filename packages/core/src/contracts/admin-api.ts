@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import { storeSettingsSchema } from '../schemas/store-settings';
+import { productFormSchema } from '../schemas/product';
+import { parsePriceBRL } from '../rules/parse-price';
 
 const adminRoot = '/v1/admin';
 
@@ -16,6 +18,12 @@ export const adminApiPaths = {
   highlight: (id: string) => `${adminRoot}/highlights/${encodeURIComponent(id)}`,
   highlightActivation: (id: string) => `${adminRoot}/highlights/${encodeURIComponent(id)}/active`,
   highlightOrder: (id: string) => `${adminRoot}/highlights/${encodeURIComponent(id)}/order`,
+  highlightImage: (id: string) => `${adminRoot}/highlights/${encodeURIComponent(id)}/image`,
+  products: `${adminRoot}/products`,
+  product: (id: string) => `${adminRoot}/products/${encodeURIComponent(id)}`,
+  productSituation: (id: string) => `${adminRoot}/products/${encodeURIComponent(id)}/situation`,
+  productOrder: (id: string) => `${adminRoot}/products/${encodeURIComponent(id)}/order`,
+  productImage: (id: string) => `${adminRoot}/products/${encodeURIComponent(id)}/image`,
 } as const;
 
 export const apiErrorResponseSchema = z.object({
@@ -32,9 +40,13 @@ export const adminSessionResponseSchema = z.object({
 });
 
 export const createdResponseSchema = z.object({ id: z.string().uuid() });
+export const imageResponseSchema = z.object({ path: z.string().min(1) });
 
 export const activationInputSchema = z.object({ is_active: z.boolean() });
 export const reorderInputSchema = z.object({ direction: z.enum(['up', 'down']) });
+export const productSituationInputSchema = z.object({
+  situation: z.enum(['menu', 'unavailable', 'hidden']),
+});
 export const storeStatusInputSchema = z.object({
   status_override: z.enum(['auto', 'open', 'closed'], 'Escolha um estado válido para a loja.'),
 });
@@ -62,12 +74,59 @@ export const adminHighlightSchema = z.object({
   is_active: z.boolean(),
 });
 
+export const adminProductSchema = z.object({
+  id: z.string().uuid(),
+  category_id: z.string().uuid(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+  price_cents: z.number().int().nonnegative(),
+  image_path: z.string().nullable(),
+  video_path: z.string().nullable(),
+  badge: z.enum(['mais_pedido', 'novo', 'quentinho']).nullable(),
+  sort_order: z.number().int(),
+  is_active: z.boolean(),
+  is_available: z.boolean(),
+  category: z.object({ name: z.string(), slug: z.string() }).nullable(),
+});
+
+const invalidPriceMessage = 'Informe um preço válido, como R$ 8,90.';
+
+export const productInputSchema = productFormSchema
+  .extend({
+    slug: z
+      .string()
+      .trim()
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use letras minúsculas, números e hífens.')
+      .optional(),
+  })
+  .transform((input, context) => {
+    const priceCents = parsePriceBRL(input.price);
+    if (priceCents === null) {
+      context.addIssue({ code: 'custom', message: invalidPriceMessage, path: ['price'] });
+      return z.NEVER;
+    }
+    return {
+      name: input.name,
+      description: input.description,
+      category_id: input.category_id,
+      badge: input.badge,
+      is_active: input.is_active,
+      is_available: input.is_available,
+      ...(input.slug ? { slug: input.slug } : {}),
+      price_cents: priceCents,
+    };
+  });
+
 export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;
 export type FieldErrors = NonNullable<ApiErrorResponse['fieldErrors']>;
 export type AdminSessionResponse = z.infer<typeof adminSessionResponseSchema>;
 export type CreatedResponse = z.infer<typeof createdResponseSchema>;
 export type ActivationInput = z.infer<typeof activationInputSchema>;
 export type ReorderInput = z.infer<typeof reorderInputSchema>;
+export type ProductSituationInput = z.infer<typeof productSituationInputSchema>;
 export type StoreStatusInput = z.infer<typeof storeStatusInputSchema>;
 export type AdminCategory = z.infer<typeof adminCategorySchema>;
 export type AdminHighlight = z.infer<typeof adminHighlightSchema>;
+export type AdminProduct = z.infer<typeof adminProductSchema>;
+export type ProductInput = z.infer<typeof productInputSchema>;

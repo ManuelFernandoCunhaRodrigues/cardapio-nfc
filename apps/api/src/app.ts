@@ -6,6 +6,7 @@ import { createCategoriesModule } from './modules/categories/categories.module.j
 import { createHighlightsModule } from './modules/highlights/highlights.module.js';
 import { createMenuModule } from './modules/menu/menu.module.js';
 import { createSessionModule } from './modules/session/session.module.js';
+import { createProductsModule } from './modules/products/products.module.js';
 import { createAdminStoreModule, createPublicStoreModule } from './modules/store/store.module.js';
 import {
   corsMiddleware,
@@ -39,5 +40,6 @@ export function createApp({ env, supabase }: AppDependencies) {
   app.route('/v1/admin/store', createAdminStoreModule(supabase));
   app.route('/v1/admin/categories', createCategoriesModule(supabase));
   app.route('/v1/admin/highlights', createHighlightsModule(supabase));
+  app.route('/v1/admin/products', createProductsModule(supabase));
   return app;
 }

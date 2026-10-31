@@ -2,6 +2,7 @@
 
 export const CLIENT_IMAGE_MAX_SIDE = 2048;
 export const CLIENT_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
+export const CLIENT_IMAGE_UPLOAD_MAX_BYTES = 3_750_000;
 
 export type ImageDimensions = { width: number; height: number };
 
@@ -49,6 +50,9 @@ export async function resizeImageForUpload(file: File): Promise<File> {
     if (!context) throw new Error('canvas_unavailable');
     context.drawImage(bitmap, 0, 0, dimensions.width, dimensions.height);
     const blob = await canvasBlob(canvas);
+    if (blob.size > CLIENT_IMAGE_UPLOAD_MAX_BYTES) {
+      throw new Error('A foto reduzida ainda ficou grande demais. Escolha outra foto.');
+    }
     return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'imagem'}.jpg`, {
       type: 'image/jpeg',
       lastModified: Date.now(),

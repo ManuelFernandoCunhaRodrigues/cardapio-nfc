@@ -1,8 +1,8 @@
 import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory.js';
 import type { HighlightInput, HighlightRepository } from './highlights.service.js';
+import { SupabaseImageRepository } from '../media/image/image.repository.js';
 
 const ADMIN_HIGHLIGHT_COLUMNS = 'id, title, description, image_path, target, sort_order, is_active';
-const HIGHLIGHT_IMAGES_BUCKET = 'highlight-images';
 
 export class SupabaseHighlightsRepository implements HighlightRepository {
   constructor(private readonly supabase: AppSupabaseClient) {}
@@ -77,17 +77,10 @@ export class SupabaseHighlightsRepository implements HighlightRepository {
   }
 
   async isImageInUse(imagePath: string) {
-    const { data, error } = await this.supabase
-      .from('highlights')
-      .select('id')
-      .eq('image_path', imagePath)
-      .limit(1);
-    if (error) throw error;
-    return data.length > 0;
+    return new SupabaseImageRepository(this.supabase).isImageInUse(imagePath);
   }
 
   async removeImageFiles(filePaths: string[]) {
-    const { error } = await this.supabase.storage.from(HIGHLIGHT_IMAGES_BUCKET).remove(filePaths);
-    if (error) throw error;
+    return new SupabaseImageRepository(this.supabase).removeFiles('highlight', filePaths);
   }
 }

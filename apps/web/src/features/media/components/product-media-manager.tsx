@@ -3,11 +3,8 @@
 
 import { useState } from 'react';
 
-import {
-  removeProductImage,
-  removeProductVideo,
-  uploadProductImage,
-} from '@/features/media/server/actions';
+import { removeProductVideo } from '@/features/media/server/actions';
+import { removeProductImage, uploadProductImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { resizeImageForUpload } from '@/features/media/client/client-resize';
 import { getPublicImageVariantUrl, getPublicMediaUrl } from '@/features/media/rules/media-urls';

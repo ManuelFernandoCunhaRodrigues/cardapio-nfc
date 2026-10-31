@@ -41,9 +41,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      // A foto chega previamente reduzida pelo navegador, mas o limite ainda
-      // comporta a validação do arquivo de até 15 MB definida para o servidor.
-      bodySizeLimit: '16mb',
+      // Reserva a mesma margem abaixo do limite de 4,5 MB da função que recebe a foto na API.
+      bodySizeLimit: '4mb',
     },
   },
 };

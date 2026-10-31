@@ -1,4 +1,8 @@
-import { apiErrorResponseSchema, createdResponseSchema } from '@salgae/core/contracts/admin-api';
+import {
+  apiErrorResponseSchema,
+  createdResponseSchema,
+  imageResponseSchema,
+} from '@salgae/core/contracts/admin-api';
 import type { z } from 'zod';
 
 import { getAccessToken } from '@/lib/auth/access-token';
@@ -40,9 +44,13 @@ export function createAdminApiClient({
       cache: 'no-store',
       headers: {
         Authorization: `Bearer ${token}`,
-        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(body === undefined || body instanceof FormData
+          ? {}
+          : { 'Content-Type': 'application/json' }),
       },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      ...(body === undefined
+        ? {}
+        : { body: body instanceof FormData ? body : JSON.stringify(body) }),
     });
     if (!response.ok) throw await toRequestError(response);
     return response;
@@ -57,6 +65,9 @@ export function createAdminApiClient({
     },
     async write(method: WriteMethod, path: string, body?: unknown): Promise<void> {
       await send(method, path, body);
+    },
+    async upload(path: string, body: FormData): Promise<string> {
+      return imageResponseSchema.parse(await (await send('POST', path, body)).json()).path;
     },
   };
 }

@@ -15,7 +15,7 @@ import {
   initialHighlightActionState,
   type HighlightActionState,
 } from '@/features/highlights/server/action-state';
-import { removeHighlightImage, uploadHighlightImage } from '@/features/media/server/actions';
+import { removeHighlightImage, uploadHighlightImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { MediaImage } from '@/features/media/components/media-image';
 import { Button } from '@/components/ui/button';
