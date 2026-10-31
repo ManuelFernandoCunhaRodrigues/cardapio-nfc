@@ -21,19 +21,10 @@ function SaveButton() {
     </Button>
   );
 }
-function defaultHours(): OpeningHourInput[] {
-  return Array.from({ length: 7 }, (_, day) => ({
-    day,
-    closed: day === 0,
-    open: '08:00',
-    close: '18:00',
-  }));
-}
-
-export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettings | null }>) {
+export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettings }>) {
   const [state, formAction] = useActionState(updateStoreSettings, initialStoreSettingsActionState);
   const formRef = useRef<HTMLFormElement>(null);
-  const [hours, setHours] = useState<OpeningHourInput[]>(settings?.opening_hours ?? defaultHours());
+  const [hours, setHours] = useState<OpeningHourInput[]>(settings.opening_hours);
   const [copySource, setCopySource] = useState(1);
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
   useEffect(() => {
@@ -51,14 +42,14 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
         <h2 className="disp text-lg font-semibold text-ink">Informações da loja</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Input
-            defaultValue={settings?.name ?? 'Salgaê Lanchonete'}
+            defaultValue={settings.name}
             error={errorFor('name')}
             label="Nome da loja"
             name="name"
             required
           />
           <Input
-            defaultValue={settings?.tagline ?? ''}
+            defaultValue={settings.tagline ?? ''}
             error={errorFor('tagline')}
             label="Frase curta"
             name="tagline"
@@ -66,14 +57,14 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
           />
           <Input
             className="sm:col-span-2"
-            defaultValue={settings?.address ?? ''}
+            defaultValue={settings.address ?? ''}
             error={errorFor('address')}
             label="Endereço"
             name="address"
           />
           <Input
             className="sm:col-span-2"
-            defaultValue={settings?.maps_url ?? ''}
+            defaultValue={settings.maps_url ?? ''}
             error={errorFor('maps_url')}
             label="Link do mapa"
             name="maps_url"
@@ -81,21 +72,21 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
             type="url"
           />
           <Input
-            defaultValue={settings?.phone ?? ''}
+            defaultValue={settings.phone ?? ''}
             error={errorFor('phone')}
             inputMode="tel"
             label="Telefone"
             name="phone"
           />
           <Input
-            defaultValue={settings?.whatsapp ?? ''}
+            defaultValue={settings.whatsapp ?? ''}
             error={errorFor('whatsapp')}
             inputMode="tel"
             label="WhatsApp"
             name="whatsapp"
           />
           <Input
-            defaultValue={settings?.instagram ?? ''}
+            defaultValue={settings.instagram ?? ''}
             error={errorFor('instagram')}
             label="Instagram (sem @)"
             name="instagram"
@@ -108,7 +99,7 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
               aria-describedby={errorFor('notice') ? 'notice-error' : undefined}
               aria-invalid={Boolean(errorFor('notice'))}
               className="min-h-24 w-full rounded-xl border border-border bg-surface-inner px-3.5 py-3 text-sm text-ink focus:outline-hidden focus:ring-4 focus:ring-brand/20"
-              defaultValue={settings?.notice ?? ''}
+              defaultValue={settings.notice ?? ''}
               id="notice"
               maxLength={140}
               name="notice"
@@ -130,7 +121,7 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
           Funcionamento agora
           <select
             className="mt-1.5 min-h-11 w-full rounded-xl border border-border bg-surface-inner px-3.5 text-sm font-normal text-ink sm:max-w-md"
-            defaultValue={settings?.status_override ?? 'auto'}
+            defaultValue={settings.status_override}
             id="status_override"
             name="status_override"
           >

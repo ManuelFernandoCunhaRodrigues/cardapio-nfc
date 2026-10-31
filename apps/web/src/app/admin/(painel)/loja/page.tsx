@@ -5,7 +5,7 @@ import { getAdminStoreSettings } from '@/features/store/server/get-store-setting
 export const dynamic = 'force-dynamic';
 
 export default async function StoreSettingsPage() {
-  const settings = await getAdminStoreSettings();
+  const store = await getAdminStoreSettings();
   return (
     <>
       <header className="mb-5">
@@ -14,14 +14,14 @@ export default async function StoreSettingsPage() {
           Atualize informações, aviso e horários do cardápio.
         </p>
       </header>
-      {!settings ? (
+      {store.status === 'loaded' ? (
+        <StoreSettingsForm settings={store.settings} />
+      ) : (
         <AdminNotice
-          className="mb-4"
           kind="error"
-          message="Não foi possível carregar os dados salvos. Preencha o formulário e tente salvar."
+          message="Não foi possível carregar os dados salvos da loja. Atualize a página para tentar de novo."
         />
-      ) : null}
-      <StoreSettingsForm settings={settings} />
+      )}
     </>
   );
 }

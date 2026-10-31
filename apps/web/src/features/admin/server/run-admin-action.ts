@@ -3,6 +3,9 @@ import type { FieldErrors } from '@salgae/core/contracts/admin-api';
 import { ApiRequestError } from '@/lib/api/api-request-error';
 import { reportServerError } from '@/lib/observability';
 
+const SESSION_REJECTED_MESSAGE = 'Sua sessão não permite esta alteração. Entre novamente.';
+const SESSION_REJECTED_STATUSES = new Set([401, 403]);
+
 export type AdminActionError = {
   status: 'error';
   message: string;
@@ -23,6 +26,9 @@ export function readFormText(formData: FormData, name: string): string {
 }
 
 export function toAdminActionError(error: unknown, options: AdminActionOptions): AdminActionError {
+  if (error instanceof ApiRequestError && SESSION_REJECTED_STATUSES.has(error.status)) {
+    return { status: 'error', message: SESSION_REJECTED_MESSAGE };
+  }
   if (error instanceof ApiRequestError && error.isExpected) {
     return {
       status: 'error',

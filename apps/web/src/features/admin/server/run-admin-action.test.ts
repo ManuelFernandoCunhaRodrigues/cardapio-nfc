@@ -31,6 +31,20 @@ describe('runAdminAction', () => {
     expect(mocks.reportServerError).not.toHaveBeenCalled();
   });
 
+  it.each([401, 403])(
+    'pede para entrar de novo quando a API recusa a sessão (%i)',
+    async (status) => {
+      const state = await runAdminAction(async () => {
+        throw new ApiRequestError(status, 'Mensagem da API.');
+      }, options);
+
+      expect(state).toEqual({
+        status: 'error',
+        message: 'Sua sessão não permite esta alteração. Entre novamente.',
+      });
+    },
+  );
+
   it('registra a falha inesperada e mostra o texto da ação', async () => {
     const failure = new TypeError('fetch failed');
 

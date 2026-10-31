@@ -14,13 +14,13 @@ export default async function AdminPanelLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const admin = await requireAdmin();
   if (!admin) return <UnauthorizedAccess />;
-  const settings = await getAdminStoreSettings();
-  const storeOpen = settings ? getStoreStatus(settings, new Date()).isOpen : null;
+  const store = await getAdminStoreSettings();
+  const loaded = store.status === 'loaded';
   return (
     <AdminShell
       name={admin.name}
-      statusOverride={settings?.status_override ?? null}
-      storeOpen={storeOpen}
+      statusOverride={loaded ? store.settings.status_override : null}
+      storeOpen={loaded ? getStoreStatus(store.settings, new Date()).isOpen : null}
     >
       {children}
     </AdminShell>

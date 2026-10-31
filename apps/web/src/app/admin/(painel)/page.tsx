@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 const reasonLabel = { unavailable: 'INDISPONÍVEL', 'without-image': 'SEM FOTO' } as const;
 
 export default async function AdminDashboardPage() {
-  const [products, categories, settings] = await Promise.all([
+  const [products, categories, store] = await Promise.all([
     getAdminProducts(),
     getAdminCategories(),
     getAdminStoreSettings(),
@@ -28,6 +28,7 @@ export default async function AdminDashboardPage() {
   const withoutImage = products.filter((product) => !product.image_path).length;
   const attention = productsNeedingAttention(products);
   const now = new Date();
+  const settings = store.status === 'loaded' ? store.settings : undefined;
   const status = settings ? getStoreStatus(settings, now) : null;
   const today = settings?.opening_hours.find((hour) => hour.day === getSaoPauloWeekday(now));
   const cards = [
