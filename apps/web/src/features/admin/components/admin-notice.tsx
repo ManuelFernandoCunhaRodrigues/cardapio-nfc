@@ -1,9 +1,9 @@
 'use client';
 
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, useIsPresent } from 'motion/react';
 import * as m from 'motion/react-m';
 
-import { useExitPresence } from '@/components/motion/exit-presence';
+import { layerAttributes } from '@/components/motion/exit-presence';
 
 type NoticeKind = 'success' | 'error' | 'info';
 
@@ -37,10 +37,10 @@ function NoticeMessage({
   className,
   children,
 }: Readonly<{ kind: NoticeKind; className: string; children: string }>) {
-  const { exitingAttributes } = useExitPresence();
+  const isPresent = useIsPresent();
   return (
     <m.p
-      {...exitingAttributes}
+      {...layerAttributes(isPresent)}
       animate={{ opacity: 1, y: 0 }}
       aria-live={kind === 'error' ? 'assertive' : 'polite'}
       className={`rounded-xl border px-3 py-2.5 text-sm font-bold ${noticeColors[kind]} ${className}`}

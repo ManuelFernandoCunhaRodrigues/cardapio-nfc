@@ -319,6 +319,7 @@ export function HighlightsManager({
   const [open, setOpen] = useState(searchParams.get('novo') === '1');
   const [selected, setSelected] = useState<AdminHighlight | null>(null);
   const [notice, setNotice] = useState<{ message: string; kind: 'success' | 'error' }>();
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const summary = highlightSummary(highlights);
   const edit = (highlight: AdminHighlight | null) => {
     setSelected(highlight);
@@ -332,7 +333,13 @@ export function HighlightsManager({
     <>
       <header className="mb-5 flex items-end justify-between gap-3">
         <div>
-          <h1 className="disp text-2xl font-bold text-ink lg:text-[28px]">Destaques</h1>
+          <h1
+            className="disp text-2xl font-bold text-ink lg:text-[28px]"
+            ref={titleRef}
+            tabIndex={-1}
+          >
+            Destaques
+          </h1>
           <p className="mt-1 text-sm text-muted">
             {summary.active} ativos de {summary.total}
           </p>
@@ -409,6 +416,7 @@ export function HighlightsManager({
                 action={deleteHighlight}
                 description="O destaque e a foto que só ele usa serão excluídos."
                 entityId={highlight.id}
+                fallbackFocusRef={titleRef}
                 title={`Excluir ${highlight.title}?`}
               />
             </div>

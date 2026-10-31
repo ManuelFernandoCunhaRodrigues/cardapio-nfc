@@ -1,5 +1,17 @@
 import { expect, test, type AdminDb, type Page } from '../fixtures';
 
+// Destaque com foto direto no banco: o editor mostra "Remover foto", uma confirmação que abre
+// sobre a gaveta. A imagem não precisa existir no Storage para isso.
+async function insertHighlightWithPhoto(adminDb: AdminDb, title: string) {
+  const { data, error } = await adminDb.client
+    .from('highlights')
+    .insert({ title, image_path: `e2e/${title}.webp`, is_active: false })
+    .select('id')
+    .single();
+  expect(error).toBeNull();
+  adminDb.track('highlights', data!.id);
+}
+
 async function createCategory(page: Page, adminDb: AdminDb, name: string) {
   await page.goto('/admin/categorias');
   await page.getByRole('button', { name: 'Nova', exact: true }).click();
@@ -46,8 +58,11 @@ for (const reducedMotion of ['reduce', 'no-preference'] as const) {
       const openButton = page.getByRole('button', { name: 'Nova', exact: true });
 
       await openButton.click();
-      await page.getByRole('dialog', { name: 'Nova categoria' }).getByLabel('Fechar').click();
-      await openButton.click();
+      await expect(page.getByRole('dialog', { name: 'Nova categoria' })).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(openButton).toBeFocused();
+      // Pelo teclado, a reabertura não espera a camada que está saindo sumir.
+      await page.keyboard.press('Enter');
 
       await expect(page.getByRole('dialog')).toHaveCount(1);
       await expect(anyDialogInDom(page)).toHaveCount(1);
@@ -111,6 +126,59 @@ for (const reducedMotion of ['reduce', 'no-preference'] as const) {
         .toBe(true);
       await expect(categoryCard(page, secondName)).toHaveCSS('transform', 'none');
       await expect(categoryCard(page, firstName)).toHaveCSS('transform', 'none');
+    });
+
+    test('excluir devolve o foco ao título da página quando o gatilho some', async ({
+      page,
+      adminDb,
+      uniqueName,
+    }) => {
+      const name = uniqueName('motion-excluir');
+      await createCategory(page, adminDb, name);
+
+      await categoryCard(page, name).getByRole('button', { name: 'Excluir', exact: true }).click();
+      await page
+        .getByRole('dialog', { name: `Excluir ${name}?` })
+        .getByRole('button', { name: 'Excluir de vez' })
+        .click();
+
+      await expect(categoryCard(page, name)).toHaveCount(0);
+      await expect(anyDialogInDom(page)).toHaveCount(0);
+      await expect(page.getByRole('heading', { level: 1, name: 'Categorias' })).toBeFocused();
+    });
+
+    test('Escape na confirmação aberta sobre a gaveta fecha só a confirmação', async ({
+      page,
+      adminDb,
+      uniqueName,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name === 'movimento-celular',
+        'No Pixel 7 emulado o formulário longo da gaveta do destaque fica encoberto (pendência da E9).',
+      );
+      const title = uniqueName('motion-camadas');
+      await insertHighlightWithPhoto(adminDb, title);
+      await page.goto('/admin/destaques');
+      await page
+        .getByRole('article')
+        .filter({ hasText: title })
+        .getByRole('button', { name: 'Editar', exact: true })
+        .click();
+      const editor = page.getByRole('dialog', { name: 'Editar destaque' });
+      const removePhoto = editor.getByRole('button', { name: 'Remover foto' });
+
+      await removePhoto.click();
+      await expect(
+        page.getByRole('dialog', { name: 'Remover foto deste destaque?' }),
+      ).toBeVisible();
+      await expect(page.getByRole('dialog')).toHaveCount(1);
+      await page.keyboard.press('Escape');
+
+      await expect(page.getByRole('dialog', { name: 'Remover foto deste destaque?' })).toHaveCount(
+        0,
+      );
+      await expect(editor).toBeVisible();
+      await expect(removePhoto).toBeFocused();
     });
   });
 }

@@ -121,12 +121,12 @@ function QuickAction({
 function MoreActions({
   product,
   onResult,
-  returnFocusRef,
+  fallbackFocusRef,
   onToggle,
 }: Readonly<{
   product: AdminProduct;
   onResult: ResultHandler;
-  returnFocusRef?: React.RefObject<HTMLElement | null>;
+  fallbackFocusRef?: React.RefObject<HTMLElement | null>;
   onToggle?: (open: boolean) => void;
 }>) {
   return (
@@ -161,7 +161,7 @@ function MoreActions({
             description="Esta ação não pode ser desfeita. Você também pode esconder o produto e mantê-lo cadastrado."
             entityId={product.id}
             onSuccess={() => onResult({ status: 'success', message: 'Produto excluído.' })}
-            returnFocusRef={returnFocusRef}
+            fallbackFocusRef={fallbackFocusRef}
             title={`Excluir ${product.name}?`}
           />
         </div>
@@ -173,11 +173,11 @@ function MoreActions({
 function ProductMobileCard({
   product,
   onResult,
-  returnFocusRef,
+  fallbackFocusRef,
 }: Readonly<{
   product: AdminProduct;
   onResult: ResultHandler;
-  returnFocusRef: React.RefObject<HTMLElement | null>;
+  fallbackFocusRef: React.RefObject<HTMLElement | null>;
 }>) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
@@ -212,7 +212,7 @@ function ProductMobileCard({
           onResult={onResult}
           onToggle={setMenuOpen}
           product={product}
-          returnFocusRef={returnFocusRef}
+          fallbackFocusRef={fallbackFocusRef}
         />
       </div>
     </m.article>
@@ -359,7 +359,7 @@ export function ProductsManager({
                   key={product.id}
                   onResult={onResult}
                   product={product}
-                  returnFocusRef={titleRef}
+                  fallbackFocusRef={titleRef}
                 />
               ))}
             </div>
@@ -447,7 +447,7 @@ export function ProductsManager({
                       <MoreActions
                         onResult={onResult}
                         product={product}
-                        returnFocusRef={titleRef}
+                        fallbackFocusRef={titleRef}
                       />
                     </div>
                   </td>

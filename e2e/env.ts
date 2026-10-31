@@ -6,3 +6,6 @@ export function requiredEnv(name: string): string {
 
 export const apiPort = Number(process.env.E2E_API_PORT ?? 4000);
 export const apiURL = process.env.E2E_API_URL ?? `http://127.0.0.1:${apiPort}`;
+
+// Sessão do administrador gravada pelo projeto `setup` e reaproveitada pelos demais.
+export const adminStorageState = 'playwright/.auth/admin.json';

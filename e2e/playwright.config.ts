@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-import { apiPort, apiURL } from './env';
+import { adminStorageState, apiPort, apiURL } from './env';
 
 // Fora do CI, os testes usam as mesmas variáveis do site.
 try {
@@ -14,7 +14,6 @@ try {
 // E2E_BASE_URL definidos, usam o servidor que já está no ar (o CI sobe a API antes do build do site).
 const port = Number(process.env.E2E_PORT ?? 3000);
 const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
-const adminStorageState = 'playwright/.auth/admin.json';
 
 export default defineConfig({
   testDir: '.',

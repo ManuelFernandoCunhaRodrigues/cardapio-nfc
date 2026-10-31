@@ -1,11 +1,11 @@
 'use client';
 
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, useIsPresent } from 'motion/react';
 import * as m from 'motion/react-m';
 import { useEffect, useRef, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 
-import { overlayFade, useExitPresence } from '@/components/motion/exit-presence';
+import { layerAttributes, overlayFade } from '@/components/motion/exit-presence';
 import { useHydrated, useMediaQuery } from '@/hooks/use-client-snapshot';
 import { useFocusTrap } from '@/features/admin/hooks/use-focus-trap';
 
@@ -39,19 +39,19 @@ function SheetFrame({
   returnFocusRef,
 }: Readonly<Omit<AdminSheetProps, 'open'>>) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const { isPresent: isOpen, exitingAttributes } = useExitPresence();
+  const isOpen = useIsPresent();
   const sidePanel = useMediaQuery('(min-width: 1024px)');
   const offscreen = sidePanel ? { x: '100%' } : { y: '100%' };
   const titleId = labelledBy ?? 'admin-sheet-title';
 
-  useFocusTrap({ active: isOpen, containerRef: panelRef, onEscape: onClose });
+  const { covered } = useFocusTrap({ active: isOpen, containerRef: panelRef, onEscape: onClose });
   useReturnFocusOnExit(isOpen, returnFocusRef);
   useLockedPageScroll(isOpen);
 
   return (
     <m.div
       {...overlayFade}
-      {...exitingAttributes}
+      {...layerAttributes(isOpen && !covered)}
       className="fixed inset-0 z-[90] bg-ink/55"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();

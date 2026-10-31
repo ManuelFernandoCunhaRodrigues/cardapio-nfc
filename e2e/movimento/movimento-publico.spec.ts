@@ -1,14 +1,30 @@
+import { devices, type Browser } from '@playwright/test';
+
+import { adminStorageState } from '../env';
 import { expect, test, type AdminDb, type Page } from '../fixtures';
 
-// Criados pelo painel (e não direto no banco) para a etiqueta do cardápio ser invalidada.
-async function createHighlights(page: Page, adminDb: AdminDb, titles: string[]) {
-  for (const title of titles) {
-    await page.goto('/admin/destaques');
-    await page.getByRole('button', { name: 'Novo', exact: true }).click();
-    await page.getByLabel('Título').fill(title);
-    await page.getByLabel('Descrição').fill(`Descrição de ${title}`);
-    await page.getByRole('button', { name: 'Criar destaque' }).click();
-    await expect(page.getByText('Destaque criado com sucesso.')).toBeVisible();
+// Criados pelo painel (e não direto no banco) para a etiqueta do cardápio ser invalidada. Sempre
+// numa aba de computador: no Pixel 7 emulado, o botão do fim do formulário longo da gaveta fica
+// encoberto, e criar destaque não é o que estes testes conferem.
+async function createHighlights(browser: Browser, adminDb: AdminDb, titles: string[]) {
+  const context = await browser.newContext({
+    ...devices['Desktop Chrome'],
+    baseURL: test.info().project.use.baseURL,
+    storageState: adminStorageState,
+  });
+  const page = await context.newPage();
+  try {
+    for (const title of titles) {
+      await page.goto('/admin/destaques');
+      await page.getByRole('button', { name: 'Novo', exact: true }).click();
+      const editor = page.getByRole('dialog', { name: 'Novo destaque' });
+      await editor.getByLabel('Título').fill(title);
+      await editor.getByLabel('Descrição').fill(`Descrição de ${title}`);
+      await editor.getByRole('button', { name: 'Criar destaque' }).click();
+      await expect(page.getByText('Destaque criado com sucesso.')).toBeVisible();
+    }
+  } finally {
+    await context.close();
   }
 
   const { data, error } = await adminDb.client.from('highlights').select('id').in('title', titles);
@@ -47,10 +63,11 @@ test.describe('movimento público com movimento reduzido', () => {
 
   test('troca de destaque pelos pontos sem deslocar a trilha', async ({
     page,
+    browser,
     adminDb,
     uniqueName,
   }) => {
-    await createHighlights(page, adminDb, [uniqueName('reduzido-a'), uniqueName('reduzido-b')]);
+    await createHighlights(browser, adminDb, [uniqueName('reduzido-a'), uniqueName('reduzido-b')]);
     await page.goto('/');
 
     await page.getByRole('button', { name: /^Ir para destaque 2 de/ }).click();
@@ -79,10 +96,11 @@ test.describe('movimento público sem redução', () => {
 
   test('troca de destaque ao arrastar com o mouse sem abrir o link', async ({
     page,
+    browser,
     adminDb,
     uniqueName,
   }) => {
-    await createHighlights(page, adminDb, [uniqueName('arrasto-a'), uniqueName('arrasto-b')]);
+    await createHighlights(browser, adminDb, [uniqueName('arrasto-a'), uniqueName('arrasto-b')]);
     await page.goto('/');
     const box = await activeSlide(page).boundingBox();
     if (!box) throw new Error('Slide ativo sem dimensões.');
@@ -99,10 +117,11 @@ test.describe('movimento público sem redução', () => {
 
   test('não troca de destaque com o mouse sobre o carrossel', async ({
     page,
+    browser,
     adminDb,
     uniqueName,
   }) => {
-    await createHighlights(page, adminDb, [uniqueName('pausa-a'), uniqueName('pausa-b')]);
+    await createHighlights(browser, adminDb, [uniqueName('pausa-a'), uniqueName('pausa-b')]);
     await page.clock.install();
     await page.goto('/');
     await expect(activeSlide(page)).toHaveAttribute('aria-label', /^1 de/);

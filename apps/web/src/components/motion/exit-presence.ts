@@ -1,14 +1,9 @@
-'use client';
-
-import { useIsPresent } from 'motion/react';
-
-// Dentro do `AnimatePresence`, o que está saindo continua no DOM até a animação acabar. Ele fica
-// inerte e fora da árvore de acessibilidade para não haver dois `role=dialog` (ou dois avisos)
-// ao mesmo tempo nem clique ou foco preso numa camada que já está sumindo.
-export function useExitPresence() {
-  const isPresent = useIsPresent();
-  const exitingAttributes = isPresent ? {} : ({ inert: true, 'aria-hidden': true } as const);
-  return { isPresent, exitingAttributes };
+// Dentro do `AnimatePresence`, o que está saindo continua no DOM até a animação acabar; uma
+// camada coberta por outra (confirmação sobre a gaveta) também continua lá. Nos dois casos ela
+// fica inerte e fora da árvore de acessibilidade: nunca há dois `role=dialog` acessíveis nem
+// clique ou foco numa camada que não é a de cima.
+export function layerAttributes(isActive: boolean) {
+  return isActive ? {} : ({ inert: true, 'aria-hidden': true } as const);
 }
 
 export const overlayFade = {

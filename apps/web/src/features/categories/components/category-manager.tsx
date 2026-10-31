@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useCallback, useEffect, useState } from 'react';
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import * as m from 'motion/react-m';
@@ -160,6 +160,7 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
   const [open, setOpen] = useState(searchParams.get('nova') === '1');
   const [selected, setSelected] = useState<AdminCategory | null>(null);
   const [notice, setNotice] = useState<string>();
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const edit = (category: AdminCategory | null) => {
     setSelected(category);
     setOpen(true);
@@ -172,7 +173,13 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
     <>
       <header className="mb-5 flex items-end justify-between gap-3">
         <div>
-          <h1 className="disp text-2xl font-bold text-ink lg:text-[28px]">Categorias</h1>
+          <h1
+            className="disp text-2xl font-bold text-ink lg:text-[28px]"
+            ref={titleRef}
+            tabIndex={-1}
+          >
+            Categorias
+          </h1>
           <p className="mt-1 text-sm text-muted">Organize as seções do cardápio.</p>
         </div>
         <Button onClick={() => edit(null)}>
@@ -238,6 +245,7 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
                 action={deleteCategory}
                 description="Se houver produtos nesta categoria, mova-os antes ou apenas esconda a categoria."
                 entityId={category.id}
+                fallbackFocusRef={titleRef}
                 title={`Excluir ${category.name}?`}
               />
             </div>

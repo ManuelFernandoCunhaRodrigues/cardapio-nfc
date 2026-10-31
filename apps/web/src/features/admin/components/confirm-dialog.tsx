@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, useIsPresent } from 'motion/react';
 import * as m from 'motion/react-m';
 import {
   useActionState,
@@ -14,7 +14,7 @@ import {
 import { createPortal, useFormStatus } from 'react-dom';
 
 import { Button } from '@/components/ui/button';
-import { overlayFade, useExitPresence } from '@/components/motion/exit-presence';
+import { layerAttributes, overlayFade } from '@/components/motion/exit-presence';
 import { useHydrated } from '@/hooks/use-client-snapshot';
 import { useFocusTrap } from '@/features/admin/hooks/use-focus-trap';
 
@@ -39,7 +39,7 @@ export function ConfirmDialog({
   fieldName = 'id',
   onSuccess,
   disabled = false,
-  returnFocusRef,
+  fallbackFocusRef,
 }: Readonly<{
   action: ConfirmAction;
   entityId: string;
@@ -49,7 +49,8 @@ export function ConfirmDialog({
   fieldName?: string;
   onSuccess?: () => void;
   disabled?: boolean;
-  returnFocusRef?: RefObject<HTMLElement | null>;
+  // Para onde o foco vai quando o gatilho some (ex.: o item foi excluído).
+  fallbackFocusRef?: RefObject<HTMLElement | null>;
 }>) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -58,12 +59,10 @@ export function ConfirmDialog({
   const [state, formAction] = useActionState(action, { status: 'idle' });
 
   const restoreTriggerFocus = useCallback(() => {
-    const trigger =
-      returnFocusRef?.current ??
-      triggerRef.current ??
-      (document.getElementById(triggerId) as HTMLButtonElement | null);
-    trigger?.focus();
-  }, [returnFocusRef, triggerId]);
+    const trigger = triggerRef.current ?? document.getElementById(triggerId);
+    const target = trigger?.checkVisibility() ? trigger : fallbackFocusRef?.current;
+    target?.focus();
+  }, [fallbackFocusRef, triggerId]);
 
   const closeDialog = useCallback(() => {
     // Foca antes e depois de esconder a confirmação: cobre clique, Escape e um re-render do
@@ -134,7 +133,7 @@ function ConfirmFrame({
 }>) {
   const cardRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const { isPresent, exitingAttributes } = useExitPresence();
+  const isPresent = useIsPresent();
   const titleId = `dialog-${entityId}`;
 
   useFocusTrap({
@@ -147,7 +146,7 @@ function ConfirmFrame({
   return (
     <m.div
       {...overlayFade}
-      {...exitingAttributes}
+      {...layerAttributes(isPresent)}
       aria-labelledby={titleId}
       aria-modal="true"
       className="fixed inset-0 z-[100] grid place-items-center bg-ink/55 p-4"
