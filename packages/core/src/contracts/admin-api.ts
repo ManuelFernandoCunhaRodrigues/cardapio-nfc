@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 import { storeSettingsSchema } from '../schemas/store-settings';
 import { productFormSchema } from '../schemas/product';
-import { parsePriceBRL } from '../rules/parse-price';
 
 const adminRoot = '/v1/admin';
 
@@ -90,33 +89,14 @@ export const adminProductSchema = z.object({
   category: z.object({ name: z.string(), slug: z.string() }).nullable(),
 });
 
-const invalidPriceMessage = 'Informe um preço válido, como R$ 8,90.';
-
-export const productInputSchema = productFormSchema
-  .extend({
-    slug: z
-      .string()
-      .trim()
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use letras minúsculas, números e hífens.')
-      .optional(),
-  })
-  .transform((input, context) => {
-    const priceCents = parsePriceBRL(input.price);
-    if (priceCents === null) {
-      context.addIssue({ code: 'custom', message: invalidPriceMessage, path: ['price'] });
-      return z.NEVER;
-    }
-    return {
-      name: input.name,
-      description: input.description,
-      category_id: input.category_id,
-      badge: input.badge,
-      is_active: input.is_active,
-      is_available: input.is_available,
-      ...(input.slug ? { slug: input.slug } : {}),
-      price_cents: priceCents,
-    };
-  });
+/** Entrada do formulário de produto; o preço chega como texto e o service o converte. */
+export const productInputSchema = productFormSchema.extend({
+  slug: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use letras minúsculas, números e hífens.')
+    .optional(),
+});
 
 export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;
 export type FieldErrors = NonNullable<ApiErrorResponse['fieldErrors']>;

@@ -6,19 +6,27 @@ import {
   type ReorderInput,
 } from '@salgae/core/contracts/admin-api';
 import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
+import { parsePriceBRL } from '@salgae/core/rules/parse-price';
 import { fieldsFromProductSituation } from '@salgae/core/rules/product-situation';
 
-import { ConflictError, NotFoundError } from '../../shared/errors/domain-errors.js';
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from '../../shared/errors/domain-errors.js';
 import { UniqueViolationError } from '../../shared/errors/persistence-errors.js';
 import { reportServerError } from '../../shared/observability.js';
 import { moveInOrder } from '../../shared/ordering/move-in-order.js';
 
 type ProductMedia = { imagePath: string | null; videoPath: string | null };
 
+/** O que o banco grava: o preço do formulário já convertido em centavos. */
+export type ProductRecord = Omit<ProductInput, 'price'> & { price_cents: number };
+
 export interface ProductRepository {
   listForAdmin(): Promise<unknown[]>;
-  create(input: ProductInput): Promise<string>;
-  update(id: string, input: ProductInput): Promise<boolean>;
+  create(record: ProductRecord): Promise<string>;
+  update(id: string, record: ProductRecord): Promise<boolean>;
   findCategoryId(id: string): Promise<string | null>;
   setSituation(id: string, fields: { is_active: boolean; is_available: boolean }): Promise<boolean>;
   listSortOrders(categoryId: string): Promise<Array<{ id: string; sort_order: number }>>;
@@ -35,6 +43,7 @@ const messages = {
   slugInUse: 'Esse endereço curto já está em uso. Escolha outro.',
   slugField: 'Esse endereço curto já está em uso.',
   atListEdge: 'Este produto já está no limite da categoria.',
+  invalidPrice: 'Informe um preço válido, como R$ 8,90.',
 };
 
 export class ProductsService {
@@ -45,11 +54,13 @@ export class ProductsService {
   }
 
   async createProduct(input: ProductInput): Promise<string> {
-    return this.withUniqueSlug(() => this.repository.create(input));
+    const record = this.toRecord(input);
+    return this.withUniqueSlug(() => this.repository.create(record));
   }
 
   async updateProduct(id: string, input: ProductInput): Promise<void> {
-    this.ensureFound(await this.withUniqueSlug(() => this.repository.update(id, input)));
+    const record = this.toRecord(input);
+    this.ensureFound(await this.withUniqueSlug(() => this.repository.update(id, record)));
   }
 
   async setProductSituation(id: string, input: ProductSituationInput): Promise<void> {
@@ -94,6 +105,15 @@ export class ProductsService {
     } catch (error) {
       reportServerError({ event: `product.${kind}_cleanup_failed`, error });
     }
+  }
+
+  /** O preço só é conferido depois dos outros campos, como no formulário de antes. */
+  private toRecord({ price, slug, ...fields }: ProductInput): ProductRecord {
+    const price_cents = parsePriceBRL(price);
+    if (price_cents === null) {
+      throw new ValidationError(messages.invalidPrice, { price: [messages.invalidPrice] });
+    }
+    return { ...fields, ...(slug ? { slug } : {}), price_cents };
   }
 
   private async withUniqueSlug<T>(save: () => Promise<T>): Promise<T> {
