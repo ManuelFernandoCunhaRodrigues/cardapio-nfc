@@ -12,7 +12,9 @@ import { SupabaseImageRepository } from '../media/image/image.repository.js';
 import { ImageService } from '../media/image/image.service.js';
 
 function createHighlightsService(client: AppSupabaseClient) {
-  return new HighlightsService(new SupabaseHighlightsRepository(client));
+  return new HighlightsService(
+    new SupabaseHighlightsRepository(client, new SupabaseImageRepository(client)),
+  );
 }
 
 function createImageService(client: AppSupabaseClient) {

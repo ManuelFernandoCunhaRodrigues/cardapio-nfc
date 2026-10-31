@@ -12,7 +12,7 @@ import { createProductsRoutes } from './products.routes.js';
 import { ProductsService } from './products.service.js';
 
 const createProductsService = (client: AppSupabaseClient) =>
-  new ProductsService(new SupabaseProductsRepository(client));
+  new ProductsService(new SupabaseProductsRepository(client, new SupabaseImageRepository(client)));
 const createImageService = (client: AppSupabaseClient) =>
   new ImageService(new SupabaseImageRepository(client), compressImageToWebp);
 

@@ -1,13 +1,17 @@
 import { translateDatabaseError } from '../../shared/supabase/database-errors.js';
 import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory.js';
 import type { ProductInput } from '@salgae/core/contracts/admin-api';
+import type { SupabaseImageRepository } from '../media/image/image.repository.js';
 import type { ProductRepository } from './products.service.js';
 
 const ADMIN_PRODUCT_COLUMNS =
   'id, category_id, name, slug, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available, category:categories(name, slug)';
 
 export class SupabaseProductsRepository implements ProductRepository {
-  constructor(private readonly supabase: AppSupabaseClient) {}
+  constructor(
+    private readonly supabase: AppSupabaseClient,
+    private readonly images: SupabaseImageRepository,
+  ) {}
 
   async listForAdmin() {
     const { data, error } = await this.supabase
@@ -90,17 +94,7 @@ export class SupabaseProductsRepository implements ProductRepository {
   }
 
   async isImageInUse(path: string) {
-    const [products, highlights, categories] = await Promise.all([
-      this.supabase.from('products').select('id').eq('image_path', path).limit(1),
-      this.supabase.from('highlights').select('id').eq('image_path', path).limit(1),
-      this.supabase.from('categories').select('id').eq('image_path', path).limit(1),
-    ]);
-    const results = [products, highlights, categories];
-    for (const result of results) {
-      if (result.error || result.data === null)
-        throw result.error ?? new Error('reference_check_failed');
-    }
-    return results.some((result) => result.data!.length > 0);
+    return this.images.isImageInUse(path);
   }
 
   async isVideoInUse(path: string) {
@@ -114,8 +108,7 @@ export class SupabaseProductsRepository implements ProductRepository {
   }
 
   async removeImageFiles(paths: string[]) {
-    const { error } = await this.supabase.storage.from('product-images').remove(paths);
-    if (error) throw error;
+    return this.images.removeFiles('product', paths);
   }
 
   async removeVideoFile(path: string) {
