@@ -63,6 +63,18 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      name: 'publico-movimento-celular',
+      testMatch: /movimento\/.*\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { ...devices['Pixel 7'] },
+    },
+    {
+      name: 'publico-movimento-desktop',
+      testMatch: /movimento\/.*\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       name: 'painel-celular',
       testMatch: /painel\/.*\.spec\.ts/,
       grep: /@leitura/,

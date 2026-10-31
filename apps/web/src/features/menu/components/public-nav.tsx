@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSyncExternalStore } from 'react';
+import * as m from 'motion/react-m';
+
+import { gentleSpring } from '@/components/motion/motion-primitives';
 
 import { Icon, type IconName } from './icons';
 
@@ -50,9 +53,19 @@ export function PublicNav() {
               key={item.href}
             >
               <span
-                className={`grid h-[30px] w-14 place-items-center rounded-full ${active ? 'bg-peach' : ''}`}
+                className={`relative grid h-[30px] w-14 place-items-center rounded-full ${active && !hydrated ? 'bg-peach' : ''}`}
               >
-                <Icon name={item.icon} />
+                {hydrated && active ? (
+                  <m.span
+                    aria-hidden="true"
+                    className="absolute h-[30px] w-14 rounded-full bg-peach"
+                    layoutId="public-navigation-indicator"
+                    transition={gentleSpring}
+                  />
+                ) : null}
+                <span className="relative z-10">
+                  <Icon name={item.icon} />
+                </span>
               </span>
               <span>{item.label}</span>
             </Link>

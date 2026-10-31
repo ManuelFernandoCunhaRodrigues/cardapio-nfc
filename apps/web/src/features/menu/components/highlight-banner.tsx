@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import * as m from 'motion/react-m';
 
 import {
   getClosestHighlightIndex,
@@ -13,6 +14,7 @@ import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import type { MenuHighlight } from '@/features/menu/types';
 import { splitLastWord } from '@/features/menu/rules/presentation';
 import { rememberProductOrigin } from '@/features/menu/rules/product-origin';
+import { useHighlightDrag } from '@/features/menu/hooks/use-highlight-drag';
 
 import { CoxinhaArt } from './coxinha-art';
 import { Icon } from './icons';
@@ -44,6 +46,11 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
   const controllerRef = useRef<HighlightCarouselController | null>(null);
   const reducedMotionRef = useRef(false);
   const programmedScrollRef = useRef<{ index: number; offset: number } | null>(null);
+  const onDragEnd = useHighlightDrag({
+    activeIndex: active,
+    itemCount: items.length,
+    onSelect: goTo,
+  });
 
   function getSlideOffsets(track: HTMLDivElement) {
     return getRelativeSlideOffsets(
@@ -145,8 +152,13 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
         if (event.pointerType !== 'mouse') controllerRef.current?.setPause('pointer', false);
       }}
     >
-      <div
+      <m.div
         className="flex snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        drag={enhanced && interactive ? 'x' : false}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.12}
+        dragTransition={{ bounceStiffness: 360, bounceDamping: 32 }}
+        onDragEnd={onDragEnd}
         onScroll={syncFromScroll}
         ref={trackRef}
       >
@@ -211,7 +223,7 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
             </div>
           );
         })}
-      </div>
+      </m.div>
       {interactive && enhanced ? (
         <>
           {items.length <= MAX_DOTS ? (

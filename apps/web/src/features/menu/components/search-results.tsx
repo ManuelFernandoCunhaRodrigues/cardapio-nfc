@@ -3,6 +3,10 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence } from 'motion/react';
+import * as m from 'motion/react-m';
+
+import { resultPresence } from '@/components/motion/motion-primitives';
 
 import { filterMenuProducts } from '@/features/menu/rules/search';
 import { sortProductsForHome } from '@salgae/core/rules/product-sort';
@@ -60,37 +64,41 @@ export function SearchResults({ products, categories }: Readonly<SearchResultsPr
       <p aria-live="polite" className="mt-3 text-xs text-muted">
         {resultLabel}
       </p>
-      {!query ? (
-        <InitialSearch categories={categories} featured={featured} onCategory={setQuery} />
-      ) : results.length ? (
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          {results.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      ) : (
-        <>
-          <section className="mt-3 rounded-card bg-white px-6 py-7 text-center shadow-card">
-            <span
-              aria-hidden="true"
-              className="mx-auto grid size-16 place-items-center rounded-full bg-surface-inner text-muted"
-            >
-              <Icon height={26} name="search" width={26} />
-            </span>
-            <h2 className="disp mt-3 text-xl font-semibold text-ink">Nada por aqui</h2>
-            <p className="mt-2 text-sm leading-5 text-muted">
-              Não achamos “{query}” no cardápio. Tente outro sabor ou veja tudo o que temos.
-            </p>
-            <Link
-              className="mt-5 inline-flex min-h-12 items-center rounded-full bg-brand-strong px-5 font-[family-name:var(--font-poppins)] text-sm font-semibold text-white shadow-brand focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/40"
-              href="/cardapio"
-            >
-              Ver cardápio completo
-            </Link>
-          </section>
-          <CategoryShortcuts categories={categories} onCategory={setQuery} />
-        </>
-      )}
+      <AnimatePresence initial={false} mode="wait">
+        {!query ? (
+          <m.div key="initial-search" {...resultPresence}>
+            <InitialSearch categories={categories} featured={featured} onCategory={setQuery} />
+          </m.div>
+        ) : results.length ? (
+          <m.div className="mt-3 grid grid-cols-2 gap-3" key="search-results" {...resultPresence}>
+            {results.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </m.div>
+        ) : (
+          <m.div key="empty-results" {...resultPresence}>
+            <section className="mt-3 rounded-card bg-white px-6 py-7 text-center shadow-card">
+              <span
+                aria-hidden="true"
+                className="mx-auto grid size-16 place-items-center rounded-full bg-surface-inner text-muted"
+              >
+                <Icon height={26} name="search" width={26} />
+              </span>
+              <h2 className="disp mt-3 text-xl font-semibold text-ink">Nada por aqui</h2>
+              <p className="mt-2 text-sm leading-5 text-muted">
+                Não achamos “{query}” no cardápio. Tente outro sabor ou veja tudo o que temos.
+              </p>
+              <Link
+                className="mt-5 inline-flex min-h-12 items-center rounded-full bg-brand-strong px-5 font-[family-name:var(--font-poppins)] text-sm font-semibold text-white shadow-brand focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/40"
+                href="/cardapio"
+              >
+                Ver cardápio completo
+              </Link>
+            </section>
+            <CategoryShortcuts categories={categories} onCategory={setQuery} />
+          </m.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

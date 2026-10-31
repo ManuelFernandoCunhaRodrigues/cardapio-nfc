@@ -1,6 +1,7 @@
 import { CategoryNav } from '@/features/menu/components/category-nav';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
+import { MenuCardStagger } from '@/components/motion/motion-primitives';
 import { getPublicMenu } from '@/lib/api/public-api-client';
 import { formatItemCount } from '@/features/menu/rules/presentation';
 import { sortProductsByAvailability } from '@salgae/core/rules/product-sort';
@@ -25,7 +26,7 @@ export default async function CardapioPage() {
             O cardápio está em preparação. Consulte a equipe no balcão.
           </p>
         ) : (
-          categories.map((category) => {
+          categories.map((category, categoryIndex) => {
             const items = productsByCategory.get(category.id) ?? [];
             return (
               <section className="scroll-mt-14" id={category.slug} key={category.id}>
@@ -35,8 +36,13 @@ export default async function CardapioPage() {
                 </div>
                 {items.length ? (
                   <ProductRow ariaLabel={`Produtos de ${category.name}`} className="mt-1">
-                    {items.map((product) => (
-                      <ProductCard compact key={product.id} product={product} />
+                    {items.map((product, productIndex) => (
+                      <MenuCardStagger
+                        key={product.id}
+                        sequence={categoryIndex * items.length + productIndex}
+                      >
+                        <ProductCard compact product={product} />
+                      </MenuCardStagger>
                     ))}
                   </ProductRow>
                 ) : (
