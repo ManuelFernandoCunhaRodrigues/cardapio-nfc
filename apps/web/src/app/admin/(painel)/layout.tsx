@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 
+import { MotionProvider } from '@/components/motion/motion-provider';
 import { AdminShell } from '@/features/admin/components/admin-shell';
 import { UnauthorizedAccess } from '@/features/auth/components/unauthorized-access';
 import { requireAdmin } from '@/features/auth/server/require-admin';
@@ -17,12 +18,14 @@ export default async function AdminPanelLayout({
   const store = await getAdminStoreSettings();
   const loaded = store.status === 'loaded';
   return (
-    <AdminShell
-      name={admin.name}
-      statusOverride={loaded ? store.settings.status_override : null}
-      storeOpen={loaded ? getStoreStatus(store.settings, new Date()).isOpen : null}
-    >
-      {children}
-    </AdminShell>
+    <MotionProvider>
+      <AdminShell
+        name={admin.name}
+        statusOverride={loaded ? store.settings.status_override : null}
+        storeOpen={loaded ? getStoreStatus(store.settings, new Date()).isOpen : null}
+      >
+        {children}
+      </AdminShell>
+    </MotionProvider>
   );
 }

@@ -4,6 +4,7 @@
 import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
+import * as m from 'motion/react-m';
 import {
   createHighlight,
   deleteHighlight,
@@ -18,6 +19,7 @@ import {
 import { removeHighlightImage, uploadHighlightImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { MediaImage } from '@/features/media/components/media-image';
+import { listReorder } from '@/components/motion/motion-primitives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { AdminProduct } from '@/features/admin/server/catalog';
@@ -350,7 +352,11 @@ export function HighlightsManager({
       ) : null}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {highlights.map((highlight, index) => (
-          <article className="rounded-card bg-white p-4 shadow-card" key={highlight.id}>
+          <m.article
+            {...listReorder}
+            className="rounded-card bg-white p-4 shadow-card"
+            key={highlight.id}
+          >
             <button
               className="flex min-h-16 w-full gap-3 text-left"
               onClick={() => edit(highlight)}
@@ -407,7 +413,7 @@ export function HighlightsManager({
               />
             </div>
             <p className="mt-3 text-xs text-muted">Posição {index + 1}</p>
-          </article>
+          </m.article>
         ))}
         {!highlights.length ? (
           <AdminNotice kind="info" message="Crie um destaque para a tela inicial do cardápio." />

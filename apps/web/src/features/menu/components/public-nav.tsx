@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSyncExternalStore } from 'react';
 import * as m from 'motion/react-m';
 
 import { gentleSpring } from '@/components/motion/motion-primitives';
+import { useHydrated } from '@/hooks/use-client-snapshot';
 
 import { Icon, type IconName } from './icons';
 
@@ -26,17 +26,11 @@ const items: {
   { href: '/info', label: 'Info', icon: 'info', matches: (path) => path === '/info' },
 ];
 
-const subscribe = () => () => {};
-
 export function PublicNav() {
   const pathname = usePathname();
   // Na Vercel a página inicial é gerada com outro caminho e sai sem aba ativa. O React não corrige
   // atributos na hidratação, então a barra é remontada uma vez no navegador com o caminho real.
-  const hydrated = useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false,
-  );
+  const hydrated = useHydrated();
   return (
     <nav aria-label="Navegação principal" className="fixed inset-x-0 bottom-0 z-30">
       <div

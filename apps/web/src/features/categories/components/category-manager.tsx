@@ -3,6 +3,7 @@
 import { useActionState, useCallback, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
+import * as m from 'motion/react-m';
 
 import type { CategoryActionState } from '@/features/categories/server/action-state';
 import {
@@ -12,6 +13,7 @@ import {
   toggleCategory,
   updateCategory,
 } from '@/features/categories/server/actions';
+import { listReorder } from '@/components/motion/motion-primitives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { AdminCategory } from '@salgae/core/contracts/admin-api';
@@ -181,7 +183,11 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
       <AdminNotice className="mb-4" message={notice} />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {categories.map((category, index) => (
-          <article className="rounded-card bg-white p-4 shadow-card" key={category.id}>
+          <m.article
+            {...listReorder}
+            className="rounded-card bg-white p-4 shadow-card"
+            key={category.id}
+          >
             <button
               className="min-h-11 w-full text-left"
               onClick={() => edit(category)}
@@ -235,7 +241,7 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
                 title={`Excluir ${category.name}?`}
               />
             </div>
-          </article>
+          </m.article>
         ))}
         {!categories.length ? (
           <AdminNotice

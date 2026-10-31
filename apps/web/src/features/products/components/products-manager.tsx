@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useActionState, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import * as m from 'motion/react-m';
 
 import {
   initialProductActionState,
@@ -14,6 +15,7 @@ import {
   setProductSituation,
 } from '@/features/products/server/actions';
 import { MediaImage } from '@/features/media/components/media-image';
+import { listReorder } from '@/components/motion/motion-primitives';
 import type { AdminProduct } from '@/features/admin/server/catalog';
 import type { AdminCategory } from '@salgae/core/contracts/admin-api';
 import { filterAdminProducts, type ProductFilter } from '@/features/admin/rules/panel';
@@ -179,7 +181,8 @@ function ProductMobileCard({
 }>) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <article
+    <m.article
+      {...listReorder}
       className={`relative rounded-product bg-white p-3 shadow-card ${menuOpen ? 'z-40' : 'z-0'}`}
     >
       <Link
@@ -212,7 +215,7 @@ function ProductMobileCard({
           returnFocusRef={returnFocusRef}
         />
       </div>
-    </article>
+    </m.article>
   );
 }
 
@@ -381,7 +384,11 @@ export function ProductsManager({
           <tbody>
             {groups.flatMap((group) =>
               group.products.map((product) => (
-                <tr className="border-b border-border-inner last:border-0" key={product.id}>
+                <m.tr
+                  {...listReorder}
+                  className="border-b border-border-inner last:border-0"
+                  key={product.id}
+                >
                   <td className="px-4 py-2">
                     <Link
                       className="flex min-h-11 items-center gap-3 font-bold text-ink"
@@ -444,7 +451,7 @@ export function ProductsManager({
                       />
                     </div>
                   </td>
-                </tr>
+                </m.tr>
               )),
             )}
           </tbody>

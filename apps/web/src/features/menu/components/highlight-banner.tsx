@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as m from 'motion/react-m';
 
 import {
@@ -11,6 +11,7 @@ import {
 } from '@/features/menu/rules/highlight-carousel';
 import type { MenuHighlight } from '@/features/menu/types';
 import { useHighlightDrag } from '@/features/menu/hooks/use-highlight-drag';
+import { useHydrated } from '@/hooks/use-client-snapshot';
 
 import { HighlightSlide } from './highlight-slide';
 import { Icon } from './icons';
@@ -31,11 +32,7 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
   const items = highlights.length ? highlights : [fallback];
   const interactive = highlights.length > 1;
   const [active, setActive] = useState(0);
-  const enhanced = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  const enhanced = useHydrated();
   const [announcement, setAnnouncement] = useState('');
   const trackRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<HighlightCarouselController | null>(null);
