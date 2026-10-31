@@ -9,7 +9,9 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/test-support/**'],
+      // Repositories são adaptadores finos do Supabase: quem os testa são os E2E da API
+      // (`e2e/api`), contra o Supabase local do CI. A regra fica nos services, medidos aqui.
+      exclude: ['src/**/*.test.ts', 'src/test-support/**', 'src/**/*.repository.ts'],
       reporter: ['text-summary', 'json-summary', 'html'],
       thresholds: { statements: 70, branches: 65, functions: 75, lines: 70 },
     },

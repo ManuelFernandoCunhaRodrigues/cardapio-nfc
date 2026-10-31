@@ -189,7 +189,7 @@ test.describe('escritas do painel na API', () => {
 
     expect(response.status()).toBe(400);
     expect(await response.json()).toMatchObject({
-      fieldErrors: { maps_url: [expect.any(String)] },
+      fieldErrors: { maps_url: expect.arrayContaining(['Informe uma URL válida.']) },
     });
   });
 });
