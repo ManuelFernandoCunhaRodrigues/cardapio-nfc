@@ -25,7 +25,7 @@ export function readFormText(formData: FormData, name: string): string {
   return typeof value === 'string' ? value : '';
 }
 
-export function toAdminActionError(error: unknown, options: AdminActionOptions): AdminActionError {
+function toAdminActionError(error: unknown, options: AdminActionOptions): AdminActionError {
   if (error instanceof ApiRequestError && SESSION_REJECTED_STATUSES.has(error.status)) {
     return { status: 'error', message: SESSION_REJECTED_MESSAGE };
   }

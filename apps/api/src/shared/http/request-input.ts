@@ -8,7 +8,7 @@ import type { AppHonoEnv } from '../types.js';
 const INVALID_FORM_MESSAGE = 'Revise os campos destacados antes de salvar.';
 const INVALID_BODY_MESSAGE = 'O corpo da requisição precisa ser um JSON válido.';
 
-export function toFieldErrors(error: z.ZodError): FieldErrors {
+function toFieldErrors(error: z.ZodError): FieldErrors {
   return error.issues.reduce<FieldErrors>((fieldErrors, issue) => {
     const field = issue.path.join('.');
     if (field) fieldErrors[field] = [...(fieldErrors[field] ?? []), issue.message];

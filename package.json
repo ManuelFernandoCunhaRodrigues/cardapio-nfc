@@ -19,6 +19,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "knip": "knip --no-progress",
     "test": "npm run test --workspaces --if-present",
     "test:coverage": "npm run test:coverage --workspaces --if-present",
     "test:e2e": "npm run test:e2e -w @salgae/e2e --",
@@ -29,6 +30,7 @@
     "qr:verificar": "npm run qr:verificar -w @salgae/web --"
   },
   "devDependencies": {
+    "knip": "6.41.0",
     "prettier": "3.9.10",
     "typescript": "5.9.3"
   }

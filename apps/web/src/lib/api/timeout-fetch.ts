@@ -1,4 +1,4 @@
-export const PUBLIC_API_TIMEOUT_MS = 10_000;
+const PUBLIC_API_TIMEOUT_MS = 10_000;
 
 export function createTimeoutFetch(
   fetchImplementation: typeof globalThis.fetch = globalThis.fetch,

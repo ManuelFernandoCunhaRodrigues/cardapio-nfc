@@ -1,5 +1,4 @@
-export const publicMediaBuckets = ['product-images', 'product-videos', 'highlight-images'] as const;
-export type PublicMediaBucket = (typeof publicMediaBuckets)[number];
+export type PublicMediaBucket = 'product-images' | 'product-videos' | 'highlight-images';
 
 export type ImageVariant = 'card' | 'detail';
 

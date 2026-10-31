@@ -8,7 +8,7 @@ import {
 } from '@/features/media/server/video/constants';
 
 export const VIDEO_MAX_BYTES = VIDEO_RAW_MAX_BYTES;
-export const VIDEO_MAX_DURATION_SECONDS = VIDEO_DURATION_TOLERANCE_SECONDS;
+const VIDEO_MAX_DURATION_SECONDS = VIDEO_DURATION_TOLERANCE_SECONDS;
 export const acceptedVideoTypes = ACCEPTED_VIDEO_MIME_TYPES;
 const VIDEO_METADATA_TIMEOUT_MS = 8_000;
 

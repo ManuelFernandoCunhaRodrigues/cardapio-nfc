@@ -1,6 +1,6 @@
 'use client';
 
-export const CLIENT_IMAGE_MAX_SIDE = 2048;
+const CLIENT_IMAGE_MAX_SIDE = 2048;
 export const CLIENT_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
 export const CLIENT_IMAGE_UPLOAD_MAX_BYTES = 3_750_000;
 

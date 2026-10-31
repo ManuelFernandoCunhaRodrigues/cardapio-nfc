@@ -1,7 +1,7 @@
 import sharp, { type Metadata } from 'sharp';
 
 export const IMAGE_BODY_MAX_BYTES = 4 * 1024 * 1024;
-export const IMAGE_MIN_SIDE = 400;
+const IMAGE_MIN_SIDE = 400;
 export const WEBP_QUALITIES = [82, 76, 70] as const;
 
 export type CompressedImage = { detail: Buffer; card: Buffer };

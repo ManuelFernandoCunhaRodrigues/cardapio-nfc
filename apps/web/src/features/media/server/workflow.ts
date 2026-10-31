@@ -1,7 +1,3 @@
-export function isMediaUnreferenced(referenceExists: readonly boolean[]): boolean {
-  return !referenceExists.some(Boolean);
-}
-
 /** Mantém o objeto anterior até o registro apontar para a nova mídia. */
 export async function commitStagedMedia({
   commit,

@@ -4,7 +4,7 @@ export type ProductFilter = 'all' | 'unavailable' | 'without-image' | 'hidden';
 export type AttentionReason = 'unavailable' | 'without-image';
 export type HighlightTargetKind = 'menu' | 'category' | 'product' | 'custom';
 
-export function attentionReasons(
+function attentionReasons(
   product: Pick<AdminProduct, 'is_active' | 'is_available' | 'image_path'>,
 ): AttentionReason[] {
   const reasons: AttentionReason[] = [];
@@ -87,7 +87,7 @@ export function copyOpeningHourToEveryDay(
 }
 
 export type CreationStage = 'product' | 'image' | 'video' | 'done';
-export type CreationProgressStatus = 'pending' | 'current' | 'complete' | 'failed';
+type CreationProgressStatus = 'pending' | 'current' | 'complete' | 'failed';
 export type CreationProgressStep = {
   value: Exclude<CreationStage, 'done'>;
   status: CreationProgressStatus;

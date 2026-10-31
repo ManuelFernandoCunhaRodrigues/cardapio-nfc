@@ -11,7 +11,7 @@ import { VideoCompressionError } from './errors';
 const STDERR_LIMIT = 512 * 1024;
 let executableCopyPath: string | undefined;
 
-export async function resolveFfmpegPath(): Promise<string> {
+async function resolveFfmpegPath(): Promise<string> {
   const binary = process.env.FFMPEG_PATH?.trim() || ffmpegStatic;
   if (!binary)
     throw new VideoCompressionError('video_compress_failed', 'Binário do ffmpeg não disponível.');
