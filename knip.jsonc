@@ -9,7 +9,7 @@
     },
     "apps/web": {
       // Scripts manuais citados na documentação (homologação e verificação de URLs).
-      "entry": ["scripts/*.mjs"],
+      "entry": ["scripts/lighthouse-homologacao.mjs", "scripts/verificar-urls.mjs"],
     },
     "e2e": {
       // Projeto `setup` do Playwright, ligado pelo `testMatch` da configuração.

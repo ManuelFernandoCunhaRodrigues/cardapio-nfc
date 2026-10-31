@@ -1,6 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-
-import type { Database } from '@salgae/core/database/database.types';
+import type { ServerSupabaseClient } from '@/lib/supabase/server';
 
 import { VIDEO_ORPHAN_AGE_MS } from './constants';
 
@@ -34,7 +32,7 @@ type VideoCleanupClientDouble = {
   };
 };
 
-export type VideoCleanupClient = SupabaseClient<Database> | VideoCleanupClientDouble;
+export type VideoCleanupClient = ServerSupabaseClient | VideoCleanupClientDouble;
 
 type CleanupOptions = {
   productId?: string;
@@ -106,7 +104,7 @@ async function cleanupProduct(
 
 /** Erro de listagem cancela somente a faxina correspondente; nunca equivale a pasta vazia. */
 type CleanupVideoOrphans = {
-  (client: SupabaseClient<Database>, options?: CleanupOptions): Promise<void>;
+  (client: ServerSupabaseClient, options?: CleanupOptions): Promise<void>;
   (client: VideoCleanupClientDouble, options?: CleanupOptions): Promise<void>;
 };
 

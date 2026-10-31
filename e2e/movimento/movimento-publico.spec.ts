@@ -102,6 +102,8 @@ test.describe('movimento público sem redução', () => {
   }) => {
     await createHighlights(browser, adminDb, [uniqueName('arrasto-a'), uniqueName('arrasto-b')]);
     await page.goto('/');
+    // Antes da hidratação todos os slides ficam visíveis (nada escondido sem JS).
+    await expect(activeSlide(page)).toHaveCount(1);
     const box = await activeSlide(page).boundingBox();
     if (!box) throw new Error('Slide ativo sem dimensões.');
 

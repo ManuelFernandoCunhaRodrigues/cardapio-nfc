@@ -41,7 +41,7 @@ const eslintConfig = [
     // Vídeo ainda no Next até a prova de conceito na Vercel (E1 do plano v3) e testes que
     // geram imagens de verdade.
     files: ['src/features/media/server/video/**', 'src/**/*.test.ts'],
-    rules: restrictImports(backendImports),
+    rules: restrictImports([...supabaseImports, ...backendImports]),
   },
 ];
 

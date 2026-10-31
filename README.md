@@ -31,17 +31,19 @@ Cardápio digital de **consulta no local** para uma lanchonete: o cliente aponta
 | Camada | Tecnologia |
 | --- | --- |
 | Site (`apps/web`) | Next.js 16 (App Router, Server Components e Server Actions), React 19, TypeScript estrito |
-| API (`apps/api`) | Hono sobre Node.js 22, empacotada com esbuild; roda na Vercel ou em Docker |
+| API (`apps/api`) | Hono sobre Node.js 22, empacotada com esbuild; Docker pronto, projeto na Vercel pendente |
 | Regras comuns (`packages/core`) | Zod, contratos da API e regras puras, sem framework |
 | Estilo e movimento | Tailwind CSS 4 e Motion (`motion/react-m` com `LazyMotion`) |
 | Dados | Supabase: PostgreSQL com Row Level Security, Auth e Storage |
 | Mídia | `sharp` (WebP) e `ffmpeg` (H.264) |
 | Qualidade | Vitest, Playwright com axe, ESLint, Prettier, knip, GitHub Actions |
-| Hospedagem | Vercel, um projeto por ambiente |
+| Hospedagem | Vercel, um projeto por ambiente (a API entra lá na etapa final do plano v3) |
 
 ## Arquitetura
 
-O site só desenha a tela. Tudo o que lê ou grava dados passa pela API, a única peça que fala com o banco (o site usa o Supabase apenas para o login).
+O site só desenha a tela. Tudo o que lê ou grava dados passa pela API, a única peça que fala com o banco; o site usa o Supabase apenas para o login.
+
+> **Exceção temporária: o vídeo.** O envio e a compactação de vídeo continuam numa rota do Next (`apps/web/src/app/admin/(painel)/midia/video/route.ts` e `features/media/server/`), com acesso ao banco e ao Storage, até a prova de conceito da API na Vercel (etapa E1 do plano v3, em `docs/planejamento/`). Depois dela o vídeo vai do navegador direto para a API.
 
 ```mermaid
 flowchart LR
@@ -115,7 +117,7 @@ apps/web/src/
   proxy.ts          renovação da sessão, só em /admin
 ```
 
-O ESLint do site também guarda as fronteiras: `@supabase/*` só em `lib/supabase` e `lib/auth`, nada de `sharp`/`ffmpeg-static` (exceto o vídeo, até ele ir para a API) e o Motion só por `motion/react-m`. O `packages/core` não pode importar framework, banco nem os apps.
+O ESLint do site também guarda as fronteiras: `@supabase/*` só em `lib/supabase` e `lib/auth`, nada de `sharp`/`ffmpeg-static` (exceto no vídeo e nos testes; `@supabase/*` continua proibido neles) e o Motion só por `motion/react-m`. O `packages/core` não pode importar framework, banco nem os apps.
 
 ### Convenção de nomes
 
@@ -223,15 +225,16 @@ docker run -d --restart unless-stopped -p 127.0.0.1:4000:4000 \
   salgae-api
 ```
 
-O site roda com Node na mesma máquina, com a API no ar antes do build:
+O site roda com Node na mesma máquina. Ele precisa das mesmas variáveis no build e na execução (as `NEXT_PUBLIC_` entram no JavaScript no build), com a API no ar antes do build:
 
 ```bash
 npm ci
-API_URL=http://127.0.0.1:4000 npm run build
-API_URL=http://127.0.0.1:4000 npm run start
+cp apps/web/.env.example apps/web/.env.local   # preencher: Supabase, API_URL, NEXT_PUBLIC_SITE_URL e NEXT_PUBLIC_SITE_ENV
+npm run build
+npm run start -- --port 3000
 ```
 
-Na frente dos dois, um proxy reverso (Nginx ou Caddy) com HTTPS. A API pode ficar só na rede interna; quando o envio de vídeo passar para ela, o navegador também vai chamá-la (`NEXT_PUBLIC_API_URL`).
+Para o site voltar sozinho depois de uma queda ou reinício, rode o `npm run start` por um serviço supervisionado (um serviço do `systemd` com `Restart=always` e `WorkingDirectory` na raiz do repositório, ou o `pm2`). Na frente dos dois, um proxy reverso (Nginx ou Caddy) com HTTPS. A API pode ficar só na rede interna; quando o envio de vídeo passar para ela, o navegador também vai chamá-la (`NEXT_PUBLIC_API_URL`).
 
 ## Banco de dados
 

@@ -12,7 +12,7 @@ Voltar: [[00-Comece-Aqui]] · Deploy: [[09-Ambientes-e-Deploy]]
 
 ## Arquitetura em alto nível
 
-> **Atualizado em 2026-10-31 (plano v3, [[25-Mudanca-Separar-Backend-e-Frontend]]):** o backend saiu do Next. O site (`apps/web`) só desenha a tela; a API própria (`apps/api`, Hono) é a única peça que lê e grava no Supabase; o que os dois compartilham fica em `packages/core`. Detalhes, camadas e convenção de nomes no `README.md` do repositório.
+> **Atualizado em 2026-10-31 (plano v3, [[25-Mudanca-Separar-Backend-e-Frontend]]):** o backend saiu do Next. O site (`apps/web`) só desenha a tela; a API própria (`apps/api`, Hono) é a única peça que lê e grava no Supabase; o que os dois compartilham fica em `packages/core`. **Exceção temporária:** o vídeo continua numa rota do Next, com acesso ao banco e ao Storage, até a prova de conceito da API na Vercel (E1); a API ainda não tem projeto na Vercel (hoje roda local e tem `Dockerfile` para VPS). Detalhes, camadas e convenção de nomes no `README.md` do repositório.
 
 ```mermaid
 flowchart TD
@@ -36,8 +36,8 @@ Dentro da API, cada domínio (`menu`, `products`, `categories`, `highlights`, `s
 | Banco de dados | Supabase PostgreSQL | Produtos, categorias, destaques, usuários e auditoria. |
 | Autenticação | Supabase Auth | Sessões e identidade dos usuários administrativos. |
 | Arquivos | Supabase Storage | Fotos e vídeos curtos de produtos e artes de destaque. |
-| API | Hono (Node.js 22) | Leituras públicas e escritas do painel; roda na Vercel ou em Docker numa VPS. |
-| Hospedagem | Vercel | Site e API, com projetos independentes por ambiente. |
+| API | Hono (Node.js 22) | Leituras públicas e escritas do painel; Docker pronto para VPS, projeto na Vercel pendente da E1/E9. |
+| Hospedagem | Vercel | Site, com projetos independentes por ambiente; a API entra na E9. |
 | Movimento | Motion (`motion/react-m`) | Carrossel, cardápio, barra inferior, busca e camadas do painel, respeitando "menos movimento". |
 | Testes | Vitest, Playwright e axe | Unidade (API, site e core) e ponta a ponta com acessibilidade. |
 | Controle de versão | Git/GitHub | Histórico, revisão e fluxo entre `develop` e `main`. |
