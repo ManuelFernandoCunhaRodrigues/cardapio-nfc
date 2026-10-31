@@ -67,6 +67,9 @@ export function ProductMediaManager({
   const [busy, setBusy] = useState(false);
   const [hasImage, setHasImage] = useState(Boolean(imagePath || preparedPreview));
   const [hasVideo, setHasVideo] = useState(Boolean(videoPath));
+  // Estado local, não a prop: a revalidação chega junto com o resultado da remoção e
+  // desmontaria a confirmação antes de ela fechar e devolver o foco.
+  const [hasStoredImage, setHasStoredImage] = useState(Boolean(imagePath));
   const titleRef = useRef<HTMLHeadingElement>(null);
 
   async function selectImage(file: File | undefined) {
@@ -89,6 +92,7 @@ export function ProductMediaManager({
         setMessage('Enviando a foto…');
         const result = await uploadProductImage(initialMediaActionState, formData);
         if (result.status === 'error') throw new Error(result.message);
+        setHasStoredImage(true);
         setMessage(result.message);
       } else setMessage('Foto pronta para ser enviada ao criar o produto.');
       setProgress(100);
@@ -168,7 +172,7 @@ export function ProductMediaManager({
             <AdminIcon height={17} name="camera" width={17} />
             {preview ? 'Trocar foto' : 'Escolher foto'}
           </label>
-          {imagePath && productId ? (
+          {hasStoredImage && productId ? (
             <ConfirmDialog
               action={removeProductImage}
               description="A foto deixará de aparecer no cardápio. Remova o vídeo antes, se existir."
@@ -179,6 +183,7 @@ export function ProductMediaManager({
               onSuccess={() => {
                 setPreview(null);
                 setHasImage(false);
+                setHasStoredImage(false);
                 setMessage('Foto removida.');
               }}
               title="Remover foto deste produto?"

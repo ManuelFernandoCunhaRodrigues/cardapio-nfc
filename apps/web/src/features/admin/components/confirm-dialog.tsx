@@ -74,6 +74,18 @@ export function ConfirmDialog({
     window.setTimeout(restoreTriggerFocus, 0);
   }, [restoreTriggerFocus]);
 
+  // Se o item excluído sai da tela junto com esta confirmação (a revalidação chega no mesmo
+  // commit do resultado), nenhum código de fechamento roda: o foco cairia no <body>.
+  useEffect(() => {
+    if (!open) return;
+    const fallback = fallbackFocusRef?.current;
+    return () => {
+      window.setTimeout(() => {
+        if (document.activeElement === document.body) fallback?.focus();
+      }, 0);
+    };
+  }, [fallbackFocusRef, open]);
+
   const notifySuccess = useEffectEvent(() => onSuccess?.());
 
   // Uma vez por resultado da ação. O fechamento não é cancelado se o `onSuccess` desmontar esta
