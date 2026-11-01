@@ -24,3 +24,6 @@ materiais/
 
 # Build da API
 apps/api/dist/
+
+# Trava local do agendador do Claude Code
+.claude/*.lock
