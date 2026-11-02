@@ -20,35 +20,27 @@ const MENU_ENTRANCE_KEY = 'salgae:menu-card-motion-played';
 // A cascata para depois de alguns cards: os de baixo não esperam segundos para assentar.
 const MAX_STAGGERED_CARDS = 6;
 
-const preparedCard = { opacity: 0.94, y: 8 };
-const enteredCard = { opacity: 1, y: 0 };
+// Quadros-chave numa animação só: recuar e assentar em dois passos podia deixar o card parado
+// em y: 8 quando o segundo passo chegava antes do primeiro ser aplicado.
+const cardEntrance = { opacity: [0.94, 1], y: [8, 0] };
 
-type EntrancePhase = 'visible' | 'prepared' | 'entered';
-
-const MenuEntranceContext = createContext<EntrancePhase>('visible');
+const MenuEntranceContext = createContext(false);
 
 // Decide uma vez por página se a entrada roda (só na primeira visita da sessão e sem movimento
 // reduzido). Os cards começam visíveis no HTML do servidor e só depois da hidratação recuam um
 // pouco para entrar, então nada nasce invisível nem atrasa o LCP.
 export function MenuEntrance({ children }: Readonly<{ children: ReactNode }>) {
-  const [phase, setPhase] = useState<EntrancePhase>('visible');
+  const [entering, setEntering] = useState(false);
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (reducedMotion || sessionStorage.getItem(MENU_ENTRANCE_KEY)) return;
     sessionStorage.setItem(MENU_ENTRANCE_KEY, 'true');
-    let enterFrame = 0;
-    const prepareFrame = requestAnimationFrame(() => {
-      setPhase('prepared');
-      enterFrame = requestAnimationFrame(() => setPhase('entered'));
-    });
-    return () => {
-      cancelAnimationFrame(prepareFrame);
-      cancelAnimationFrame(enterFrame);
-    };
+    const frame = requestAnimationFrame(() => setEntering(true));
+    return () => cancelAnimationFrame(frame);
   }, [reducedMotion]);
 
-  return <MenuEntranceContext value={phase}>{children}</MenuEntranceContext>;
+  return <MenuEntranceContext value={entering}>{children}</MenuEntranceContext>;
 }
 
 type MenuCardStaggerProps = HTMLMotionProps<'div'> & {
@@ -56,19 +48,14 @@ type MenuCardStaggerProps = HTMLMotionProps<'div'> & {
 };
 
 export function MenuCardStagger({ sequence, children, ...props }: Readonly<MenuCardStaggerProps>) {
-  const phase = use(MenuEntranceContext);
-  const prepared = phase === 'prepared';
+  const entering = use(MenuEntranceContext);
 
   return (
     <m.div
       {...props}
-      animate={phase === 'visible' ? undefined : prepared ? preparedCard : enteredCard}
+      animate={entering ? cardEntrance : undefined}
       initial={false}
-      transition={
-        prepared
-          ? { duration: 0 }
-          : { duration: 0.24, delay: Math.min(sequence, MAX_STAGGERED_CARDS) * 0.045 }
-      }
+      transition={{ duration: 0.24, delay: Math.min(sequence, MAX_STAGGERED_CARDS) * 0.045 }}
     >
       {children}
     </m.div>
