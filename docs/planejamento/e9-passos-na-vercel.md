@@ -11,8 +11,9 @@ Tudo aqui usa **projetos de teste no plano Hobby** e o **banco do stage**. Produ
 
 1. Novo projeto Vercel ligado ao repositório, branch `refactor/estrutura-completa`.
 2. **Root Directory:** `apps/api`, com "Include files outside the root directory" ligado
-   (a API embute o `packages/core`). Framework: Hono (a entrada é `apps/api/src/index.ts`,
-   com `export default` do app).
+   (a API embute o `packages/core`). Framework: Hono. A entrada é `apps/api/index.js`, que
+   reexporta `dist/index.js` gerado pelo `npm run build`: sem isso a Vercel usa `src/index.ts`
+   sem empacotar e a função cai com `ERR_MODULE_NOT_FOUND` ao importar o `@salgae/core`.
 3. **Variáveis** (as mesmas do stage, nenhuma nova):
    - `SUPABASE_URL` = `https://csirmtmerqpbhatruzaf.supabase.co`
    - `SUPABASE_ANON_KEY` = chave anônima/publicável do stage
