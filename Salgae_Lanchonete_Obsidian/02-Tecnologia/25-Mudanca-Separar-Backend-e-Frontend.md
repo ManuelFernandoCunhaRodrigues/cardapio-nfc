@@ -6,7 +6,7 @@ tags:
   - arquitetura
   - ideia
   - aprovado
-atualizado: 2026-10-24
+atualizado: 2026-10-31
 ---
 # Mudança planejada — separar backend e frontend, Motion e Playwright
 
@@ -62,9 +62,32 @@ Depende do responsável: trocar o Root Directory dos projetos do site na Vercel 
 - **Comportamento observado (possível melhoria, não alterado):** no formulário de produto, com nome e preço errados ao mesmo tempo, o painel mostra só o erro do nome; o do preço aparece na tentativa seguinte.
 - **Segurança (PR #64, na develop e no stage):** Next 16.4.0 → 16.4.2 e Zod 4.6.5 → 4.6.7, corrigindo falhas críticas apontadas pelo `npm audit`. Falta promover para a produção.
 
-### Fase 2 — Separação: próxima
+### Fase 2 — Separação: em andamento
 
-Começa pela prova de conceito do Hono com ffmpeg na Vercel (PR 2.0), que precisa de um projeto de teste na Vercel.
+- **2026-10-28 — PR 2.1 (monorepo) antes da prova de conceito.** O responsável pediu para estruturar as pastas separando o front do back. O PR 2.1 veio primeiro porque não depende do resultado da prova de conceito: tanto o plano A (API com vídeo) quanto o plano B (vídeo fica no Next) usam o monorepo.
+  - O site foi movido com `git mv` para `apps/web` (pacote `@salgae/web`); a raiz virou npm workspaces e os comandos de sempre (`npm run dev`, `build`, `test`, `test:e2e`…) continuam na raiz, repassando para o pacote.
+  - `supabase/`, `docs/`, o vault e o teste de banco (`scripts/testar-banco-local.sh`) ficam na raiz.
+  - O `next.config.ts` aponta `outputFileTracingRoot` e `turbopack.root` para a raiz, porque as dependências ficam no `node_modules` de lá; o ffmpeg continua entrando na função de vídeo.
+  - O `.env.local` agora fica em `apps/web/.env.local`.
+  - **Depende do responsável antes do merge:** na Vercel, o projeto `salgae-homologacao` precisa de *Root Directory = `apps/web`* (com "Include files outside the root directory" ligado). Sem isso, o stage não publica a `develop` nova (o site no ar não cai, fica na versão anterior). O `salgae-producao` só troca na promoção para a `main`.
+- **2026-10-28 — `apps/web` organizado por funcionalidade, com back e front separados em pastas.** O responsável comparou com uma estrutura de app Vite (`src/features/…`, `pages/`, `services/`). Decisão: **não trocar o Next.js por Vite**, porque o projeto depende de servidor (ffmpeg, Server Actions, páginas prontas no servidor para SEO e para abrir rápido, sessão renovada no `proxy.ts`). Ficou só a parte boa da proposta, a organização por funcionalidade.
+  - Código em `apps/web/src/`: `app/` (rotas), `features/` (`menu`, `products`, `categories`, `highlights`, `store`, `media`, `auth`, `admin`), `components/ui/`, `lib/` (infraestrutura: Supabase, SEO, CSP, logs, QR) e `proxy.ts`.
+  - Em cada funcionalidade: `server/` = back (Server Actions, Supabase, ffmpeg); `components/` e `client/` = front; `schemas/` e `rules/` = usados pelos dois lados. As Server Actions saíram de `app/admin/(painel)/*/actions.ts` para `features/*/server/actions.ts`; a rota de vídeo continua em `app/`.
+  - O `server/` de cada funcionalidade é o que vai para `apps/api`; `schemas/` e `rules/` vão para `packages/core`.
+  - Arquivos sem uso: nenhum arquivo de código versionado ficou sem uso (grafo de imports a partir das páginas, rotas, proxy, testes e scripts). As imagens e os vídeos não versionados em `apps/web/public/` e na raiz não são usados pelo código; ficam com o responsável decidir.
+- **Próximos:** PR 2.0 (prova de conceito do Hono com ffmpeg num projeto de teste da Vercel), PR 2.2 (`packages/core`), PR 2.3 (esqueleto de `apps/api`).
+- **2026-10-30 — Plano v3 (consenso Claude + Codex).** O responsável achou a estrutura ainda bagunçada e pediu: backend separado do frontend com camadas (controller, service, repository), remover arquivos sem uso, Playwright e Motion, código no padrão do livro *Código Limpo*, para outro desenvolvedor entender fácil. O plano foi revisado duas vezes pelo Codex (1ª: reprovado, 7 problemas; 2ª: aprovado com 3 ajustes) e está em `docs/planejamento/plano-v3-estrutura-playwright-motion.md`. Substitui as Fases 2 e 3 do plano anterior.
+  - Arquitetura: `apps/web` (Next, só tela), `apps/api` (Hono; `modules/<domínio>/` com `routes → controller → service → repository` e o service definindo a interface do repositório), `packages/core` (schemas, contratos, regras puras, tipos do banco) e `e2e/` (Playwright testando web + API).
+  - Leituras públicas pela API **sem token** (acontecem no build e na revalidação); painel pela API com o token do admin; vídeo do navegador direto para a API. Cache por etiqueta (`fetch` com `next.tags`, `updateTag` depois de salvar).
+  - Convenção de nomes: código em inglês, telas e endereços em português.
+  - Forma de trabalho: execução dividida entre Claude e Codex; o Codex revisa e testa toda etapa e devolve problemas ao Claude; tudo numa branch de integração (`refactor/estrutura-completa`) e **só vai para o stage no fim**, depois de prévia completa e revisão final.
+  - Etapas: E0 preparação · E1 prova de conceito na Vercel (barreira) · E2 Playwright na raiz · E3 `packages/core` · E4 esqueleto da API + CI · E5 leituras públicas · E6 escritas · E7 Motion · E8 fechamento · E9 prévia e stage.
+
+- **2026-10-31 — Execução do plano v3 (E0 a E8).** Tudo numa branch de integração (`refactor/estrutura-completa`, PR rascunho #74); cada etapa revisada pelo Codex até "aprovado" e com o CI verde antes de seguir. Nada entrou na `develop` ainda.
+  - **Feito:** E0 (workspaces e limpeza), E2 (Playwright na raiz, axe 4.14), E3 (`packages/core`), E4 (esqueleto da API e CI na ordem Supabase → API → build do site → E2E), E5 (leituras públicas pela API, com o cardápio mantido em cache se a API cair), E6 (escritas do painel pela API: loja, categorias, destaques, produtos e foto), E7 (Motion no cardápio e no painel) e E8 (`knip` no CI, fronteiras como erro no ESLint, README).
+  - **Motion:** carrossel com arrasto pelo mouse (no toque fica a rolagem nativa), cards do cardápio entrando em cascata na primeira visita, indicador deslizando na barra inferior, resultados da busca, e no painel a gaveta e a confirmação com entrada e saída (a camada que sai ou fica coberta é inerte para leitor de tela e teclado; o foco volta a quem abriu), avisos e reordenação. Tudo respeita "menos movimento".
+  - **Bloqueado:** E1 (prova de conceito na Vercel) — o computador está logado em outra conta da Vercel; pergunta enviada por e-mail. Por isso o **vídeo** continua como rota do Next por enquanto, e a E9 (prévia e stage) depende desse acesso.
+  - **Para conferir na E9:** no Pixel 7 emulado do Playwright, o botão "Criar destaque" do fim do formulário da gaveta fica encoberto; conferir num celular de verdade.
 
 ## Perguntas em aberto (respondidas em 2026-10-23, ver acima)
 

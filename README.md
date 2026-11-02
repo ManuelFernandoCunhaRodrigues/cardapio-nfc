@@ -30,28 +30,35 @@ Cardápio digital de **consulta no local** para uma lanchonete: o cliente aponta
 
 | Camada | Tecnologia |
 | --- | --- |
-| Aplicação | Next.js 16 (App Router, Server Components e Server Actions), React 19, TypeScript estrito |
-| Estilo | Tailwind CSS 4 |
+| Site (`apps/web`) | Next.js 16 (App Router, Server Components e Server Actions), React 19, TypeScript estrito |
+| API (`apps/api`) | Hono sobre Node.js 22, empacotada com esbuild; Docker pronto, projeto na Vercel pendente |
+| Regras comuns (`packages/core`) | Zod, contratos da API e regras puras, sem framework |
+| Estilo e movimento | Tailwind CSS 4 e Motion (`motion/react-m` com `LazyMotion`) |
 | Dados | Supabase: PostgreSQL com Row Level Security, Auth e Storage |
-| Validação | Zod, no formulário e no servidor |
 | Mídia | `sharp` (WebP) e `ffmpeg` (H.264) |
-| Qualidade | Vitest, ESLint, Prettier, GitHub Actions |
-| Hospedagem | Vercel, um projeto por ambiente |
+| Qualidade | Vitest, Playwright com axe, ESLint, Prettier, knip, GitHub Actions |
+| Hospedagem | Vercel, um projeto por ambiente (a API entra lá na etapa final do plano v3) |
 
 ## Arquitetura
+
+O site só desenha a tela. Tudo o que lê ou grava dados passa pela API, a única peça que fala com o banco; o site usa o Supabase apenas para o login.
+
+> **Exceção temporária: o vídeo.** O envio e a compactação de vídeo continuam numa rota do Next (`apps/web/src/app/admin/(painel)/midia/video/route.ts` e `features/media/server/`), com acesso ao banco e ao Storage, até a prova de conceito da API na Vercel (etapa E1 do plano v3, em `docs/planejamento/`). Depois dela o vídeo vai do navegador direto para a API.
 
 ```mermaid
 flowchart LR
   Cliente["Cliente<br/>QR Code"] --> Publico
   Equipe[Equipe] --> Painel
 
-  subgraph Next["Next.js na Vercel"]
+  subgraph Web["apps/web — Next.js"]
     Publico["Páginas públicas<br/>estáticas, revalidadas a cada 60 s"]
     Painel["Painel /admin<br/>dinâmico, exige sessão"]
-    Actions["Server Actions<br/>validação + autorização"]
-    Video["Rota de vídeo<br/>ffmpeg"]
+    Actions["Server Actions finas<br/>formulário → API → updateTag"]
     Painel --> Actions
-    Painel --> Video
+  end
+
+  subgraph Api["apps/api — Hono"]
+    Rotas["/v1: routes → controller<br/>→ service → repository"]
   end
 
   subgraph Supa["Supabase"]
@@ -60,21 +67,63 @@ flowchart LR
     Storage[Storage]
   end
 
-  Publico -- chave pública, só leitura --> Banco
-  Actions -- sessão do admin --> Banco
-  Actions --> Storage
-  Video --> Storage
-  Painel --> Auth
-  Actions -. revalidatePath .-> Publico
+  Publico -- leitura pública, sem token --> Rotas
+  Actions -- Bearer do admin --> Rotas
+  Rotas -- chave pública + token do admin --> Banco
+  Rotas --> Storage
+  Painel -- login --> Auth
+  Core["packages/core<br/>schemas, contratos, regras"] -.-> Web
+  Core -.-> Api
 ```
 
-Organização das pastas:
+Organização das pastas (monorepo com npm workspaces):
 
-- `app/(public)` — páginas do cardápio; `app/admin` — painel, Server Actions e a rota de vídeo.
-- `components/menu` e `components/admin` — interface de cada lado; `components/ui` — peças comuns.
-- `lib` — regras sem interface (ordenação, busca, horários, mídia, validadores), onde ficam os testes.
-- `supabase/migrations` — esquema, políticas e funções; `supabase/tests` — testes de RLS em SQL.
-- `e2e` — testes de ponta a ponta.
+```
+apps/
+  web/          site: cardápio e painel, só tela (@salgae/web)
+  api/          API: leitura pública e escrita do painel (@salgae/api)
+packages/
+  core/         schemas Zod, contratos da API, tipos do banco e regras puras (@salgae/core)
+e2e/            testes de ponta a ponta com Playwright, web + API juntos (@salgae/e2e)
+supabase/       migrations, seed e testes SQL
+docs/           documentação técnica; Salgae_Lanchonete_Obsidian/ — vault do projeto
+```
+
+### API em camadas
+
+Cada domínio (`menu`, `products`, `categories`, `highlights`, `store`, `media`, `session`) é uma pasta em `apps/api/src/modules/` com quatro camadas, e a dependência sempre aponta para dentro:
+
+| Arquivo | Faz | Não faz |
+| --- | --- | --- |
+| `x.routes.ts` | liga o caminho ao controller | regra, banco |
+| `x.controller.ts` | traduz HTTP: valida a entrada com o schema do core, chama o service, devolve status e JSON | regra, banco |
+| `x.service.ts` | regra de negócio; define a interface do repositório de que precisa | importar Hono ou Supabase |
+| `x.repository.ts` | implementa essa interface com o Supabase | regra |
+| `x.module.ts` | monta repository → service → controller, sem framework de injeção | — |
+
+O que é comum fica em `apps/api/src/shared/`: erros de domínio e sua tradução para HTTP, autenticação do admin, `request-id`, CORS, tempo limite de 15 s e a fábrica do cliente Supabase. O ESLint barra os imports que quebrariam as camadas (controller importando repository, service importando Hono ou Supabase, API importando React ou Next).
+
+### Site por funcionalidade
+
+```
+apps/web/src/
+  app/              rotas do Next.js (páginas e layouts), sem regra
+  features/<x>/     components/ (tela), server/ (Server Actions finas e leituras),
+                    client/ (navegador sem tela), hooks/, rules/ (regras só de tela)
+  components/       ui/ (botões, campos) e motion/ (provider e primitivas do Motion)
+  hooks/            hooks comuns (hidratação, media query)
+  lib/              api/ (clientes público e do admin), supabase/ e auth/ (login),
+                    cache/, security/ (CSP), seo/, qr/
+  proxy.ts          renovação da sessão, só em /admin
+```
+
+O ESLint do site também guarda as fronteiras: `@supabase/*` só em `lib/supabase` e `lib/auth`, nada de `sharp`/`ffmpeg-static` (exceto no vídeo e nos testes; `@supabase/*` continua proibido neles) e o Motion só por `motion/react-m`. O `packages/core` não pode importar framework, banco nem os apps.
+
+### Convenção de nomes
+
+- Código em **inglês**: identificadores, arquivos e pastas internas (`listMenu`, `deleteCategory`, `products.service.ts`). Funções começam com verbo; nada de `data`, `handle`, `utils` ou `helpers` genéricos.
+- Tela e URLs públicas em **português**: textos, mensagens e rotas (`/cardapio`, `/produto/...`).
+- Testes descrevem o comportamento numa frase em português ("não apaga categoria com produtos"), um comportamento por teste.
 
 ## Rotas
 
@@ -93,56 +142,99 @@ Organização das pastas:
 
 **A autorização final é do banco.** Toda ação do painel confere o administrador na aplicação (`requireAdmin`) e de novo no PostgreSQL, por políticas de RLS que consultam `private.is_admin()` — uma função fora do esquema exposto pela API. A aplicação usa só a chave pública; a `service_role` não existe no projeto. Se uma verificação da aplicação for esquecida, o banco ainda recusa a escrita.
 
-**Páginas públicas estáticas, painel dinâmico.** O cardápio é gerado estaticamente e revalidado a cada 60 segundos; qualquer alteração no painel chama `revalidatePath` e aparece na hora. O visitante nunca espera o banco, e o cliente Supabase das páginas públicas não usa cookies, para que elas continuem podendo ser guardadas em cache. O "aberta ou fechada" é recalculado no navegador, porque uma página em cache não sabe que horas são.
+**Páginas públicas estáticas, painel dinâmico.** O cardápio é gerado estaticamente e revalidado a cada 60 segundos. As leituras públicas vão à API com etiquetas de cache (`menu`, `store`, `product:<slug>`), e cada alteração no painel chama `updateTag` na Server Action: quem alterou vê o resultado na hora. O visitante nunca espera o banco. O "aberta ou fechada" é recalculado no navegador, porque uma página em cache não sabe que horas são.
 
-**Leituras com tempo limite.** As leituras públicas são abortadas depois de 10 segundos e caem em um estado de erro com mensagem amigável. Sem isso, uma lentidão do banco travava a geração das páginas até derrubar a publicação.
+**API fora do ar não estraga o cardápio.** O cliente público da API desiste depois de 10 segundos e **lança** o erro em vez de publicar uma tela de erro: no build a publicação falha, e no ISR o Next mantém a última versão boa. O CI derruba a API de propósito (`e2e/scripts/api-fora-do-ar.sh`) para conferir isso.
+
+**Sem segredo novo.** A API usa a mesma chave pública do site e, nas escritas, um cliente Supabase por requisição com o token do administrador. A RLS continua sendo a última barreira.
 
 **Fotos em duas variantes.** O navegador reduz a foto antes de enviar; o servidor valida pelo conteúdo, remove metadados e gera WebP `card` (até 640 px, meta de 80 KB) e `detail` (até 1600 px, meta de 300 KB). O banco guarda só a base do caminho e a interface escolhe a variante.
 
 **Vídeo sempre leve.** O arquivo bruto vai direto do navegador para um bucket privado por URL assinada. Uma rota do servidor confere o tipo real pela assinatura do arquivo, compacta com `ffmpeg` (H.264, até 720p, sem áudio, `faststart`) e publica o resultado, tipicamente de dezenas de megabytes para 1 a 3 MB. O bruto e os temporários são apagados sempre, com sucesso ou com erro.
 
-**Troca de mídia sem deixar item quebrado.** O arquivo novo é enviado, o registro passa a apontar para ele e só então o antigo é apagado — e apenas se nenhum outro registro o usar. Se a gravação falhar, o arquivo novo é removido e o item continua como estava (`lib/media/workflow.ts`).
+**Troca de mídia sem deixar item quebrado.** O arquivo novo é enviado, o registro passa a apontar para ele e só então o antigo é apagado — e apenas se nenhum outro registro o usar. Se a gravação falhar, o arquivo novo é removido e o item continua como estava.
 
 **Reordenação atômica.** Trocar dois itens de posição é uma única instrução no banco, por uma função SQL. Ou as duas posições mudam, ou nenhuma.
 
-**Preço em centavos.** O preço é um inteiro (`price_cents`), sem ponto flutuante; a conversão de e para "R$ 8,90" fica em duas funções testadas.
+**Preço em centavos.** O preço é um inteiro (`price_cents`), sem ponto flutuante; a conversão de e para "R$ 8,90" fica em duas funções testadas no `packages/core`.
+
+**Movimento sem custo de acessibilidade.** O Motion entra por um provider de cliente com `MotionConfig reducedMotion="user"` e `LazyMotion strict`, carregando os recursos sob demanda. Só `opacity` e `transform` são animados, nada nasce invisível no HTML do servidor e, no painel, a gaveta ou a confirmação que está saindo fica `inert` e `aria-hidden` até sumir.
 
 ## Qualidade
 
-- 174 testes unitários e de integração com Vitest (`npm test`), concentrados nas regras de `lib/` e na rota de vídeo. A cobertura é medida no CI e aparece no resumo do job: em 2026-10-14, 56% das linhas e 71% das funções de `lib/` e `app/`. Um piso logo abaixo disso faz o CI falhar se a cobertura cair.
+- 306 testes unitários e de integração com Vitest (`npm test`): 95 na API (services com repositório falso e rotas com `app.request()`), 171 no site e 40 no core. Cada pacote tem um piso de cobertura próprio, medido no CI.
 - Testes de RLS em SQL (`supabase/tests/`), que rodam dentro de uma transação desfeita no fim e conferem o que visitante, usuário comum e administrador conseguem ler e escrever.
-- 12 testes de ponta a ponta com Playwright (`e2e/`): o cardápio no celular e, no painel, entrar, criar produto, reordenar, marcar em falta e sair, conferindo o efeito no cardápio.
-- CI no GitHub Actions a cada PR, em dois jobs. O primeiro confere formatação, lint, typecheck, testes e build. O segundo sobe o Supabase local, aplica todas as migrations em um banco vazio, confere se os tipos versionados batem com esse banco, roda os testes de RLS e depois os de ponta a ponta contra o build de produção.
-- Acessibilidade tratada como requisito: navegação por teclado, rótulos para leitor de tela e respeito a movimento reduzido. No Lighthouse móvel do stage, acessibilidade 100 e desempenho de 94 a 98 nas rotas públicas (medição de 2026-10-09, anterior ao redesign).
-- Cabeçalhos de segurança (`Content-Security-Policy`, `HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) e páginas de stage fora dos buscadores. A CSP (`lib/security/csp.ts`) só aceita scripts do próprio site, libera o Supabase apenas para imagens, vídeos e conexões, e os testes de ponta a ponta falham se alguma página tiver algo bloqueado por ela.
-- Erros do servidor registrados como uma linha JSON (`lib/observability.ts`), com evento e código do erro, para filtrar nos logs da Vercel.
+- 125 execuções de ponta a ponta com Playwright (`e2e/`), contra os builds de produção da API e do site: cardápio no celular e no computador, painel, foto e vídeo, cache, API fora do ar, sessão, acessibilidade com axe e movimento com e sem `prefers-reduced-motion`.
+- CI no GitHub Actions a cada PR, em dois jobs. O primeiro confere formatação, lint, typecheck, `knip` (arquivos, exports e dependências sem uso), testes e o build da API. O segundo sobe o Supabase local, aplica as migrations num banco vazio, confere os tipos versionados, roda os testes de RLS, sobe a API, faz o build do site lendo dela e roda os testes de ponta a ponta.
+- Acessibilidade tratada como requisito: navegação por teclado, foco preso e devolvido nas camadas do painel, rótulos para leitor de tela e respeito a movimento reduzido.
+- Cabeçalhos de segurança (`Content-Security-Policy`, `HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) e páginas de stage fora dos buscadores. A CSP (`apps/web/src/lib/security/csp.ts`) só aceita scripts do próprio site, e os testes de ponta a ponta falham se alguma página tiver algo bloqueado por ela.
+- Erros registrados como uma linha JSON, com evento e código, no site e na API (cada resposta da API leva um `request-id`).
 - Dependabot abre, toda segunda-feira, PRs de atualização para a `develop`; eles passam pelo mesmo CI.
-- A renovação de sessão do Supabase (`proxy.ts`) roda só em `/admin`: as páginas do cardápio não fazem chamada ao Auth.
 
 ## Executar localmente
 
-Requisitos: Node.js 22 ou superior e um projeto Supabase.
+São três peças: o Supabase, a API e o site. Requisitos: Node.js 22 ou superior e um projeto Supabase (o de stage serve para desenvolver; com Docker, `npx supabase start` sobe um local).
 
 ```bash
 npm install
-cp .env.example .env.local
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
+```
+
+Preencha nos dois arquivos a URL e a chave anônima/publicável do mesmo projeto Supabase. Nunca use uma `service_role`.
+
+| Peça | Variáveis |
+| --- | --- |
+| API (`apps/api/.env`) | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `WEB_ORIGIN` (origem do site, para o CORS) e `PORT` (padrão 4000) |
+| Site (`apps/web/.env.local`) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (login), `API_URL` (servidor e build) e `NEXT_PUBLIC_SITE_URL` |
+
+Depois, em dois terminais, a API primeiro (o site lê os dados dela):
+
+```bash
+npm run dev:api
+```
+
+```bash
 npm run dev
 ```
 
-Preencha em `.env.local` a URL e a chave anônima/publicável do Supabase. A aplicação valida essas variáveis ao acessar o Supabase e informa claramente quando estiverem ausentes ou inválidas. Nunca coloque uma `service_role` em variáveis `NEXT_PUBLIC_`.
+O build de produção do site também precisa da API no ar, porque as páginas públicas são geradas com os dados dela.
 
 | Comando | Finalidade |
 | --- | --- |
-| `npm run dev` | Ambiente de desenvolvimento. |
-| `npm run build` / `npm run start` | Build de produção e execução dele. |
-| `npm run lint` | ESLint. |
-| `npm run typecheck` | TypeScript estrito, sem emitir arquivos. |
-| `npm test` | Testes com Vitest. |
-| `npm run test:coverage` | Os mesmos testes, com medição de cobertura de `lib/` e `app/` (relatório em `coverage/`). |
+| `npm run dev:api` / `npm run dev` | API e site em desenvolvimento. |
+| `npm run build -w @salgae/api` / `npm run start -w @salgae/api` | Build e execução da API. |
+| `npm run build` / `npm run start` | Build de produção do site e execução dele. |
+| `npm run lint` | ESLint em todos os pacotes. |
+| `npm run typecheck` | TypeScript estrito em todos os pacotes. |
+| `npm run knip` | Arquivos, exports e dependências sem uso. |
+| `npm test` / `npm run test:coverage` | Vitest em todos os pacotes, com ou sem cobertura. |
 | `npm run test:db` | Testes SQL de RLS, Storage e reordenação contra o Supabase local. |
-| `npm run test:e2e` | Testes de ponta a ponta com Playwright, contra o build de produção. |
+| `npm run test:e2e` | Testes de ponta a ponta com Playwright, contra os builds de produção. |
 | `npm run test:types-db` | Confere os tipos versionados contra os gerados do banco local (usado no CI). |
 | `npm run format` / `npm run format:check` | Formata ou confere a formatação com Prettier. |
+
+### Servidor próprio (VPS)
+
+A API tem um `Dockerfile`, com contexto na raiz do repositório porque ela embute o `packages/core`:
+
+```bash
+docker build -f apps/api/Dockerfile -t salgae-api .
+docker run -d --restart unless-stopped -p 127.0.0.1:4000:4000 \
+  -e SUPABASE_URL=... -e SUPABASE_ANON_KEY=... -e WEB_ORIGIN=https://cardapio.exemplo.com \
+  salgae-api
+```
+
+O site roda com Node na mesma máquina. Ele precisa das mesmas variáveis no build e na execução (as `NEXT_PUBLIC_` entram no JavaScript no build), com a API no ar antes do build:
+
+```bash
+npm ci
+cp apps/web/.env.example apps/web/.env.local   # preencher: Supabase, API_URL, NEXT_PUBLIC_SITE_URL e NEXT_PUBLIC_SITE_ENV
+npm run build
+npm run start -- --port 3000
+```
+
+Para o site voltar sozinho depois de uma queda ou reinício, rode o `npm run start` por um serviço supervisionado (um serviço do `systemd` com `Restart=always` e `WorkingDirectory` na raiz do repositório, ou o `pm2`). Na frente dos dois, um proxy reverso (Nginx ou Caddy) com HTTPS. A API pode ficar só na rede interna; quando o envio de vídeo passar para ela, o navegador também vai chamá-la (`NEXT_PUBLIC_API_URL`).
 
 ## Banco de dados
 
@@ -168,7 +260,7 @@ npx supabase db push
 
 `supabase/seed.sql` traz dados de exemplo para ambiente local ou stage. Não execute o seed em produção.
 
-Os tipos do banco usados pelo código ficam em `lib/supabase/database.types.ts`. O arquivo é gerado pelo Supabase a partir do esquema; depois de uma migration nova, gere de novo (`npx supabase gen types typescript --project-id <ref-do-projeto> > lib/supabase/database.types.ts`) em vez de editar à mão. Os três clientes (`lib/supabase/client.ts`, `server.ts` e `public.ts`) recebem esse tipo, então um nome de tabela, coluna ou função errado vira erro no `npm run typecheck`.
+Os tipos do banco ficam em `packages/core/src/database/database.types.ts`. O arquivo é gerado pelo Supabase a partir do esquema; depois de uma migration nova, gere de novo (`npx supabase gen types typescript --project-id <ref-do-projeto> > packages/core/src/database/database.types.ts`) em vez de editar à mão. A API e o site recebem esse tipo, então um nome de tabela, coluna ou função errado vira erro no `npm run typecheck`.
 
 ### Primeiro administrador
 

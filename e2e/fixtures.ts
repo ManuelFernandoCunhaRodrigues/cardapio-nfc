@@ -1,8 +1,9 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { expect as baseExpect, test as base } from '@playwright/test';
 
-import type { Database } from '../lib/supabase/database.types';
+import type { Database } from '@salgae/core/database/database.types';
 import { watchCspViolations } from './csp';
+import { requiredEnv } from './env';
 
 export type { APIRequestContext, Page } from '@playwright/test';
 
@@ -19,12 +20,6 @@ type Fixtures = {
   uniqueName: (prefixo: string) => string;
   cspCheck: void;
 };
-
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Defina ${name} para executar os testes E2E.`);
-  return value;
-}
 
 export async function withStoreSettingsRestored<T>(
   adminDb: AdminDb,

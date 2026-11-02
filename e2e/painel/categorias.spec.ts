@@ -3,7 +3,7 @@ import { expect, test, type AdminDb, type Page } from '../fixtures';
 async function createCategory(page: Page, adminDb: AdminDb, name: string) {
   await page.goto('/admin/categorias');
   await page.getByRole('button', { name: 'Nova', exact: true }).click();
-  await page.getByLabel('Nome').fill(name);
+  await page.getByRole('dialog', { name: 'Nova categoria' }).getByLabel('Nome').fill(name);
   await page.getByRole('button', { name: 'Criar categoria' }).click();
   await expect(page.getByText('Categoria criada com sucesso.')).toBeVisible();
 
@@ -47,7 +47,11 @@ test.describe('categorias do painel', () => {
 
     const card = page.getByRole('article').filter({ hasText: name });
     await card.getByRole('button', { name: 'Editar', exact: true }).click();
-    await page.getByLabel('Nome').fill(updatedName);
+    // Dentro do diálogo aberto: a gaveta da criação pode ainda estar saindo (inerte) no DOM.
+    await page
+      .getByRole('dialog', { name: 'Editar categoria' })
+      .getByLabel('Nome')
+      .fill(updatedName);
     await page.getByRole('button', { name: 'Salvar categoria' }).click();
     await expect(page.getByText('Categoria atualizada com sucesso.')).toBeVisible();
 

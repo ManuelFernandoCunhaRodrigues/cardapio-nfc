@@ -25,10 +25,11 @@ async function carouselTitles(page: Page) {
 }
 
 async function panelTitles(page: Page) {
-  const labels = await page
+  return page
     .getByRole('button', { name: /^Editar / })
-    .evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label') ?? ''));
-  return labels.map((label) => label.replace(/^Editar /, ''));
+    .evaluateAll((buttons) =>
+      buttons.map((button) => button.querySelector('strong')?.textContent ?? ''),
+    );
 }
 
 test.describe('destaques do painel', () => {

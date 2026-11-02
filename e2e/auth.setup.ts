@@ -1,9 +1,8 @@
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
+import { adminStorageState } from './env';
 import { expect, test } from './fixtures';
-
-const adminStorageState = 'playwright/.auth/admin.json';
 
 test('autentica o administrador', async ({ page }) => {
   const email = process.env.E2E_ADMIN_EMAIL;

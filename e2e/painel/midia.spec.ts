@@ -2,8 +2,8 @@ import path from 'node:path';
 
 import { expect, test, type AdminDb, type Page } from '../fixtures';
 
-const PHOTO_FILE = path.resolve('e2e/arquivos/foto-teste.jpg');
-const VIDEO_FILE = path.resolve('e2e/arquivos/video-teste.mp4');
+const PHOTO_FILE = path.join(__dirname, '../arquivos/foto-teste.jpg');
+const VIDEO_FILE = path.join(__dirname, '../arquivos/video-teste.mp4');
 
 async function createProduct(page: Page, adminDb: AdminDb, name: string) {
   await page.goto('/admin/produtos/novo');
@@ -81,6 +81,34 @@ test.describe('mídia dos produtos', () => {
         await expectStorageObjectRemoved(adminDb, 'product-images', `${imagePath}-detail.webp`);
         await expectStorageObjectRemoved(adminDb, 'product-images', `${imagePath}-card.webp`);
       }
+    }
+  });
+
+  test('remove a foto e devolve o foco ao título da mídia', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    const name = uniqueName('produto-remover-foto');
+    await createProduct(page, adminDb, name);
+
+    try {
+      await page.getByLabel('Escolher foto', { exact: true }).setInputFiles(PHOTO_FILE);
+      await expect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible();
+      await page.reload();
+
+      await page.getByRole('button', { name: 'Remover foto' }).click();
+      await page
+        .getByRole('dialog', { name: 'Remover foto deste produto?' })
+        .getByRole('button', { name: 'Excluir de vez' })
+        .click();
+
+      await expect(page.getByText('Foto removida.')).toBeVisible();
+      await expect(page.locator('[role="dialog"]')).toHaveCount(0);
+      // O botão "Remover foto" some com a foto: o foco vai para o título da seção.
+      await expect(page.getByRole('heading', { level: 2, name: 'Foto e vídeo' })).toBeFocused();
+    } finally {
+      await deleteProduct(page, name);
     }
   });
 

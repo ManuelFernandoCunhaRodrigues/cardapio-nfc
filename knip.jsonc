@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  "workspaces": {
+    ".": {
+      // Conferência de tipos do banco rodada pelo CI (`npm run test:types-db`).
+      "entry": ["supabase/tests/types/schema-matches-types.check.ts"],
+      // Protótipo navegável documentado em docs/design/refatoracao.
+      "ignore": ["docs/design/refatoracao/prototipo-v2/**"],
+    },
+    "apps/web": {
+      // Scripts manuais citados na documentação (homologação e verificação de URLs).
+      "entry": ["scripts/lighthouse-homologacao.mjs", "scripts/verificar-urls.mjs"],
+    },
+    "e2e": {
+      // Projeto `setup` do Playwright, ligado pelo `testMatch` da configuração.
+      "entry": ["auth.setup.ts"],
+    },
+  },
+  // Gerado pelo `supabase gen types` no CI (ignorado pelo git); a conferência o importa.
+  "ignoreUnresolved": ["../../../packages/core/src/database/database.types.local"],
+}

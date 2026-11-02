@@ -182,7 +182,7 @@ Nada disto foi feito. Lista para orçamento e validação.
 1. Chip de categoria marcado conforme a rolagem em `/cardapio`. A página é um componente de servidor; isso pede uma pequena ilha de cliente só para os chips (observador de interseção, sincronizado com a âncora da URL e com o foco). Sem JavaScript, os chips continuam funcionando como links, todos iguais, como hoje.
 2. Banner inteiro como link (hoje só o botão "Conferir", com 32 px de altura, é clicável).
 3. Última palavra do título do destaque em âmbar (regra de exibição, sem campo novo).
-4. Alternador "Disponível" na lista do painel: mesma ação `toggleProduct`, outro controle. Precisa de rótulo acessível e estado de carregamento.
+4. Alternador "Disponível" na lista do painel: mesma ação `setProductSituation`, outro controle (até 2026-10-30 a ação se chamava `toggleProduct`). Precisa de rótulo acessível e estado de carregamento.
 5. Menu "⋯ Mais ações" na lista (desativar, subir, descer, excluir): mesmas ações, novo contêiner.
 6. "Precisam de atenção" no resumo: nova consulta com campos (produtos com `is_available = false` **ou** `image_path` nulo, sem repetir o mesmo produto; quando os dois valem, mostrar as duas etiquetas). Mesmas tabelas e permissões; hoje o resumo só conta registros.
 7. "Loja hoje" no resumo do desktop: lê `store_settings` (hoje o resumo não lê).

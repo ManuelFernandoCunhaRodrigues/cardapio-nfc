@@ -34,6 +34,8 @@ APROVADA COM RESSALVAS
 
 ## Comportamentos novos: revisao da lista
 
+> Nota de 2026-10-30: registro histórico. A ação `toggleProduct` citada aqui foi substituída por `setProductSituation` e removida; os caminhos de arquivo mudaram com a reorganização em `apps/web/src`.
+
 - Itens 1-9 estao corretos como necessidade funcional. Nao exigem migration, RLS, rota nem mudanca no envio de midia: campos e permissoes ja existem (`supabase/migrations/20261008225427_harden_rls.sql:94-124`; `20261008232020_store_settings.sql:40-57`).
 - Acrescentar: formatar `opensNext` com dia da semana; exibir contagens por categoria/resumo; aplicar estado indisponivel tambem a preco/texto no detalhe; e decidir navegacao/foco ao clicar chip/hash.
 - `toggleProduct` ja revalida `/`, `/admin`, `/admin/produtos` e o produto (`produtos/actions.ts:44-49,96-108`). A nova consulta do resumo sera atualizada por essa revalidacao; leitura de loja tem acoes/revalidacao proprias a conferir na implementacao.
