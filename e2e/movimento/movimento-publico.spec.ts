@@ -70,9 +70,11 @@ test.describe('movimento público com movimento reduzido', () => {
     await createHighlights(browser, adminDb, [uniqueName('reduzido-a'), uniqueName('reduzido-b')]);
     await page.goto('/');
 
-    await page.getByRole('button', { name: /^Ir para destaque 2 de/ }).click();
+    const secondDot = page.getByRole('button', { name: /^Ir para destaque 2 de/ });
+    await secondDot.click();
 
     await expect(activeSlide(page)).toHaveAttribute('aria-label', /^2 de/);
+    await expect(secondDot).toHaveAttribute('aria-current', 'true');
     await expect(carouselTrack(page)).toHaveCSS('transform', 'none');
   });
 

@@ -176,8 +176,9 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
             <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center">
               {items.map((item, index) => (
                 <button
+                  aria-current={index === active ? 'true' : undefined}
                   aria-label={`Ir para destaque ${index + 1} de ${items.length}`}
-                  className="grid h-8 w-6 place-items-center rounded-full focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber"
+                  className="flex h-11 min-w-0 max-w-11 flex-1 items-end justify-center rounded-full pb-3 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber"
                   key={item.id}
                   onClick={() => goTo(index)}
                   type="button"

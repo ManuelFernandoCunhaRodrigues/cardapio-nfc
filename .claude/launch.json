@@ -13,6 +13,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "start", "--", "-p", "3100"],
       "port": 3100
+    },
+    {
+      "name": "salgae-api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--env-file=apps/api/.env", "apps/api/dist/server.js"],
+      "port": 4000
     }
   ]
 }
