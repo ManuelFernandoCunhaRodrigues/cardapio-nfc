@@ -1,6 +1,6 @@
 # E9 — passos na Vercel (com o responsável)
 
-Status: **aguardando o responsável** (2026-10-31). Desde 2026-10-31 o que é Vercel ou Supabase
+Status: **passos 1 a 4 aplicados** (2026-11-02). Desde 2026-10-31 o que é Vercel ou Supabase
 ele faz pelo Codex, na conta pessoal dele (time `manuelfernandocr4-5200s-projects`). Este é o
 roteiro do que falta do plano v3 (`plano-v3-estrutura-playwright-motion.md`, etapas E1 e E9);
 o resto (E0, E2–E8) já está na integração `refactor/estrutura-completa` (PR rascunho #74).
@@ -42,7 +42,8 @@ do Codex sobre a integração inteira.
 ## 4. Stage (só com o "sim" do responsável)
 
 1. `salgae-homologacao`: Root Directory `apps/web` e variável `API_URL` apontando para a API.
-2. `salgae-api-stage` passa a publicar a `develop`.
+2. `salgae-api-stage` passa a publicar a `develop`. `WEB_ORIGIN` só libera chamadas do navegador (CORS);
+   hoje o site chama a API pelo servidor, então a variável não precisa acompanhar o stage.
 3. Merge do #74 na `develop` e conferência de novo no stage.
 
 `salgae-producao` não muda neste plano.
