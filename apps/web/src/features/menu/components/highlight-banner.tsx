@@ -17,7 +17,7 @@ import { HighlightSlide } from './highlight-slide';
 import { Icon } from './icons';
 
 // Acima disso os pontos não cabem na largura do banner e dão lugar a um contador.
-const MAX_DOTS = 8;
+const MAX_DOTS = 6;
 
 const fallback: MenuHighlight = {
   id: 'default',
