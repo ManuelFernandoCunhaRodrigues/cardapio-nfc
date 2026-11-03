@@ -8,6 +8,7 @@ async function saveStatusOverride(page: Page, value: 'auto' | 'open' | 'closed')
     .filter({ visible: true })
     .click();
   await expect(page.getByText('Dados da loja salvos com sucesso.')).toBeVisible();
+  await expect(page.getByLabel('Funcionamento agora')).toHaveValue(value);
 }
 
 async function expectPublicStatus(page: Page, label: 'Aberta' | 'Fechada', suffix: string) {
