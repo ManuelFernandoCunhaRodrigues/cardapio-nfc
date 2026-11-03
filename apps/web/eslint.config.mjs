@@ -38,7 +38,12 @@ const eslintConfig = [
     rules: restrictImports([...mediaProcessingImports, ...backendImports]),
   },
   {
-    // Vídeo ainda no Next até a prova de conceito na Vercel (E1 do plano v3) e testes que
+    // Ponto único que adapta a API Hono para o servidor do Next.
+    files: ['src/lib/api/embedded-api.ts'],
+    rules: restrictImports([...supabaseImports, ...mediaProcessingImports]),
+  },
+  {
+    // O vídeo fica no Next (ver docs/planejamento/dois-projetos-por-ambiente.md) e os testes
     // geram imagens de verdade.
     files: ['src/features/media/server/video/**', 'src/**/*.test.ts'],
     rules: restrictImports([...supabaseImports, ...backendImports]),

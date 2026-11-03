@@ -2,10 +2,7 @@ import type { Context } from 'hono';
 
 import { ValidationError } from '../../../shared/errors/domain-errors';
 import { readUuidParam } from '../../../shared/http/index';
-import {
-  serviceForRequest,
-  type ServiceFactory,
-} from '../../../shared/supabase/request-service';
+import { serviceForRequest, type ServiceFactory } from '../../../shared/supabase/request-service';
 import type { AppHonoEnv } from '../../../shared/types';
 import type { ImageService, ImageTarget } from './image.service';
 

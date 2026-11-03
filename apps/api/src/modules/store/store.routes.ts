@@ -3,10 +3,7 @@ import { Hono } from 'hono';
 import { requireAdmin } from '../../shared/auth/index';
 import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory';
 import type { AppHonoEnv } from '../../shared/types';
-import type {
-  createAdminStoreController,
-  createPublicStoreController,
-} from './store.controller';
+import type { createAdminStoreController, createPublicStoreController } from './store.controller';
 
 type StoreControllers = {
   publicController: ReturnType<typeof createPublicStoreController>;

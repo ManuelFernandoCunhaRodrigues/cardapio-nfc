@@ -9,11 +9,7 @@ import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
 import { parsePriceBRL } from '@salgae/core/rules/parse-price';
 import { fieldsFromProductSituation } from '@salgae/core/rules/product-situation';
 
-import {
-  ConflictError,
-  NotFoundError,
-  ValidationError,
-} from '../../shared/errors/domain-errors';
+import { ConflictError, NotFoundError, ValidationError } from '../../shared/errors/domain-errors';
 import { UniqueViolationError } from '../../shared/errors/persistence-errors';
 import { reportServerError } from '../../shared/observability';
 import { moveInOrder } from '../../shared/ordering/move-in-order';

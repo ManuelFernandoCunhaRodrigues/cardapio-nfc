@@ -3,6 +3,7 @@ import { StoreSettingsForm } from '@/features/store/components/store-settings-fo
 import { getAdminStoreSettings } from '@/features/store/server/get-store-settings';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 export default async function StoreSettingsPage() {
   const store = await getAdminStoreSettings();

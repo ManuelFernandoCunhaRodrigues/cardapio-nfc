@@ -6,6 +6,7 @@ import {
 } from '@/features/admin/server/catalog';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 export default async function HighlightsPage() {
   const [highlights, categories, products] = await Promise.all([
