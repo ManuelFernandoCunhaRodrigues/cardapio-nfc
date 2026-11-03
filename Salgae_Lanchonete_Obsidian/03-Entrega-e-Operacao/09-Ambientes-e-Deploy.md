@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-10-31
+atualizado: 2026-11-03
 ---
 # Ambientes e deploy
 
@@ -53,10 +53,10 @@ Cada projeto Vercel deve receber apenas as chaves do seu ambiente:
 
 Com a API própria (plano v3, 2026-10-31), cada ambiente tem também a API:
 
-- **Site:** além das acima, `API_URL` (endereço da API, usado no servidor e no build) e, quando o vídeo passar para a API, `NEXT_PUBLIC_API_URL`.
+- **Site:** além das acima, `API_URL` (endereço da API, usado no servidor e no build) e, quando o vídeo passar para a API, `NEXT_PUBLIC_API_URL` e a origem da API no `connect-src` da CSP, que hoje bloqueia chamadas do navegador à API.
 - **API:** `SUPABASE_URL`, `SUPABASE_ANON_KEY` (a mesma chave pública do site) e `WEB_ORIGIN` (origem do site, para o CORS). Nenhum segredo novo.
 - **Ordem:** a API precisa estar no ar antes do build do site, porque as páginas públicas são geradas com os dados dela.
-- **Vercel:** projetos de teste `salgae-api-stage` e `salgae-web-previa` para a prévia (etapa E9); os projetos atuais só mudam no fim, com Root Directory `apps/web` no site. **VPS:** a API tem `Dockerfile`; o passo a passo está no `README.md` ("Servidor próprio").
+- **Vercel (stage):** `salgae-homologacao` (site, Root Directory `apps/web`) e `salgae-api-stage` (API, Root Directory `apps/api`), ambos na `develop`; o `WEB_ORIGIN` da API é `https://salgae-homologacao.vercel.app`. O projeto de teste `salgae-web-previa` (etapa E9) foi excluído em 2026-11-03. **Vercel (produção):** `salgae-producao` ainda publica a `main` sem Root Directory `apps/web` e sem `API_URL`; ela precisa dos dois antes de receber a `develop`, e o projeto da API de produção ainda não foi decidido. **VPS:** a API tem `Dockerfile`; o passo a passo está no `README.md` ("Servidor próprio").
 
 Nunca copiar arquivo `.env` de produção para homologação sem revisar cada valor. Nunca commitar `.env` ou segredo no Git.
 
