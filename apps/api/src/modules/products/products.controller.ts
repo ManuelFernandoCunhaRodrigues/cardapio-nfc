@@ -5,10 +5,10 @@ import {
 } from '@salgae/core/contracts/admin-api';
 import type { Context } from 'hono';
 
-import { readJsonBody, readUuidParam } from '../../shared/http/index.js';
-import { serviceForRequest, type ServiceFactory } from '../../shared/supabase/request-service.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { ProductsService } from './products.service.js';
+import { readJsonBody, readUuidParam } from '../../shared/http/index';
+import { serviceForRequest, type ServiceFactory } from '../../shared/supabase/request-service';
+import type { AppHonoEnv } from '../../shared/types';
+import type { ProductsService } from './products.service';
 
 type ProductsContext = Context<AppHonoEnv>;
 const readProductId = (context: ProductsContext) =>

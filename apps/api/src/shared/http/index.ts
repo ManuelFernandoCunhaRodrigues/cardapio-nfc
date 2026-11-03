@@ -1,5 +1,5 @@
-export { corsMiddleware } from './cors.js';
-export { errorHandler } from './error-handler.js';
-export { requestIdMiddleware } from './request-id.js';
-export { requestTimeoutMiddleware } from './request-timeout.js';
-export { readJsonBody, readUuidParam } from './request-input.js';
+export { corsMiddleware } from './cors';
+export { errorHandler } from './error-handler';
+export { requestIdMiddleware } from './request-id';
+export { requestTimeoutMiddleware } from './request-timeout';
+export { readJsonBody, readUuidParam } from './request-input';

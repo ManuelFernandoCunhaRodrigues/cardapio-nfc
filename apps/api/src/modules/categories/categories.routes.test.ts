@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { describe, expect, it, vi } from 'vitest';
 
-import { errorHandler } from '../../shared/http/error-handler.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients.js';
-import { createCategoriesController } from './categories.controller.js';
-import { createCategoriesRoutes } from './categories.routes.js';
-import { CategoriesService, type CategoryRepository } from './categories.service.js';
+import { errorHandler } from '../../shared/http/error-handler';
+import type { AppHonoEnv } from '../../shared/types';
+import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
+import { createCategoriesController } from './categories.controller';
+import { createCategoriesRoutes } from './categories.routes';
+import { CategoriesService, type CategoryRepository } from './categories.service';
 
 const categoryId = '11111111-1111-4111-8111-111111111111';
 const validInput = { name: 'Coxinhas', slug: 'coxinhas', description: '', is_active: true };

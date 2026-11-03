@@ -6,9 +6,9 @@ import {
   ConflictError,
   NotFoundError,
   ValidationError,
-} from '../../../shared/errors/domain-errors.js';
-import { reportServerError } from '../../../shared/observability.js';
-import { ImageTooSmallError, InvalidImageError, type CompressedImage } from './image-compressor.js';
+} from '../../../shared/errors/domain-errors';
+import { reportServerError } from '../../../shared/observability';
+import { ImageTooSmallError, InvalidImageError, type CompressedImage } from './image-compressor';
 
 export type ImageTarget = 'product' | 'highlight';
 

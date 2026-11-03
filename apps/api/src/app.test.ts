@@ -1,12 +1,12 @@
 import type { User } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createApp } from './app.js';
-import type { ApiEnv } from './config/env.js';
+import { createApp } from './app';
+import type { ApiEnv } from './config/env';
 import type {
   AppSupabaseClient,
   SupabaseClientFactory,
-} from './shared/supabase/supabase-client-factory.js';
+} from './shared/supabase/supabase-client-factory';
 
 const env: ApiEnv = {
   SUPABASE_URL: 'https://example.supabase.co',

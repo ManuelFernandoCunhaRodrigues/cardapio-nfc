@@ -6,7 +6,7 @@ import {
   ImageTooSmallError,
   InvalidImageError,
   WEBP_QUALITIES,
-} from './image-compressor.js';
+} from './image-compressor';
 
 async function jpeg(width: number, height: number, orientation?: number) {
   let image = sharp({

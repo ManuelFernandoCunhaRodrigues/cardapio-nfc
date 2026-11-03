@@ -7,8 +7,8 @@ import {
   NotFoundError,
   UnauthorizedError,
   ValidationError,
-} from './domain-errors.js';
-import { mapErrorToHttp } from './http-error-mapper.js';
+} from './domain-errors';
+import { mapErrorToHttp } from './http-error-mapper';
 
 describe('mapErrorToHttp', () => {
   it.each([

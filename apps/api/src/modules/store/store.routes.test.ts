@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
 import { describe, expect, it, vi } from 'vitest';
 
-import { errorHandler } from '../../shared/http/error-handler.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients.js';
-import { createAdminStoreController, createPublicStoreController } from './store.controller.js';
-import { createAdminStoreRoutes, createPublicStoreRoutes } from './store.routes.js';
-import { StoreService, type StoreRepository } from './store.service.js';
-import { storeSettingsFixture } from './store.test-fixture.js';
+import { errorHandler } from '../../shared/http/error-handler';
+import type { AppHonoEnv } from '../../shared/types';
+import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
+import { createAdminStoreController, createPublicStoreController } from './store.controller';
+import { createAdminStoreRoutes, createPublicStoreRoutes } from './store.routes';
+import { StoreService, type StoreRepository } from './store.service';
+import { storeSettingsFixture } from './store.test-fixture';
 
 function fakeRepository(settings: unknown = storeSettingsFixture): StoreRepository {
   return { findSettings: async () => settings, updateSettings: vi.fn(async () => true) };

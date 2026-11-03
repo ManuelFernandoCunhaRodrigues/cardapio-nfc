@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { describeError, reportServerError } from './observability.js';
+import { describeError, reportServerError } from './observability';
 
 describe('observability', () => {
   it('descreve erros simples do Supabase', () => {

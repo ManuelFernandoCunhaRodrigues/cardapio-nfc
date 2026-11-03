@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { HealthService } from './health.service.js';
+import type { AppHonoEnv } from '../../shared/types';
+import type { HealthService } from './health.service';
 
 export function createHealthController(service: HealthService) {
   return async (context: Context<AppHonoEnv>) => {

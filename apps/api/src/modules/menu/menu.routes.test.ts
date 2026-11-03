@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 
-import { errorHandler } from '../../shared/http/error-handler.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import { createMenuController } from './menu.controller.js';
-import { createMenuRoutes } from './menu.routes.js';
-import { category, highlight, product, sitemapItem } from './menu.test-fixtures.js';
-import { MenuService, type MenuRepository } from './menu.service.js';
+import { errorHandler } from '../../shared/http/error-handler';
+import type { AppHonoEnv } from '../../shared/types';
+import { createMenuController } from './menu.controller';
+import { createMenuRoutes } from './menu.routes';
+import { category, highlight, product, sitemapItem } from './menu.test-fixtures';
+import { MenuService, type MenuRepository } from './menu.service';
 
 function testApp(foundProduct: unknown = product) {
   const repository: MenuRepository = {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ApiEnv } from '../../config/env.js';
-import { createSupabaseClientFactory } from './supabase-client-factory.js';
+import type { ApiEnv } from '../../config/env';
+import { createSupabaseClientFactory } from './supabase-client-factory';
 
 const env: ApiEnv = {
   SUPABASE_URL: 'https://example.supabase.co',

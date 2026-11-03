@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { createHealthController } from './health.controller.js';
+import type { AppHonoEnv } from '../../shared/types';
+import type { createHealthController } from './health.controller';
 
 type HealthController = ReturnType<typeof createHealthController>;
 

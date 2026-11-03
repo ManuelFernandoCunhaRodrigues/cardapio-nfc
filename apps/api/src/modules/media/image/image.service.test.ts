@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ImageService, type ImageRepository } from './image.service.js';
+import { ImageService, type ImageRepository } from './image.service';
 
 const productId = '11111111-1111-4111-8111-111111111111';
 const image = { detail: Buffer.from('detail'), card: Buffer.from('card') };

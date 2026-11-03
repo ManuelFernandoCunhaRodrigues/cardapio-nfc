@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ConflictError, NotFoundError } from '../../shared/errors/domain-errors.js';
+import { ConflictError, NotFoundError } from '../../shared/errors/domain-errors';
 import {
   ReferencedRecordError,
   UniqueViolationError,
-} from '../../shared/errors/persistence-errors.js';
+} from '../../shared/errors/persistence-errors';
 import {
   CategoriesService,
   type CategoryInput,
   type CategoryRepository,
-} from './categories.service.js';
+} from './categories.service';
 
 const categoryId = '11111111-1111-4111-8111-111111111111';
 const input: CategoryInput = {

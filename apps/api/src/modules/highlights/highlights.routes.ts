@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 
-import { requireAdmin } from '../../shared/auth/index.js';
-import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { createHighlightsController } from './highlights.controller.js';
-import { imageBodyLimit } from '../media/image/image-body-limit.js';
-import type { createImageController } from '../media/image/image.controller.js';
+import { requireAdmin } from '../../shared/auth/index';
+import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory';
+import type { AppHonoEnv } from '../../shared/types';
+import type { createHighlightsController } from './highlights.controller';
+import { imageBodyLimit } from '../media/image/image-body-limit';
+import type { createImageController } from '../media/image/image.controller';
 
 type HighlightsController = ReturnType<typeof createHighlightsController>;
 type ImageController = ReturnType<typeof createImageController>;

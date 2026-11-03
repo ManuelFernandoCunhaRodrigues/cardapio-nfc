@@ -1,15 +1,15 @@
-import { compressImageToWebp } from '../media/image/image-compressor.js';
-import { createImageController } from '../media/image/image.controller.js';
-import { SupabaseImageRepository } from '../media/image/image.repository.js';
-import { ImageService } from '../media/image/image.service.js';
+import { compressImageToWebp } from '../media/image/image-compressor';
+import { createImageController } from '../media/image/image.controller';
+import { SupabaseImageRepository } from '../media/image/image.repository';
+import { ImageService } from '../media/image/image.service';
 import type {
   AppSupabaseClient,
   SupabaseClientFactory,
-} from '../../shared/supabase/supabase-client-factory.js';
-import { createProductsController } from './products.controller.js';
-import { SupabaseProductsRepository } from './products.repository.js';
-import { createProductsRoutes } from './products.routes.js';
-import { ProductsService } from './products.service.js';
+} from '../../shared/supabase/supabase-client-factory';
+import { createProductsController } from './products.controller';
+import { SupabaseProductsRepository } from './products.repository';
+import { createProductsRoutes } from './products.routes';
+import { ProductsService } from './products.service';
 
 const createProductsService = (client: AppSupabaseClient) =>
   new ProductsService(new SupabaseProductsRepository(client, new SupabaseImageRepository(client)));

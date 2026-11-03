@@ -1,13 +1,13 @@
 import type { Context } from 'hono';
 
-import { ValidationError } from '../../../shared/errors/domain-errors.js';
-import { readUuidParam } from '../../../shared/http/index.js';
+import { ValidationError } from '../../../shared/errors/domain-errors';
+import { readUuidParam } from '../../../shared/http/index';
 import {
   serviceForRequest,
   type ServiceFactory,
-} from '../../../shared/supabase/request-service.js';
-import type { AppHonoEnv } from '../../../shared/types.js';
-import type { ImageService, ImageTarget } from './image.service.js';
+} from '../../../shared/supabase/request-service';
+import type { AppHonoEnv } from '../../../shared/types';
+import type { ImageService, ImageTarget } from './image.service';
 
 type ImageContext = Context<AppHonoEnv>;
 

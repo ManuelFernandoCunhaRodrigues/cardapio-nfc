@@ -1,6 +1,6 @@
-import { translateDatabaseError } from '../../shared/supabase/database-errors.js';
-import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory.js';
-import type { CategoryInput, CategoryRepository } from './categories.service.js';
+import { translateDatabaseError } from '../../shared/supabase/database-errors';
+import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory';
+import type { CategoryInput, CategoryRepository } from './categories.service';
 
 const ADMIN_CATEGORY_COLUMNS =
   'id, name, slug, description, image_path, sort_order, is_active, products(count)';

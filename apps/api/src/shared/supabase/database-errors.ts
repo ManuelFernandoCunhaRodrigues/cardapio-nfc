@@ -1,6 +1,6 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 
-import { ReferencedRecordError, UniqueViolationError } from '../errors/persistence-errors.js';
+import { ReferencedRecordError, UniqueViolationError } from '../errors/persistence-errors';
 
 const POSTGRES_UNIQUE_VIOLATION = '23505';
 const POSTGRES_FOREIGN_KEY_VIOLATION = '23503';

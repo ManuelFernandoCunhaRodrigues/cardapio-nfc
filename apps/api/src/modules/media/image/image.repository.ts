@@ -1,6 +1,6 @@
-import type { AppSupabaseClient } from '../../../shared/supabase/supabase-client-factory.js';
-import type { ImageRepository, ImageTarget } from './image.service.js';
-import type { CompressedImage } from './image-compressor.js';
+import type { AppSupabaseClient } from '../../../shared/supabase/supabase-client-factory';
+import type { ImageRepository, ImageTarget } from './image.service';
+import type { CompressedImage } from './image-compressor';
 
 const targetSettings = {
   product: { table: 'products', bucket: 'product-images' },

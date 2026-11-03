@@ -8,7 +8,7 @@ import {
   NotFoundError,
   UnauthorizedError,
   ValidationError,
-} from './domain-errors.js';
+} from './domain-errors';
 
 type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 500 | 504;
 

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ConflictError } from '../errors/domain-errors.js';
-import { moveInOrder, type OrderableRepository } from './move-in-order.js';
+import { ConflictError } from '../errors/domain-errors';
+import { moveInOrder, type OrderableRepository } from './move-in-order';
 
 function fakeRepository(): OrderableRepository {
   return {

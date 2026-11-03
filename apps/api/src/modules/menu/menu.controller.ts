@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { MenuService } from './menu.service.js';
+import type { AppHonoEnv } from '../../shared/types';
+import type { MenuService } from './menu.service';
 
 export function createMenuController(service: MenuService) {
   return {

@@ -1,8 +1,8 @@
 import type { MiddlewareHandler } from 'hono';
 
-import { ForbiddenError, UnauthorizedError } from '../errors/domain-errors.js';
-import type { SupabaseClientFactory } from '../supabase/supabase-client-factory.js';
-import type { AppHonoEnv } from '../types.js';
+import { ForbiddenError, UnauthorizedError } from '../errors/domain-errors';
+import type { SupabaseClientFactory } from '../supabase/supabase-client-factory';
+import type { AppHonoEnv } from '../types';
 
 const unauthorizedMessage = 'Sua sessão expirou. Entre novamente.';
 const forbiddenMessage = 'Você não tem permissão para acessar este recurso.';

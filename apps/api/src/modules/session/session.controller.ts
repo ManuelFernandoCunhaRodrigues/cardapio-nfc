@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { SessionService } from './session.service.js';
+import type { AppHonoEnv } from '../../shared/types';
+import type { SessionService } from './session.service';
 
 export function createSessionController(service: SessionService) {
   return (context: Context<AppHonoEnv>) =>

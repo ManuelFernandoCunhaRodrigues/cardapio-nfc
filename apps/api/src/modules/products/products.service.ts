@@ -13,10 +13,10 @@ import {
   ConflictError,
   NotFoundError,
   ValidationError,
-} from '../../shared/errors/domain-errors.js';
-import { UniqueViolationError } from '../../shared/errors/persistence-errors.js';
-import { reportServerError } from '../../shared/observability.js';
-import { moveInOrder } from '../../shared/ordering/move-in-order.js';
+} from '../../shared/errors/domain-errors';
+import { UniqueViolationError } from '../../shared/errors/persistence-errors';
+import { reportServerError } from '../../shared/observability';
+import { moveInOrder } from '../../shared/ordering/move-in-order';
 
 type ProductMedia = { imagePath: string | null; videoPath: string | null };
 

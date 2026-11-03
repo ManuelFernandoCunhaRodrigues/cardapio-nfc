@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 
-import { requireAdmin } from '../../shared/auth/index.js';
-import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory.js';
-import type { AppHonoEnv } from '../../shared/types.js';
+import { requireAdmin } from '../../shared/auth/index';
+import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory';
+import type { AppHonoEnv } from '../../shared/types';
 import type {
   createAdminStoreController,
   createPublicStoreController,
-} from './store.controller.js';
+} from './store.controller';
 
 type StoreControllers = {
   publicController: ReturnType<typeof createPublicStoreController>;

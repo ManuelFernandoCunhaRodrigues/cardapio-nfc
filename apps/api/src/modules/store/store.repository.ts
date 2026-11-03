@@ -1,5 +1,5 @@
-import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory.js';
-import type { StoreRepository, StoreSettingsInput } from './store.service.js';
+import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory';
+import type { StoreRepository, StoreSettingsInput } from './store.service';
 
 const STORE_COLUMNS =
   'id, name, tagline, address, maps_url, phone, whatsapp, instagram, opening_hours, status_override, notice, updated_at';

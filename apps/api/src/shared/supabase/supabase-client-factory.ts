@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@salgae/core/database/database.types';
 
-import type { ApiEnv } from '../../config/env.js';
+import type { ApiEnv } from '../../config/env';
 
 export type AppSupabaseClient = SupabaseClient<Database>;
 

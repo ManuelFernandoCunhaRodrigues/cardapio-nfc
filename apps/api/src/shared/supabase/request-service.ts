@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 
-import type { AppHonoEnv } from '../types.js';
-import type { AppSupabaseClient } from './supabase-client-factory.js';
+import type { AppHonoEnv } from '../types';
+import type { AppSupabaseClient } from './supabase-client-factory';
 
 /** Monta o service de um módulo com um cliente Supabase (anon ou o da requisição do admin). */
 export type ServiceFactory<TService> = (client: AppSupabaseClient) => TService;

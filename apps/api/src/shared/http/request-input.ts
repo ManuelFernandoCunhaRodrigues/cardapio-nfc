@@ -2,8 +2,8 @@ import type { FieldErrors } from '@salgae/core/contracts/admin-api';
 import type { Context } from 'hono';
 import { z } from 'zod';
 
-import { ValidationError } from '../errors/domain-errors.js';
-import type { AppHonoEnv } from '../types.js';
+import { ValidationError } from '../errors/domain-errors';
+import type { AppHonoEnv } from '../types';
 
 const INVALID_FORM_MESSAGE = 'Revise os campos destacados antes de salvar.';
 const INVALID_BODY_MESSAGE = 'O corpo da requisição precisa ser um JSON válido.';
