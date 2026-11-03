@@ -6,13 +6,15 @@ tags:
   - arquitetura
   - ideia
   - aprovado
-atualizado: 2026-10-31
+atualizado: 2026-11-03
 ---
 # Mudança planejada — separar backend e frontend, Motion e Playwright
 
 Voltar: [[00-Comece-Aqui]] · Relacionado: [[06-Arquitetura-e-Stack]] · [[12-Seguranca-e-Qualidade]] · [[03-Decisoes-do-Projeto]]
 
 > **Status: plano aprovado para desenvolvimento em 2026-10-23.** O responsável pediu para executar os três pontos junto com o Codex, na ordem Playwright → separação → Motion. Plano completo em `docs/planejamento/separacao-backend-frontend-plano.md`.
+
+> **Mudança de hospedagem em 2026-11-03:** o responsável decidiu ter 2 projetos na Vercel, um de teste e um de produção. Isso substitui o item 2 das decisões abaixo: a API continua em `apps/api`, com as mesmas camadas e o Dockerfile, mas roda dentro do site em cada ambiente. O envio de vídeo fica no Next. Plano com consenso do Codex em `docs/planejamento/dois-projetos-por-ambiente.md`. Pedido para o final: animação de login no botão "Entrar no painel".
 
 ## O que foi pedido (2026-10-19)
 
