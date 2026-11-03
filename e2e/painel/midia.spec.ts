@@ -43,7 +43,83 @@ async function expectStorageObjectRemoved(adminDb: AdminDb, bucket: string, obje
   expect(error, `${bucket}/${objectPath} ainda existe após excluir o produto`).not.toBeNull();
 }
 
+/**
+ * Gera uma foto de ruído cujo JPEG, na qualidade que o painel usa ao reduzir, fica logo abaixo do
+ * limite de envio (`CLIENT_IMAGE_UPLOAD_MAX_BYTES`). Vai em PNG para o painel recodificar os mesmos pixels.
+ */
+async function createPhotoNearUploadLimit(page: Page): Promise<Buffer> {
+  const dataUrl = await page.evaluate(async () => {
+    const MIN_JPEG_BYTES = 3_400_000;
+    const MAX_JPEG_BYTES = 3_700_000;
+    const exportCanvas = (canvas: HTMLCanvasElement, type: string, quality?: number) =>
+      new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error('canvas_export_failed'))),
+          type,
+          quality,
+        ),
+      );
+    const noiseCanvas = (side: number) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = side;
+      canvas.height = side;
+      const image = new ImageData(side, side);
+      for (let index = 0; index < image.data.length; index += 1) {
+        image.data[index] = index % 4 === 3 ? 255 : Math.floor(Math.random() * 256);
+      }
+      canvas.getContext('2d')!.putImageData(image, 0, 0);
+      return canvas;
+    };
+
+    let smallestSide = 200;
+    let largestSide = 2048;
+    while (smallestSide <= largestSide) {
+      const side = Math.floor((smallestSide + largestSide) / 2);
+      const canvas = noiseCanvas(side);
+      const jpeg = await exportCanvas(canvas, 'image/jpeg', 0.92);
+      if (jpeg.size > MAX_JPEG_BYTES) largestSide = side - 1;
+      else if (jpeg.size < MIN_JPEG_BYTES) smallestSide = side + 1;
+      else return canvas.toDataURL('image/png');
+    }
+    throw new Error('Nenhum tamanho de foto ficou perto do limite de envio.');
+  });
+  return Buffer.from(dataUrl.split(',')[1]!, 'base64');
+}
+
 test.describe('mídia dos produtos', () => {
+  test('aceita foto perto do limite de envio', async ({ page, adminDb, uniqueName }) => {
+    test.slow();
+    const name = uniqueName('produto-foto-grande');
+    const product = await createProduct(page, adminDb, name);
+    let imagePath: string | null = null;
+
+    try {
+      await page.getByLabel('Escolher foto', { exact: true }).setInputFiles({
+        name: 'foto-grande.png',
+        mimeType: 'image/png',
+        buffer: await createPhotoNearUploadLimit(page),
+      });
+      await expect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible({
+        timeout: 30_000,
+      });
+
+      const { data, error } = await adminDb.client
+        .from('products')
+        .select('image_path')
+        .eq('id', product.id)
+        .single();
+      expect(error).toBeNull();
+      imagePath = data?.image_path ?? null;
+      expect(imagePath).not.toBeNull();
+    } finally {
+      await deleteProduct(page, name);
+      if (imagePath) {
+        await expectStorageObjectRemoved(adminDb, 'product-images', `${imagePath}-detail.webp`);
+        await expectStorageObjectRemoved(adminDb, 'product-images', `${imagePath}-card.webp`);
+      }
+    }
+  });
+
   test('envia foto e mostra a imagem do Storage no detalhe público', async ({
     page,
     adminDb,
