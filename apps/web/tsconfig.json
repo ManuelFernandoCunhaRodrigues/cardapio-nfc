@@ -28,6 +28,9 @@
       ],
       "@salgae/core/*": [
         "../../packages/core/src/*"
+      ],
+      "@salgae/api/*": [
+        "../api/src/*"
       ]
     }
   },

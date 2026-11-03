@@ -1,7 +1,6 @@
-import { createApp } from './app.js';
-import { loadEnv } from './config/env.js';
-import { createSupabaseClientFactory } from './shared/supabase/supabase-client-factory.js';
+import { createStandaloneApp } from './app';
+import { loadEnv } from './config/env';
 
 const env = loadEnv();
 
-export default createApp({ env, supabase: createSupabaseClientFactory(env) });
+export default createStandaloneApp(env);

@@ -2,10 +2,10 @@ import { activationInputSchema, reorderInputSchema } from '@salgae/core/contract
 import { categoryFormSchema } from '@salgae/core/schemas/category';
 import type { Context } from 'hono';
 
-import { readJsonBody, readUuidParam } from '../../shared/http/index.js';
-import { serviceForRequest, type ServiceFactory } from '../../shared/supabase/request-service.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { CategoriesService } from './categories.service.js';
+import { readJsonBody, readUuidParam } from '../../shared/http/index';
+import { serviceForRequest, type ServiceFactory } from '../../shared/supabase/request-service';
+import type { AppHonoEnv } from '../../shared/types';
+import type { CategoriesService } from './categories.service';
 
 type CategoriesContext = Context<AppHonoEnv>;
 

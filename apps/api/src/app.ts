@@ -1,32 +1,35 @@
 import { Hono } from 'hono';
 
-import type { ApiEnv } from './config/env.js';
-import { createHealthModule } from './modules/health/health.module.js';
-import { createCategoriesModule } from './modules/categories/categories.module.js';
-import { createHighlightsModule } from './modules/highlights/highlights.module.js';
-import { createMenuModule } from './modules/menu/menu.module.js';
-import { createSessionModule } from './modules/session/session.module.js';
-import { createProductsModule } from './modules/products/products.module.js';
-import { createAdminStoreModule, createPublicStoreModule } from './modules/store/store.module.js';
+import type { ApiEnv } from './config/env';
+import { createHealthModule } from './modules/health/health.module';
+import { createCategoriesModule } from './modules/categories/categories.module';
+import { createHighlightsModule } from './modules/highlights/highlights.module';
+import { createMenuModule } from './modules/menu/menu.module';
+import { createSessionModule } from './modules/session/session.module';
+import { createProductsModule } from './modules/products/products.module';
+import { createAdminStoreModule, createPublicStoreModule } from './modules/store/store.module';
 import {
   corsMiddleware,
   errorHandler,
   requestIdMiddleware,
   requestTimeoutMiddleware,
-} from './shared/http/index.js';
-import type { SupabaseClientFactory } from './shared/supabase/supabase-client-factory.js';
-import type { AppHonoEnv } from './shared/types.js';
+} from './shared/http/index';
+import {
+  createSupabaseClientFactory,
+  type SupabaseClientFactory,
+} from './shared/supabase/supabase-client-factory';
+import type { AppHonoEnv } from './shared/types';
 
 type AppDependencies = {
-  env: ApiEnv;
+  corsOrigin?: string;
   supabase: SupabaseClientFactory;
 };
 
-export function createApp({ env, supabase }: AppDependencies) {
+export function createApp({ corsOrigin, supabase }: AppDependencies) {
   const app = new Hono<AppHonoEnv>();
   const publicClient = supabase.createPublicClient();
   app.use('*', requestIdMiddleware());
-  app.use('*', corsMiddleware(env.WEB_ORIGIN));
+  if (corsOrigin) app.use('*', corsMiddleware(corsOrigin));
   app.use('*', requestTimeoutMiddleware());
   app.onError(errorHandler);
   app.notFound((context) =>
@@ -42,4 +45,14 @@ export function createApp({ env, supabase }: AppDependencies) {
   app.route('/v1/admin/highlights', createHighlightsModule(supabase));
   app.route('/v1/admin/products', createProductsModule(supabase));
   return app;
+}
+
+export function createStandaloneApp(env: ApiEnv) {
+  return createApp({
+    corsOrigin: env.WEB_ORIGIN,
+    supabase: createSupabaseClientFactory({
+      supabaseUrl: env.SUPABASE_URL,
+      supabaseAnonKey: env.SUPABASE_ANON_KEY,
+    }),
+  });
 }

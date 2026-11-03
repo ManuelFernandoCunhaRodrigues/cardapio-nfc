@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 
-import { requireAdmin } from '../../shared/auth/index.js';
-import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { createSessionController } from './session.controller.js';
+import { requireAdmin } from '../../shared/auth/index';
+import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory';
+import type { AppHonoEnv } from '../../shared/types';
+import type { createSessionController } from './session.controller';
 
 type SessionController = ReturnType<typeof createSessionController>;
 

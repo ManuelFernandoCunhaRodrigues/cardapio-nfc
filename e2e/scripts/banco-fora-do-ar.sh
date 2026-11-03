@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${API_PID_FILE:?Defina API_PID_FILE.}"
 : "${E2E_BASE_URL:?Defina E2E_BASE_URL.}"
+: "${NEXT_PUBLIC_SUPABASE_URL:?Defina NEXT_PUBLIC_SUPABASE_URL.}"
 
 product_name='Coxinha de frango'
 pages=("/" "/cardapio" "/produto/coxinha-de-frango")
@@ -16,21 +16,13 @@ assert_cached_pages() {
 
 assert_cached_pages
 
-api_pid="$(cat "$API_PID_FILE")"
-kill "$api_pid"
-for _ in $(seq 1 20); do
-  kill -0 "$api_pid" 2>/dev/null || break
-  sleep 1
-done
-if kill -0 "$api_pid" 2>/dev/null; then
-  echo 'A API não encerrou.' >&2
-  exit 1
-fi
-if curl --fail --silent "${E2E_API_URL}/health" >/dev/null; then
-  echo 'A API ainda responde depois de encerrar o PID.' >&2
+supabase stop --no-backup
+if curl --silent --max-time 5 "${NEXT_PUBLIC_SUPABASE_URL}/rest/v1/" >/dev/null; then
+  echo 'O Supabase ainda responde depois de parar.' >&2
   exit 1
 fi
 
+# Passa dos 60 s de revalidação: a falha ao revalidar não pode tirar o último valor do ar.
 sleep 65
 assert_cached_pages
 sleep 5

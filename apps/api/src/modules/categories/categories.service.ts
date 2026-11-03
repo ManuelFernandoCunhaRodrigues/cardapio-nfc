@@ -7,12 +7,12 @@ import {
 import type { categoryFormSchema } from '@salgae/core/schemas/category';
 import type { z } from 'zod';
 
-import { ConflictError, NotFoundError } from '../../shared/errors/domain-errors.js';
+import { ConflictError, NotFoundError } from '../../shared/errors/domain-errors';
 import {
   ReferencedRecordError,
   UniqueViolationError,
-} from '../../shared/errors/persistence-errors.js';
-import { moveInOrder, type OrderableRepository } from '../../shared/ordering/move-in-order.js';
+} from '../../shared/errors/persistence-errors';
+import { moveInOrder, type OrderableRepository } from '../../shared/ordering/move-in-order';
 
 export type CategoryInput = z.infer<typeof categoryFormSchema>;
 

@@ -1,7 +1,7 @@
-import { translateDatabaseError } from '../../shared/supabase/database-errors.js';
-import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory.js';
-import type { SupabaseImageRepository } from '../media/image/image.repository.js';
-import type { ProductRecord, ProductRepository } from './products.service.js';
+import { translateDatabaseError } from '../../shared/supabase/database-errors';
+import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory';
+import type { SupabaseImageRepository } from '../media/image/image.repository';
+import type { ProductRecord, ProductRepository } from './products.service';
 
 const ADMIN_PRODUCT_COLUMNS =
   'id, category_id, name, slug, description, price_cents, image_path, video_path, badge, sort_order, is_active, is_available, category:categories(name, slug)';

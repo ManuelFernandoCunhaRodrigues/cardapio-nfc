@@ -1,6 +1,6 @@
-import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory.js';
-import type { HighlightInput, HighlightRepository } from './highlights.service.js';
-import type { SupabaseImageRepository } from '../media/image/image.repository.js';
+import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory';
+import type { HighlightInput, HighlightRepository } from './highlights.service';
+import type { SupabaseImageRepository } from '../media/image/image.repository';
 
 const ADMIN_HIGHLIGHT_COLUMNS = 'id, title, description, image_path, target, sort_order, is_active';
 

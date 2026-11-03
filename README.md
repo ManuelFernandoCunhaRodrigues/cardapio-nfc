@@ -31,19 +31,21 @@ Cardápio digital de **consulta no local** para uma lanchonete: o cliente aponta
 | Camada | Tecnologia |
 | --- | --- |
 | Site (`apps/web`) | Next.js 16 (App Router, Server Components e Server Actions), React 19, TypeScript estrito |
-| API (`apps/api`) | Hono sobre Node.js 22, empacotada com esbuild; Docker pronto, projeto na Vercel pendente |
+| API (`apps/api`) | Hono sobre Node.js 22, rodando dentro do site; Docker pronto para servidor separado |
 | Regras comuns (`packages/core`) | Zod, contratos da API e regras puras, sem framework |
 | Estilo e movimento | Tailwind CSS 4 e Motion (`motion/react-m` com `LazyMotion`) |
 | Dados | Supabase: PostgreSQL com Row Level Security, Auth e Storage |
 | Mídia | `sharp` (WebP) e `ffmpeg` (H.264) |
 | Qualidade | Vitest, Playwright com axe, ESLint, Prettier, knip, GitHub Actions |
-| Hospedagem | Vercel, um projeto por ambiente (a API entra lá na etapa final do plano v3) |
+| Hospedagem | Vercel, um projeto por ambiente, com site e API juntos |
 
 ## Arquitetura
 
 O site só desenha a tela. Tudo o que lê ou grava dados passa pela API, a única peça que fala com o banco; o site usa o Supabase apenas para o login.
 
-> **Exceção temporária: o vídeo.** O envio e a compactação de vídeo continuam numa rota do Next (`apps/web/src/app/admin/(painel)/midia/video/route.ts` e `features/media/server/`), com acesso ao banco e ao Storage, até a prova de conceito da API na Vercel (etapa E1 do plano v3, em `docs/planejamento/`). Depois dela o vídeo vai do navegador direto para a API.
+Em cada ambiente, os dois são publicados juntos em um único projeto: o site chama a API dentro do mesmo processo, sem passar pela rede, e ela também responde em `/api`. Só `apps/web/src/lib/api/` importa a API, e o ESLint barra esse import no restante do site. A decisão e as alternativas estão em `docs/planejamento/dois-projetos-por-ambiente.md`.
+
+> **Exceção: o vídeo.** O envio e a compactação de vídeo ficam numa rota do Next (`apps/web/src/app/admin/(painel)/midia/video/route.ts` e `features/media/server/`), com acesso ao banco e ao Storage.
 
 ```mermaid
 flowchart LR
@@ -57,7 +59,7 @@ flowchart LR
     Painel --> Actions
   end
 
-  subgraph Api["apps/api — Hono"]
+  subgraph Api["apps/api — Hono, no mesmo processo do site"]
     Rotas["/v1: routes → controller<br/>→ service → repository"]
   end
 
@@ -84,7 +86,7 @@ apps/
   api/          API: leitura pública e escrita do painel (@salgae/api)
 packages/
   core/         schemas Zod, contratos da API, tipos do banco e regras puras (@salgae/core)
-e2e/            testes de ponta a ponta com Playwright, web + API juntos (@salgae/e2e)
+e2e/            testes de ponta a ponta com Playwright, contra o site com a API dentro (@salgae/e2e)
 supabase/       migrations, seed e testes SQL
 docs/           documentação técnica; Salgae_Lanchonete_Obsidian/ — vault do projeto
 ```
@@ -173,37 +175,25 @@ O ESLint do site também guarda as fronteiras: `@supabase/*` só em `lib/supabas
 
 ## Executar localmente
 
-São três peças: o Supabase, a API e o site. Requisitos: Node.js 22 ou superior e um projeto Supabase (o de stage serve para desenvolver; com Docker, `npx supabase start` sobe um local).
+Requisitos: Node.js 22 ou superior e um projeto Supabase (o de stage serve para desenvolver; com Docker, `npx supabase start` sobe um local).
 
 ```bash
 npm install
-cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-Preencha nos dois arquivos a URL e a chave anônima/publicável do mesmo projeto Supabase. Nunca use uma `service_role`.
-
-| Peça | Variáveis |
-| --- | --- |
-| API (`apps/api/.env`) | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `WEB_ORIGIN` (origem do site, para o CORS) e `PORT` (padrão 4000) |
-| Site (`apps/web/.env.local`) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (login), `API_URL` (servidor e build) e `NEXT_PUBLIC_SITE_URL` |
-
-Depois, em dois terminais, a API primeiro (o site lê os dados dela):
-
-```bash
-npm run dev:api
-```
+Preencha em `apps/web/.env.local` a URL e a chave anônima/publicável do projeto Supabase (`NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`) e `NEXT_PUBLIC_SITE_URL`. Nunca use uma `service_role`. Depois:
 
 ```bash
 npm run dev
 ```
 
-O build de produção do site também precisa da API no ar, porque as páginas públicas são geradas com os dados dela.
+A API já vem junto, em `/api`. O build de produção também lê o banco, porque as páginas públicas são geradas com esses dados.
 
 | Comando | Finalidade |
 | --- | --- |
-| `npm run dev:api` / `npm run dev` | API e site em desenvolvimento. |
-| `npm run build -w @salgae/api` / `npm run start -w @salgae/api` | Build e execução da API. |
+| `npm run dev` | Site e API em desenvolvimento. |
+| `npm run dev:api` / `npm run build -w @salgae/api` / `npm run start -w @salgae/api` | API sozinha, para servidor separado (usa `apps/api/.env`, com `WEB_ORIGIN` para o CORS). |
 | `npm run build` / `npm run start` | Build de produção do site e execução dele. |
 | `npm run lint` | ESLint em todos os pacotes. |
 | `npm run typecheck` | TypeScript estrito em todos os pacotes. |
@@ -216,7 +206,18 @@ O build de produção do site também precisa da API no ar, porque as páginas p
 
 ### Servidor próprio (VPS)
 
-A API tem um `Dockerfile`, com contexto na raiz do repositório porque ela embute o `packages/core`:
+O site roda com Node e já inclui a API. Ele precisa das mesmas variáveis no build e na execução (as `NEXT_PUBLIC_` entram no JavaScript no build):
+
+```bash
+npm ci
+cp apps/web/.env.example apps/web/.env.local   # preencher: Supabase, NEXT_PUBLIC_SITE_URL e NEXT_PUBLIC_SITE_ENV
+npm run build
+npm run start -- --port 3000
+```
+
+Para o site voltar sozinho depois de uma queda ou reinício, rode o `npm run start` por um serviço supervisionado (um serviço do `systemd` com `Restart=always` e `WorkingDirectory` na raiz do repositório, ou o `pm2`). Na frente dele, um proxy reverso (Nginx ou Caddy) com HTTPS.
+
+Para quem precisar da API em um servidor separado, ela tem um `Dockerfile`, com contexto na raiz do repositório porque embute o `packages/core`. O site continua usando a própria cópia da API:
 
 ```bash
 docker build -f apps/api/Dockerfile -t salgae-api .
@@ -224,17 +225,6 @@ docker run -d --restart unless-stopped -p 127.0.0.1:4000:4000 \
   -e SUPABASE_URL=... -e SUPABASE_ANON_KEY=... -e WEB_ORIGIN=https://cardapio.exemplo.com \
   salgae-api
 ```
-
-O site roda com Node na mesma máquina. Ele precisa das mesmas variáveis no build e na execução (as `NEXT_PUBLIC_` entram no JavaScript no build), com a API no ar antes do build:
-
-```bash
-npm ci
-cp apps/web/.env.example apps/web/.env.local   # preencher: Supabase, API_URL, NEXT_PUBLIC_SITE_URL e NEXT_PUBLIC_SITE_ENV
-npm run build
-npm run start -- --port 3000
-```
-
-Para o site voltar sozinho depois de uma queda ou reinício, rode o `npm run start` por um serviço supervisionado (um serviço do `systemd` com `Restart=always` e `WorkingDirectory` na raiz do repositório, ou o `pm2`). Na frente dos dois, um proxy reverso (Nginx ou Caddy) com HTTPS. A API pode ficar só na rede interna; quando o envio de vídeo passar para ela, o navegador também vai chamá-la (`NEXT_PUBLIC_API_URL`).
 
 ## Banco de dados
 

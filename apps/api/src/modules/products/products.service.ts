@@ -9,14 +9,10 @@ import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
 import { parsePriceBRL } from '@salgae/core/rules/parse-price';
 import { fieldsFromProductSituation } from '@salgae/core/rules/product-situation';
 
-import {
-  ConflictError,
-  NotFoundError,
-  ValidationError,
-} from '../../shared/errors/domain-errors.js';
-import { UniqueViolationError } from '../../shared/errors/persistence-errors.js';
-import { reportServerError } from '../../shared/observability.js';
-import { moveInOrder } from '../../shared/ordering/move-in-order.js';
+import { ConflictError, NotFoundError, ValidationError } from '../../shared/errors/domain-errors';
+import { UniqueViolationError } from '../../shared/errors/persistence-errors';
+import { reportServerError } from '../../shared/observability';
+import { moveInOrder } from '../../shared/ordering/move-in-order';
 
 type ProductMedia = { imagePath: string | null; videoPath: string | null };
 

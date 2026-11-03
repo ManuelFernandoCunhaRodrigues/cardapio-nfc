@@ -1,5 +1,7 @@
 # E9 — passos na Vercel (com o responsável)
 
+**Substituído em 2026-11-03 por `dois-projetos-por-ambiente.md`:** a API passa a rodar dentro do site, e o projeto separado deixa de existir. Mantido como histórico.
+
 Status: **passos 1 a 4 aplicados** (2026-11-02). Desde 2026-10-31 o que é Vercel ou Supabase
 ele faz pelo Codex, na conta pessoal dele (time `manuelfernandocr4-5200s-projects`). Este é o
 roteiro do que falta do plano v3 (`plano-v3-estrutura-playwright-motion.md`, etapas E1 e E9);

@@ -4,7 +4,7 @@ import { vi } from 'vitest';
 import type {
   AppSupabaseClient,
   SupabaseClientFactory,
-} from '../shared/supabase/supabase-client-factory.js';
+} from '../shared/supabase/supabase-client-factory';
 
 const ADMIN_TOKEN = 'admin-token';
 

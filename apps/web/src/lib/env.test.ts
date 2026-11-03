@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getApiEnv, getSiteEnv, getSiteUrl } from '@/lib/env';
+import { getSiteEnv, getSiteUrl } from '@/lib/env';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -50,19 +50,5 @@ describe('getSiteUrl', () => {
 
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'cardapio.exemplo.com');
     expect(getSiteUrl()).toBeUndefined();
-  });
-});
-
-describe('getApiEnv', () => {
-  it('returns a server-only API URL without a trailing slash', () => {
-    vi.stubEnv('API_URL', 'https://api.example.com/');
-
-    expect(getApiEnv()).toEqual({ API_URL: 'https://api.example.com' });
-  });
-
-  it('explains when API_URL is absent', () => {
-    vi.stubEnv('API_URL', undefined);
-
-    expect(getApiEnv).toThrow('API_URL');
   });
 });

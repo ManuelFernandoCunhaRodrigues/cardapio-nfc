@@ -18,6 +18,7 @@
     "qr:verificar": "node --experimental-strip-types --no-warnings scripts/verificar-qrcode.mjs"
   },
   "dependencies": {
+    "@salgae/api": "*",
     "@salgae/core": "*",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.118.0",

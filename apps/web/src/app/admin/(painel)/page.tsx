@@ -12,6 +12,7 @@ import { getStoreStatus } from '@salgae/core/rules/opening-hours';
 import { formatPriceBRL } from '@salgae/core/rules/price';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 const reasonLabel = { unavailable: 'INDISPONÍVEL', 'without-image': 'SEM FOTO' } as const;
 

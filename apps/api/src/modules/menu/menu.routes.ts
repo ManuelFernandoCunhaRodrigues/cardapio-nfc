@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { createMenuController } from './menu.controller.js';
+import type { AppHonoEnv } from '../../shared/types';
+import type { createMenuController } from './menu.controller';
 
 type MenuController = ReturnType<typeof createMenuController>;
 

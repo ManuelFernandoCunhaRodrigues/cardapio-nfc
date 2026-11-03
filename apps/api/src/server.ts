@@ -1,12 +1,11 @@
 import { serve } from '@hono/node-server';
 
-import { createApp } from './app.js';
-import { loadEnv } from './config/env.js';
-import { createSupabaseClientFactory } from './shared/supabase/supabase-client-factory.js';
+import { createStandaloneApp } from './app';
+import { loadEnv } from './config/env';
 
 const env = loadEnv();
 const port = env.PORT ?? 4000;
-const app = createApp({ env, supabase: createSupabaseClientFactory(env) });
+const app = createStandaloneApp(env);
 
 serve({ fetch: app.fetch, port }, ({ port: listeningPort }) => {
   console.log(

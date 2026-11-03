@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 
-import { requireAdmin } from '../../shared/auth/index.js';
-import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { createCategoriesController } from './categories.controller.js';
+import { requireAdmin } from '../../shared/auth/index';
+import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory';
+import type { AppHonoEnv } from '../../shared/types';
+import type { createCategoriesController } from './categories.controller';
 
 type CategoriesController = ReturnType<typeof createCategoriesController>;
 

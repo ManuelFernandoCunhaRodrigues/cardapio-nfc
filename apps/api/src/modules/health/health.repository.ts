@@ -1,5 +1,5 @@
-import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory.js';
-import type { HealthRepository } from './health.service.js';
+import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory';
+import type { HealthRepository } from './health.service';
 
 const HEALTH_QUERY_TIMEOUT_MS = 2_000;
 

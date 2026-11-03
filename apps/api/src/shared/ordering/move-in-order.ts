@@ -1,7 +1,7 @@
 import type { ReorderInput } from '@salgae/core/contracts/admin-api';
 import { swapSortOrders, type OrderedItem } from '@salgae/core/rules/reorder';
 
-import { ConflictError } from '../errors/domain-errors.js';
+import { ConflictError } from '../errors/domain-errors';
 
 /** Parte do repositório de que a reordenação precisa (categorias, destaques e produtos). */
 export interface OrderableRepository {

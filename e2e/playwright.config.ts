@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-import { adminStorageState, apiPort, apiURL } from './env';
+import { adminStorageState, baseURL, port } from './env';
 
 // Fora do CI, os testes usam as mesmas variáveis do site.
 try {
@@ -9,12 +9,9 @@ try {
   // No CI, as variáveis são definidas pelo próprio job.
 }
 
-// Os testes de ponta a ponta rodam contra os builds de produção da API e do site ligados ao
-// Supabase local (`supabase start`), com os dados de `supabase/seed.sql`. Com E2E_API_URL ou
-// E2E_BASE_URL definidos, usam o servidor que já está no ar (o CI sobe a API antes do build do site).
-const port = Number(process.env.E2E_PORT ?? 3000);
-const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
-
+// Os testes de ponta a ponta rodam contra o build de produção do site, com a API dentro dele,
+// ligado ao Supabase local (`supabase start`), com os dados de `supabase/seed.sql`. Com
+// E2E_BASE_URL definido, usam o servidor que já está no ar.
 export default defineConfig({
   testDir: '.',
   // O painel altera dados que o cardápio lê: um arquivo por vez, na ordem dos projetos. Gravam
@@ -87,35 +84,15 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: [
-    ...(process.env.E2E_API_URL
-      ? []
-      : [
-          {
-            command: 'npm run start -w @salgae/api',
-            cwd: '..',
-            url: `${apiURL}/health`,
-            reuseExistingServer: !process.env.CI,
-            timeout: 60_000,
-            env: {
-              PORT: String(apiPort),
-              SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-              SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
-              WEB_ORIGIN: baseURL,
-            },
-          },
-        ]),
-    ...(process.env.E2E_BASE_URL
-      ? []
-      : [
-          {
-            command: `npm run start -w @salgae/web -- --port ${port}`,
-            cwd: '..',
-            url: baseURL,
-            reuseExistingServer: !process.env.CI,
-            timeout: 120_000,
-            env: { API_URL: apiURL },
-          },
-        ]),
-  ],
+  webServer: process.env.E2E_BASE_URL
+    ? []
+    : [
+        {
+          command: `npm run start -w @salgae/web -- --port ${port}`,
+          cwd: '..',
+          url: baseURL,
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+      ],
 });

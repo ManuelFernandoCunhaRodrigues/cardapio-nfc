@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 
-import { requireAdmin } from '../../shared/auth/index.js';
-import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import { imageBodyLimit } from '../media/image/image-body-limit.js';
-import type { createImageController } from '../media/image/image.controller.js';
-import type { createProductsController } from './products.controller.js';
+import { requireAdmin } from '../../shared/auth/index';
+import type { SupabaseClientFactory } from '../../shared/supabase/supabase-client-factory';
+import type { AppHonoEnv } from '../../shared/types';
+import { imageBodyLimit } from '../media/image/image-body-limit';
+import type { createImageController } from '../media/image/image.controller';
+import type { createProductsController } from './products.controller';
 
 type ProductsController = ReturnType<typeof createProductsController>;
 type ImageController = ReturnType<typeof createImageController>;

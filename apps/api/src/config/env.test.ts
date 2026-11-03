@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { loadEnv } from './env.js';
+import { loadEnv } from './env';
 
 describe('loadEnv', () => {
   it('explica quais variáveis obrigatórias estão ausentes', () => {

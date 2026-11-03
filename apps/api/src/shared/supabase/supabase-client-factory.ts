@@ -1,9 +1,12 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@salgae/core/database/database.types';
 
-import type { ApiEnv } from '../../config/env.js';
-
 export type AppSupabaseClient = SupabaseClient<Database>;
+
+export type SupabaseConfig = {
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+};
 
 export type SupabaseClientFactory = {
   createPublicClient: () => AppSupabaseClient;
@@ -16,20 +19,26 @@ const authOptions = {
   detectSessionInUrl: false,
 };
 
-function createPublicClient(env: ApiEnv): AppSupabaseClient {
-  return createClient<Database>(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, { auth: authOptions });
-}
+const noStoreFetch: typeof globalThis.fetch = (input, init) =>
+  globalThis.fetch(input, { ...init, cache: 'no-store' });
 
-function createUserClient(env: ApiEnv, accessToken: string): AppSupabaseClient {
-  return createClient<Database>(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+function createPublicClient(config: SupabaseConfig): AppSupabaseClient {
+  return createClient<Database>(config.supabaseUrl, config.supabaseAnonKey, {
     auth: authOptions,
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    global: { fetch: noStoreFetch },
   });
 }
 
-export function createSupabaseClientFactory(env: ApiEnv): SupabaseClientFactory {
+function createUserClient(config: SupabaseConfig, accessToken: string): AppSupabaseClient {
+  return createClient<Database>(config.supabaseUrl, config.supabaseAnonKey, {
+    auth: authOptions,
+    global: { fetch: noStoreFetch, headers: { Authorization: `Bearer ${accessToken}` } },
+  });
+}
+
+export function createSupabaseClientFactory(config: SupabaseConfig): SupabaseClientFactory {
   return {
-    createPublicClient: () => createPublicClient(env),
-    createUserClient: (accessToken) => createUserClient(env, accessToken),
+    createPublicClient: () => createPublicClient(config),
+    createUserClient: (accessToken) => createUserClient(config, accessToken),
   };
 }

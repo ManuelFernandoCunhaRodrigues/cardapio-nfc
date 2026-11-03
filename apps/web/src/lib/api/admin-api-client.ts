@@ -6,17 +6,15 @@ import {
 import type { z } from 'zod';
 
 import { getAccessToken } from '@/lib/auth/access-token';
-import { getApiEnv } from '@/lib/env';
 
 import { ApiRequestError, SESSION_EXPIRED_MESSAGE } from './api-request-error';
-import { createTimeoutFetch } from './timeout-fetch';
+import { embeddedApiFetch } from './embedded-api';
 
 type WriteMethod = 'POST' | 'PUT' | 'DELETE';
 
 type AdminApiClientOptions = {
-  apiUrl: string;
   getToken: () => Promise<string | null>;
-  fetchImplementation?: typeof globalThis.fetch;
+  fetchImplementation: typeof globalThis.fetch;
 };
 
 const UNEXPECTED_RESPONSE_MESSAGE = 'A API respondeu de um jeito inesperado.';
@@ -29,17 +27,11 @@ async function toRequestError(response: Response): Promise<ApiRequestError> {
 }
 
 /** Cliente do painel: toda chamada leva o token do admin e nunca é guardada em cache. */
-export function createAdminApiClient({
-  apiUrl,
-  getToken,
-  fetchImplementation = globalThis.fetch,
-}: AdminApiClientOptions) {
-  const timedFetch = createTimeoutFetch(fetchImplementation);
-
+export function createAdminApiClient({ getToken, fetchImplementation }: AdminApiClientOptions) {
   async function send(method: 'GET' | WriteMethod, path: string, body?: unknown) {
     const token = await getToken();
     if (!token) throw new ApiRequestError(401, SESSION_EXPIRED_MESSAGE);
-    const response = await timedFetch(`${apiUrl}${path}`, {
+    const response = await fetchImplementation(path, {
       method,
       cache: 'no-store',
       headers: {
@@ -73,5 +65,5 @@ export function createAdminApiClient({
 }
 
 export function adminApi() {
-  return createAdminApiClient({ apiUrl: getApiEnv().API_URL, getToken: getAccessToken });
+  return createAdminApiClient({ getToken: getAccessToken, fetchImplementation: embeddedApiFetch });
 }

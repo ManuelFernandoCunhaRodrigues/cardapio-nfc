@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 
-import type { AppSupabaseClient } from './supabase/supabase-client-factory.js';
+import type { AppSupabaseClient } from './supabase/supabase-client-factory';
 
 type AppVariables = {
   requestId: string;

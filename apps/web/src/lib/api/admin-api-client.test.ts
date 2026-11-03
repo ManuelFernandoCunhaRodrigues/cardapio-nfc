@@ -14,7 +14,6 @@ function jsonResponse(body: unknown, status = 200) {
 function client(response: Response, token: string | null = 'admin-token') {
   const fetchImplementation = vi.fn(async () => response);
   const api = createAdminApiClient({
-    apiUrl: 'http://api.test',
     getToken: async () => token,
     fetchImplementation,
   });
@@ -28,7 +27,7 @@ describe('createAdminApiClient', () => {
     await api.read('/v1/admin/store', z.object({ ok: z.boolean() }));
 
     expect(fetchImplementation).toHaveBeenCalledWith(
-      'http://api.test/v1/admin/store',
+      '/v1/admin/store',
       expect.objectContaining({
         method: 'GET',
         cache: 'no-store',
@@ -43,8 +42,24 @@ describe('createAdminApiClient', () => {
 
     await expect(api.create('/v1/admin/categories', { name: 'Coxinhas' })).resolves.toBe(id);
     expect(fetchImplementation).toHaveBeenCalledWith(
-      'http://api.test/v1/admin/categories',
+      '/v1/admin/categories',
       expect.objectContaining({ body: JSON.stringify({ name: 'Coxinhas' }) }),
+    );
+  });
+
+  it('preserva FormData e deixa o navegador definir o Content-Type', async () => {
+    const { api, fetchImplementation } = client(jsonResponse({ path: 'products/image.webp' }));
+    const body = new FormData();
+    body.set('file', new Blob(['image'], { type: 'image/webp' }), 'image.webp');
+
+    await api.upload('/v1/admin/products/image', body);
+
+    expect(fetchImplementation).toHaveBeenCalledWith(
+      '/v1/admin/products/image',
+      expect.objectContaining({
+        body,
+        headers: { Authorization: 'Bearer admin-token' },
+      }),
     );
   });
 

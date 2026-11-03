@@ -8,9 +8,9 @@ import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
 import type { highlightFormSchema } from '@salgae/core/schemas/highlight';
 import type { z } from 'zod';
 
-import { NotFoundError } from '../../shared/errors/domain-errors.js';
-import { reportServerError } from '../../shared/observability.js';
-import { moveInOrder, type OrderableRepository } from '../../shared/ordering/move-in-order.js';
+import { NotFoundError } from '../../shared/errors/domain-errors';
+import { reportServerError } from '../../shared/observability';
+import { moveInOrder, type OrderableRepository } from '../../shared/ordering/move-in-order';
 
 export type HighlightInput = z.infer<typeof highlightFormSchema>;
 

@@ -83,7 +83,7 @@ frontend continua sem acessar o banco nem processar mídia fora dessa fronteira.
   usam `${baseURL}/api`. Saem `E2E_API_URL`, `apiPort`, `API_URL` e o servidor separado.
 - **Build:** o job E2E constrói o web sem API no ar; o resumo do `next build` deve manter as páginas
   públicas estáticas com revalidação.
-- **Mídia:** E2E de upload perto de 3.750.000 bytes. Conferir nos `.nft.json` os binários do `sharp` e
+- **Mídia:** E2E de envio com 3,75 MB pela rota `/api` e com foto de mais de 2 MB pelo painel. Conferir nos `.nft.json` os binários do `sharp` e
   medir o tamanho das funções.
 - **Resiliência:** `e2e/scripts/api-fora-do-ar.sh` vira um teste de banco fora do ar: aquecer as
   páginas, parar o Supabase local, esperar mais de 60 s e confirmar que elas seguem entregando o

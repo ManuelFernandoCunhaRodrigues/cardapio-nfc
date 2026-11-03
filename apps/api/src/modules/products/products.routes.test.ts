@@ -1,15 +1,15 @@
 import { Hono } from 'hono';
 import { describe, expect, it, vi } from 'vitest';
 
-import { errorHandler } from '../../shared/http/error-handler.js';
-import { UniqueViolationError } from '../../shared/errors/persistence-errors.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients.js';
-import { createImageController } from '../media/image/image.controller.js';
-import { ImageService, type ImageRepository } from '../media/image/image.service.js';
-import { createProductsController } from './products.controller.js';
-import { createProductsRoutes } from './products.routes.js';
-import { ProductsService, type ProductRepository } from './products.service.js';
+import { errorHandler } from '../../shared/http/error-handler';
+import { UniqueViolationError } from '../../shared/errors/persistence-errors';
+import type { AppHonoEnv } from '../../shared/types';
+import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
+import { createImageController } from '../media/image/image.controller';
+import { ImageService, type ImageRepository } from '../media/image/image.service';
+import { createProductsController } from './products.controller';
+import { createProductsRoutes } from './products.routes';
+import { ProductsService, type ProductRepository } from './products.service';
 
 const productId = '11111111-1111-4111-8111-111111111111';
 const categoryId = '22222222-2222-4222-8222-222222222222';

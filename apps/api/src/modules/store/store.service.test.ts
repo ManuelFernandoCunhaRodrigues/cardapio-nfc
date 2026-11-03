@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { NotFoundError } from '../../shared/errors/domain-errors.js';
-import { StoreService, type StoreRepository } from './store.service.js';
-import { storeSettingsFixture } from './store.test-fixture.js';
+import { NotFoundError } from '../../shared/errors/domain-errors';
+import { StoreService, type StoreRepository } from './store.service';
+import { storeSettingsFixture } from './store.test-fixture';
 
 function fakeRepository(overrides: Partial<StoreRepository> = {}): StoreRepository {
   return {

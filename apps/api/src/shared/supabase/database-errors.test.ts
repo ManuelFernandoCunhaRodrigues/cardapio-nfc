@@ -1,8 +1,8 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 import { describe, expect, it } from 'vitest';
 
-import { ReferencedRecordError, UniqueViolationError } from '../errors/persistence-errors.js';
-import { translateDatabaseError } from './database-errors.js';
+import { ReferencedRecordError, UniqueViolationError } from '../errors/persistence-errors';
+import { translateDatabaseError } from './database-errors';
 
 function postgrestError(code: string): PostgrestError {
   return Object.assign(new Error(`postgres ${code}`), {

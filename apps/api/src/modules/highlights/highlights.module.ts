@@ -1,15 +1,15 @@
 import type {
   AppSupabaseClient,
   SupabaseClientFactory,
-} from '../../shared/supabase/supabase-client-factory.js';
-import { createHighlightsController } from './highlights.controller.js';
-import { SupabaseHighlightsRepository } from './highlights.repository.js';
-import { createHighlightsRoutes } from './highlights.routes.js';
-import { HighlightsService } from './highlights.service.js';
-import { compressImageToWebp } from '../media/image/image-compressor.js';
-import { createImageController } from '../media/image/image.controller.js';
-import { SupabaseImageRepository } from '../media/image/image.repository.js';
-import { ImageService } from '../media/image/image.service.js';
+} from '../../shared/supabase/supabase-client-factory';
+import { createHighlightsController } from './highlights.controller';
+import { SupabaseHighlightsRepository } from './highlights.repository';
+import { createHighlightsRoutes } from './highlights.routes';
+import { HighlightsService } from './highlights.service';
+import { compressImageToWebp } from '../media/image/image-compressor';
+import { createImageController } from '../media/image/image.controller';
+import { SupabaseImageRepository } from '../media/image/image.repository';
+import { ImageService } from '../media/image/image.service';
 
 function createHighlightsService(client: AppSupabaseClient) {
   return new HighlightsService(

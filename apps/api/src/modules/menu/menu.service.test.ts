@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { NotFoundError } from '../../shared/errors/domain-errors.js';
-import { category, highlight, product, sitemapItem } from './menu.test-fixtures.js';
-import { MenuService, type MenuRepository } from './menu.service.js';
+import { NotFoundError } from '../../shared/errors/domain-errors';
+import { category, highlight, product, sitemapItem } from './menu.test-fixtures';
+import { MenuService, type MenuRepository } from './menu.service';
 
 function fakeRepository(overrides: Partial<MenuRepository> = {}): MenuRepository {
   return {

@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { describe, expect, it, vi } from 'vitest';
 
-import { errorHandler } from '../../shared/http/error-handler.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients.js';
-import { createHighlightsController } from './highlights.controller.js';
-import { createHighlightsRoutes } from './highlights.routes.js';
-import { HighlightsService, type HighlightRepository } from './highlights.service.js';
+import { errorHandler } from '../../shared/http/error-handler';
+import type { AppHonoEnv } from '../../shared/types';
+import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
+import { createHighlightsController } from './highlights.controller';
+import { createHighlightsRoutes } from './highlights.routes';
+import { HighlightsService, type HighlightRepository } from './highlights.service';
 
 const highlightId = '33333333-3333-4333-8333-333333333333';
 const validInput = { title: 'Combo', description: '', target: '/cardapio', is_active: true };

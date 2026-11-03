@@ -1,11 +1,11 @@
 import type {
   AppSupabaseClient,
   SupabaseClientFactory,
-} from '../../shared/supabase/supabase-client-factory.js';
-import { createCategoriesController } from './categories.controller.js';
-import { SupabaseCategoriesRepository } from './categories.repository.js';
-import { createCategoriesRoutes } from './categories.routes.js';
-import { CategoriesService } from './categories.service.js';
+} from '../../shared/supabase/supabase-client-factory';
+import { createCategoriesController } from './categories.controller';
+import { SupabaseCategoriesRepository } from './categories.repository';
+import { createCategoriesRoutes } from './categories.routes';
+import { CategoriesService } from './categories.service';
 
 function createCategoriesService(client: AppSupabaseClient) {
   return new CategoriesService(new SupabaseCategoriesRepository(client));

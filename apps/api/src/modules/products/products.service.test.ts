@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ValidationError } from '../../shared/errors/domain-errors.js';
-import { UniqueViolationError } from '../../shared/errors/persistence-errors.js';
-import { ProductsService, type ProductRepository } from './products.service.js';
+import { ValidationError } from '../../shared/errors/domain-errors';
+import { UniqueViolationError } from '../../shared/errors/persistence-errors';
+import { ProductsService, type ProductRepository } from './products.service';
 
 const productId = '11111111-1111-4111-8111-111111111111';
 const categoryId = '22222222-2222-4222-8222-222222222222';

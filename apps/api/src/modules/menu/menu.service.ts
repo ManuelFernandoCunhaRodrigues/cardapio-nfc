@@ -8,7 +8,7 @@ import {
 } from '@salgae/core/contracts/public-api';
 import { z } from 'zod';
 
-import { NotFoundError } from '../../shared/errors/domain-errors.js';
+import { NotFoundError } from '../../shared/errors/domain-errors';
 
 export interface MenuRepository {
   listCategories(): Promise<unknown>;

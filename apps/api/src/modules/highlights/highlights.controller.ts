@@ -2,10 +2,10 @@ import { activationInputSchema, reorderInputSchema } from '@salgae/core/contract
 import { highlightFormSchema } from '@salgae/core/schemas/highlight';
 import type { Context } from 'hono';
 
-import { readJsonBody, readUuidParam } from '../../shared/http/index.js';
-import { serviceForRequest, type ServiceFactory } from '../../shared/supabase/request-service.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { HighlightsService } from './highlights.service.js';
+import { readJsonBody, readUuidParam } from '../../shared/http/index';
+import { serviceForRequest, type ServiceFactory } from '../../shared/supabase/request-service';
+import type { AppHonoEnv } from '../../shared/types';
+import type { HighlightsService } from './highlights.service';
 
 type HighlightsContext = Context<AppHonoEnv>;
 

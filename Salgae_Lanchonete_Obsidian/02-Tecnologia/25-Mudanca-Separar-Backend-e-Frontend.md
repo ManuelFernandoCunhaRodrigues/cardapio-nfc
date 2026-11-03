@@ -89,6 +89,11 @@ Depende do responsável: trocar o Root Directory dos projetos do site na Vercel 
   - **Feito:** E0 (workspaces e limpeza), E2 (Playwright na raiz, axe 4.14), E3 (`packages/core`), E4 (esqueleto da API e CI na ordem Supabase → API → build do site → E2E), E5 (leituras públicas pela API, com o cardápio mantido em cache se a API cair), E6 (escritas do painel pela API: loja, categorias, destaques, produtos e foto), E7 (Motion no cardápio e no painel) e E8 (`knip` no CI, fronteiras como erro no ESLint, README).
   - **Motion:** carrossel com arrasto pelo mouse (no toque fica a rolagem nativa), cards do cardápio entrando em cascata na primeira visita, indicador deslizando na barra inferior, resultados da busca, e no painel a gaveta e a confirmação com entrada e saída (a camada que sai ou fica coberta é inerte para leitor de tela e teclado; o foco volta a quem abriu), avisos e reordenação. Tudo respeita "menos movimento".
   - **Bloqueado:** E1 (prova de conceito na Vercel) — o computador está logado em outra conta da Vercel; pergunta enviada por e-mail. Por isso o **vídeo** continua como rota do Next por enquanto, e a E9 (prévia e stage) depende desse acesso.
+
+- **2026-11-03 — Um projeto Vercel por ambiente.** O responsável escolheu 2 projetos, um de teste e um de produção, em vez de site e API separados em cada ambiente. O plano teve consenso entre Claude e Codex depois de 3 revisões (`docs/planejamento/dois-projetos-por-ambiente.md`).
+  - **Como ficou:** a API segue em `apps/api`, com as mesmas camadas, e roda dentro do site, no mesmo processo; ela também responde em `/api`. Só `apps/web/src/lib/api/embedded-api.ts` a importa. O `Dockerfile` continua para quem quiser a API em servidor separado.
+  - **Vídeo:** fica definitivamente no Next, e a E1 saiu do escopo. Com os dois no mesmo projeto, levar o vídeo para a API não traria ganho.
+  - **Descartado:** Vercel Services (beta, e seus bindings não existem no build) e o site chamando a si mesmo por HTTP (o build não tem servidor para responder).
   - **Para conferir na E9:** no Pixel 7 emulado do Playwright, o botão "Criar destaque" do fim do formulário da gaveta fica encoberto; conferir num celular de verdade.
 
 ## Perguntas em aberto (respondidas em 2026-10-23, ver acima)

@@ -2,10 +2,10 @@ import { storeStatusInputSchema } from '@salgae/core/contracts/admin-api';
 import { storeSettingsFormSchema } from '@salgae/core/schemas/store-settings';
 import type { Context } from 'hono';
 
-import { readJsonBody } from '../../shared/http/index.js';
-import { serviceForRequest, type ServiceFactory } from '../../shared/supabase/request-service.js';
-import type { AppHonoEnv } from '../../shared/types.js';
-import type { StoreService } from './store.service.js';
+import { readJsonBody } from '../../shared/http/index';
+import { serviceForRequest, type ServiceFactory } from '../../shared/supabase/request-service';
+import type { AppHonoEnv } from '../../shared/types';
+import type { StoreService } from './store.service';
 
 type StoreContext = Context<AppHonoEnv>;
 

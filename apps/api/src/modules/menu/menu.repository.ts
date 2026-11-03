@@ -1,5 +1,5 @@
-import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory.js';
-import type { MenuRepository } from './menu.service.js';
+import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory';
+import type { MenuRepository } from './menu.service';
 
 const CATEGORY_COLUMNS = 'id, name, slug, image_path, sort_order';
 const PRODUCT_COLUMNS =

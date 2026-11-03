@@ -1,8 +1,8 @@
 import type { ErrorHandler } from 'hono';
 
-import type { AppHonoEnv } from '../types.js';
-import { mapErrorToHttp } from '../errors/http-error-mapper.js';
-import { reportServerError } from '../observability.js';
+import type { AppHonoEnv } from '../types';
+import { mapErrorToHttp } from '../errors/http-error-mapper';
+import { reportServerError } from '../observability';
 
 export const errorHandler: ErrorHandler<AppHonoEnv> = (error, context) => {
   const httpError = mapErrorToHttp(error);

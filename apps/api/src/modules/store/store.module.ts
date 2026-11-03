@@ -1,11 +1,11 @@
 import type {
   AppSupabaseClient,
   SupabaseClientFactory,
-} from '../../shared/supabase/supabase-client-factory.js';
-import { createAdminStoreController, createPublicStoreController } from './store.controller.js';
-import { SupabaseStoreRepository } from './store.repository.js';
-import { createAdminStoreRoutes, createPublicStoreRoutes } from './store.routes.js';
-import { StoreService } from './store.service.js';
+} from '../../shared/supabase/supabase-client-factory';
+import { createAdminStoreController, createPublicStoreController } from './store.controller';
+import { SupabaseStoreRepository } from './store.repository';
+import { createAdminStoreRoutes, createPublicStoreRoutes } from './store.routes';
+import { StoreService } from './store.service';
 
 function createStoreService(client: AppSupabaseClient) {
   return new StoreService(new SupabaseStoreRepository(client));

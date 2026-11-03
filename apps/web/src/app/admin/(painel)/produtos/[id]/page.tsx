@@ -4,6 +4,7 @@ import { ProductForm } from '@/features/products/components/product-form';
 import { getAdminCategories, getAdminProducts } from '@/features/admin/server/catalog';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 export default async function EditProductPage({
   params,

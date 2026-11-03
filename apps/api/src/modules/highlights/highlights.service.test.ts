@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { NotFoundError } from '../../shared/errors/domain-errors.js';
-import { HighlightsService, type HighlightRepository } from './highlights.service.js';
+import { NotFoundError } from '../../shared/errors/domain-errors';
+import { HighlightsService, type HighlightRepository } from './highlights.service';
 
 const highlightId = '33333333-3333-4333-8333-333333333333';
 

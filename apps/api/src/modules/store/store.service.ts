@@ -6,7 +6,7 @@ import {
 import type { storeSettingsFormSchema } from '@salgae/core/schemas/store-settings';
 import type { z } from 'zod';
 
-import { NotFoundError } from '../../shared/errors/domain-errors.js';
+import { NotFoundError } from '../../shared/errors/domain-errors';
 
 export type StoreSettingsInput = z.infer<typeof storeSettingsFormSchema>;
 

@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { expect, test, type APIRequestContext } from '@playwright/test';
 
 import { apiURL } from '../env';
@@ -8,6 +11,24 @@ const categoriesURL = `${apiURL}/v1/admin/categories`;
 
 const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
 const uniqueSlug = () => `e2e-product-${crypto.randomUUID().slice(0, 8)}`;
+
+const UPLOAD_NEAR_LIMIT_BYTES = 3_750_000;
+const JPEG_COMMENT_MAX_BYTES = 65_533;
+
+/** JPEG válido preenchido com comentários, que chega ao tamanho pedido e some ao gerar o WebP. */
+function paddedJpeg(totalBytes: number): Buffer {
+  const photo = readFileSync(path.join(__dirname, '../arquivos/foto-teste.jpg'));
+  const comments: Buffer[] = [];
+  let size = photo.length;
+  while (size < totalBytes) {
+    const dataBytes = Math.min(JPEG_COMMENT_MAX_BYTES, totalBytes - size);
+    const marker = Buffer.from([0xff, 0xfe, (dataBytes + 2) >> 8, (dataBytes + 2) & 0xff]);
+    comments.push(marker, Buffer.alloc(dataBytes, 0x20));
+    size += marker.length + dataBytes;
+  }
+  // Os comentários entram logo depois do marcador de início do arquivo (2 bytes).
+  return Buffer.concat([photo.subarray(0, 2), ...comments, photo.subarray(2)]);
+}
 
 async function createCategory(request: APIRequestContext, token: string) {
   const slug = `e2e-category-${crypto.randomUUID().slice(0, 8)}`;
@@ -103,6 +124,28 @@ test.describe('produtos do painel na API', () => {
       expect(await duplicate.json()).toMatchObject({
         fieldErrors: { slug: ['Esse endereço curto já está em uso.'] },
       });
+    } finally {
+      await request.delete(`${productsURL}/${id}`, { headers: bearer(token) });
+      await request.delete(`${categoriesURL}/${categoryId}`, { headers: bearer(token) });
+    }
+  });
+
+  test('foto perto do limite de envio passa pela rota /api', async ({ request }) => {
+    const categoryId = await createCategory(request, token);
+    const id = await createProduct(request, token, categoryId);
+    try {
+      const response = await request.post(`${productsURL}/${id}/image`, {
+        headers: bearer(token),
+        multipart: {
+          image: {
+            name: 'perto-do-limite.jpg',
+            mimeType: 'image/jpeg',
+            buffer: paddedJpeg(UPLOAD_NEAR_LIMIT_BYTES),
+          },
+        },
+      });
+      expect(response.status()).toBeLessThan(300);
+      expect(await response.json()).toMatchObject({ path: expect.stringContaining(id) });
     } finally {
       await request.delete(`${productsURL}/${id}`, { headers: bearer(token) });
       await request.delete(`${categoriesURL}/${categoryId}`, { headers: bearer(token) });
