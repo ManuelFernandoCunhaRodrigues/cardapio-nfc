@@ -68,11 +68,10 @@ test.describe('produtos do painel', () => {
     const { productId, productSlug } = await createProduct(page, adminDb, productName);
 
     await page.goto('/admin/produtos');
-    await page
-      .getByLabel(`Situação de ${productName}`)
-      .filter({ visible: true })
-      .selectOption('unavailable');
+    const situation = page.getByLabel(`Situação de ${productName}`).filter({ visible: true });
+    await situation.selectOption('unavailable');
     await expect(page.getByText('Situação do produto atualizada.')).toBeVisible();
+    await expect(situation).toHaveValue('unavailable');
 
     await page.goto(`/produto/${productId}`);
     await expect(page).toHaveURL(new RegExp(`/produto/${productSlug}$`));

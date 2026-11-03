@@ -2,7 +2,17 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useActionState, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  startTransition,
+  useActionState,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useOptimistic,
+  useRef,
+  useState,
+} from 'react';
 import * as m from 'motion/react-m';
 
 import {
@@ -53,26 +63,36 @@ function SituationControl({
   onResult,
 }: Readonly<{ product: AdminProduct; onResult: ResultHandler }>) {
   const [state, action] = useActionState(setProductSituation, initialProductActionState);
-  const formRef = useRef<HTMLFormElement>(null);
   // O controle aparece duas vezes na página (cartões do celular e tabela do desktop): o id não
   // pode vir do produto, senão o rótulo da tabela aponta para o campo escondido dos cartões.
   const selectId = useId();
-  const situation = productSituationFromFields(product);
+  const [situation, showSituation] = useOptimistic(productSituationFromFields(product));
   useEffect(() => {
     if (state.status !== 'idle' && state.message) onResult(state);
   }, [onResult, state]);
+
+  // Sem <form action>: o React reinicia o formulário depois da action e o select voltaria à opção
+  // do primeiro carregamento. Assim ele mostra a escolha e, ao terminar, o que está salvo.
+  function changeSituation(nextSituation: ProductSituation) {
+    const formData = new FormData();
+    formData.set('id', product.id);
+    formData.set('situation', nextSituation);
+    startTransition(() => {
+      showSituation(nextSituation);
+      action(formData);
+    });
+  }
+
   return (
-    <form action={action} className="relative z-10" ref={formRef}>
-      <input name="id" type="hidden" value={product.id} />
+    <div className="relative z-10">
       <label className="sr-only" htmlFor={selectId}>
         Situação de {product.name}
       </label>
       <select
         className={`min-h-11 rounded-full border px-3 font-[family-name:var(--font-poppins)] text-xs font-semibold focus:outline-hidden focus:ring-4 focus:ring-brand/20 ${situation === 'menu' ? 'border-green/20 bg-green-soft text-green' : situation === 'unavailable' ? 'border-amber/30 bg-amber-soft text-body' : 'border-danger/20 bg-danger-soft text-danger'}`}
-        defaultValue={situation}
         id={selectId}
-        name="situation"
-        onChange={() => formRef.current?.requestSubmit()}
+        onChange={(event) => changeSituation(event.target.value as ProductSituation)}
+        value={situation}
       >
         {Object.entries(situationLabels).map(([value, label]) => (
           <option key={value} value={value}>
@@ -80,7 +100,7 @@ function SituationControl({
           </option>
         ))}
       </select>
-    </form>
+    </div>
   );
 }
 
