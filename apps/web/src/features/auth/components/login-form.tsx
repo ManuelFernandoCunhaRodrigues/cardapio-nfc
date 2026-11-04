@@ -22,11 +22,11 @@ function SubmitLabel({ phase }: Readonly<{ phase: LoginPhase }>) {
       {phase === 'signing-in' ? (
         <span
           aria-hidden="true"
-          className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white motion-reduce:animate-none"
+          className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white motion-reduce:hidden"
           data-testid="login-spinner"
         />
       ) : (
-        <AdminIcon name="check" />
+        <AdminIcon className="motion-reduce:hidden" name="check" />
       )}
       {phase === 'signing-in' ? 'Entrando…' : 'Abrindo o painel…'}
     </span>

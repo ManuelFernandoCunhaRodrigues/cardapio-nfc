@@ -21,7 +21,9 @@ test.describe('autenticação do painel', () => {
     const loginHeld = new Promise<void>((resolve) => {
       releaseLogin = resolve;
     });
+    let loginRequests = 0;
     await page.route('**/auth/v1/token**', async (route) => {
+      loginRequests += 1;
       await loginHeld;
       await route.continue();
     });
@@ -35,6 +37,9 @@ test.describe('autenticação do painel', () => {
     await expect(button).toHaveAttribute('aria-busy', 'true');
     await expect(page.getByTestId('login-spinner')).toBeVisible();
     await expect(page.getByTestId('login-spinner')).toHaveCSS('animation-name', 'spin');
+
+    await page.getByLabel('Senha', { exact: true }).press('Enter');
+    expect(loginRequests).toBe(1);
 
     releaseLogin();
     await expect(page).toHaveURL(/\/admin$/);
@@ -56,7 +61,7 @@ test.describe('autenticação do painel', () => {
     await page.getByRole('button', { name: 'Entrar no painel' }).click();
 
     await expect(page.getByRole('button', { name: 'Entrando…' })).toBeVisible();
-    await expect(page.getByTestId('login-spinner')).toHaveCSS('animation-name', 'none');
+    await expect(page.getByTestId('login-spinner')).toBeHidden();
 
     releaseLogin();
     await expect(page.getByRole('button', { name: 'Entrar no painel' })).toBeEnabled();
