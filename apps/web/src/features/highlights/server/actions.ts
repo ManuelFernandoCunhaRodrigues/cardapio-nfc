@@ -68,7 +68,7 @@ export async function toggleHighlight(
       await adminApi().write('PUT', adminApiPaths.highlightActivation(id), {
         is_active: isActive,
       });
-      return refreshAfterHighlightChange(isActive ? 'Destaque ativado.' : 'Destaque desativado.');
+      return refreshAfterHighlightChange(isActive ? 'Destaque visível.' : 'Destaque escondido.');
     },
     {
       event: 'highlight_toggle_failed',

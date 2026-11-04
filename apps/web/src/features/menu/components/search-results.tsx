@@ -25,23 +25,24 @@ export function SearchResults({ products, categories }: Readonly<SearchResultsPr
   const searchParams = useSearchParams();
   const focusOnMount = searchParams.get('focus') === '1';
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
+  const effectiveQuery = query.trim();
   const results = useMemo(
     () => filterMenuProducts(products, query, categories),
     [products, query, categories],
   );
   const featured = useMemo(() => sortProductsForHome(products).slice(0, 4), [products]);
-  const resultLabel = !query
+  const resultLabel = !effectiveQuery
     ? 'Escolha uma categoria ou digite o que procura'
     : results.length === 0
       ? 'Nenhum resultado'
       : `${results.length} ${results.length === 1 ? 'resultado' : 'resultados'}`;
 
   useEffect(() => {
-    const url = query ? `/busca?q=${encodeURIComponent(query)}` : '/busca';
+    const url = effectiveQuery ? `/busca?q=${encodeURIComponent(effectiveQuery)}` : '/busca';
     if (`${window.location.pathname}${window.location.search}` === url) return;
     // Estado nulo: é assim que o roteador do Next acompanha a troca e devolve este endereço no "voltar".
     window.history.replaceState(null, '', url);
-  }, [query]);
+  }, [effectiveQuery]);
 
   return (
     <>
@@ -65,7 +66,7 @@ export function SearchResults({ products, categories }: Readonly<SearchResultsPr
         {resultLabel}
       </p>
       <AnimatePresence initial={false} mode="wait">
-        {!query ? (
+        {!effectiveQuery ? (
           <m.div key="initial-search" {...resultPresence}>
             <InitialSearch categories={categories} featured={featured} onCategory={setQuery} />
           </m.div>

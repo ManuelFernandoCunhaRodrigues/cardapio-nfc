@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useActionState, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 
@@ -33,6 +33,7 @@ import {
 } from '@/features/media/client/product-media-client';
 import { parsePriceBRL } from '@salgae/core/rules/parse-price';
 
+import { useLeaveGuard } from '@/features/admin/client/use-leave-guard';
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { ProductMediaManager } from '@/features/media/components/product-media-manager';
@@ -143,17 +144,8 @@ export function ProductForm({
   const situationFields = fieldsFromProductSituation(situation);
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
 
-  useEffect(() => {
-    const beforeUnload = (event: BeforeUnloadEvent) => {
-      if (!(dirty || (editing && updateState.status === 'error')) || submittingRef.current) return;
-      event.preventDefault();
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', beforeUnload);
-    return () => window.removeEventListener('beforeunload', beforeUnload);
-  }, [dirty, editing, updateState.status]);
-
   const hasUnsavedChanges = dirty || (editing && updateState.status === 'error');
+  useLeaveGuard(hasUnsavedChanges && !creating);
   function leave() {
     if (!hasUnsavedChanges || window.confirm('Sair sem salvar as alterações?'))
       router.push('/admin/produtos');

@@ -66,7 +66,7 @@ export async function toggleCategory(
   return runAdminAction(
     async () => {
       await adminApi().write('PUT', adminApiPaths.categoryActivation(id), { is_active: isActive });
-      return refreshAfterCategoryChange(isActive ? 'Categoria ativada.' : 'Categoria desativada.');
+      return refreshAfterCategoryChange(isActive ? 'Categoria visível.' : 'Categoria escondida.');
     },
     {
       event: 'category_toggle_failed',

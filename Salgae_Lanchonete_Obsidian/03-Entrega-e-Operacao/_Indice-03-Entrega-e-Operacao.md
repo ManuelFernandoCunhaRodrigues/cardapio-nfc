@@ -15,5 +15,6 @@ atualizado: 2026-09-26
 - [[13-Roadmap]] — plano de execução.
 - [[14-Epicos-de-Desenvolvimento]] — épicos e critérios de pronto.
 - [[15-Operacao-e-Manutencao]] — rotina pós-lançamento.
+- [[16-Achados-dos-Testes-no-Navegador]]
 
 Voltar: [[Home]]

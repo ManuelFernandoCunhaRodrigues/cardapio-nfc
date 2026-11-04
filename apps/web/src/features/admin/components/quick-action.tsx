@@ -22,8 +22,10 @@ type QuickActionState = {
 
 type QuickActionLock = {
   busy: boolean;
-  /** Fica com a vez, se estiver livre. Síncrono: vale até para cliques no mesmo instante. */
-  acquire: () => boolean;
+  /** Muda a cada ação da lista: o aviso de erro da ação anterior deixa de valer. */
+  actionNumber: number;
+  /** Fica com a vez, se estiver livre, e devolve o número da ação. Síncrono: vale até para cliques no mesmo instante. */
+  acquire: () => number | null;
   release: () => void;
 };
 
@@ -36,18 +38,25 @@ const QuickActionLockContext = createContext<QuickActionLock | null>(null);
  */
 export function QuickActionGroup({ children }: Readonly<{ children: ReactNode }>) {
   const [busy, setBusy] = useState(false);
+  const [actionNumber, setActionNumber] = useState(0);
   const taken = useRef(false);
+  const lastAction = useRef(0);
   const acquire = useCallback(() => {
-    if (taken.current) return false;
+    if (taken.current) return null;
     taken.current = true;
+    lastAction.current += 1;
     setBusy(true);
-    return true;
+    setActionNumber(lastAction.current);
+    return lastAction.current;
   }, []);
   const release = useCallback(() => {
     taken.current = false;
     setBusy(false);
   }, []);
-  const lock = useMemo(() => ({ busy, acquire, release }), [busy, acquire, release]);
+  const lock = useMemo(
+    () => ({ busy, actionNumber, acquire, release }),
+    [busy, actionNumber, acquire, release],
+  );
   return <QuickActionLockContext value={lock}>{children}</QuickActionLockContext>;
 }
 
@@ -71,12 +80,16 @@ export function QuickAction({
   label: string;
   icon?: 'up' | 'down';
   disabled?: boolean;
-  /** Quem passa isto mostra o resultado na própria tela; sem ele, o erro aparece junto do botão. */
+  /**
+   * Quem passa isto mostra o resultado na própria tela; sem ele, o erro aparece junto do botão.
+   * Recebe o estado inicial quando a ação começa, para tirar o aviso anterior.
+   */
   onResult?: (state: QuickActionState) => void;
 }>) {
   const [state, formAction, pending] = useActionState(action, INITIAL_STATE);
-  const { busy, acquire, release } = useQuickActionLock();
+  const { busy, actionNumber, acquire, release } = useQuickActionLock();
   const holdsLock = useRef(false);
+  const [ownAction, setOwnAction] = useState(0);
 
   useEffect(() => {
     if (state.status !== 'idle' && state.message) onResult?.(state);
@@ -98,8 +111,14 @@ export function QuickAction({
     <form
       action={formAction}
       onSubmit={(event) => {
-        if (acquire()) holdsLock.current = true;
-        else event.preventDefault();
+        const acquired = acquire();
+        if (acquired === null) {
+          event.preventDefault();
+          return;
+        }
+        holdsLock.current = true;
+        setOwnAction(acquired);
+        onResult?.(INITIAL_STATE);
       }}
     >
       {Object.entries(values).map(([name, value]) => (
@@ -139,7 +158,7 @@ export function QuickAction({
           >
             {state.message}
           </span>
-          {state.status === 'error' ? (
+          {state.status === 'error' && ownAction === actionNumber && !pending ? (
             <AdminNotice className="mt-2" kind="error" message={state.message} />
           ) : null}
         </>
