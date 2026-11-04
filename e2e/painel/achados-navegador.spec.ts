@@ -122,7 +122,9 @@ test.describe('categoria escondida', () => {
     await expect(row).toContainText('1 produto fora do cardápio');
 
     await page.goto(`/admin/produtos?categoria=${categoryId}`);
-    await expect(page.getByText(productName).filter({ visible: true })).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: productName }).filter({ visible: true }).first(),
+    ).toBeVisible();
     await expect(
       page
         .getByText(/escondida/)
