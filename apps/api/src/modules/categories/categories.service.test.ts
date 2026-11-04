@@ -29,7 +29,9 @@ function fakeRepository(overrides: Partial<CategoryRepository> = {}): CategoryRe
     setActive: async () => true,
     listSortOrders: async () => [{ id: categoryId, sort_order: 10 }],
     swapSortOrders: vi.fn(async () => undefined),
-    delete: async () => true,
+    delete: async () => ({ imagePath: null }),
+    isImageInUse: async () => false,
+    removeImageFiles: vi.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -74,6 +76,44 @@ describe('CategoriesService', () => {
     await expect(service.deleteCategory(categoryId)).rejects.toThrow(
       'Esta categoria possui produtos vinculados.',
     );
+  });
+
+  it('apaga os arquivos da foto quando a categoria excluída era a única a usá-la', async () => {
+    const removeImageFiles = vi.fn(async () => undefined);
+    const service = new CategoriesService(
+      fakeRepository({
+        delete: async () => ({ imagePath: 'categories/abc/foto' }),
+        removeImageFiles,
+      }),
+    );
+
+    await service.deleteCategory(categoryId);
+
+    expect(removeImageFiles).toHaveBeenCalledWith([
+      'categories/abc/foto-detail.webp',
+      'categories/abc/foto-card.webp',
+    ]);
+  });
+
+  it('preserva os arquivos da foto quando outro registro ainda a usa', async () => {
+    const removeImageFiles = vi.fn(async () => undefined);
+    const service = new CategoriesService(
+      fakeRepository({
+        delete: async () => ({ imagePath: 'categories/abc/foto' }),
+        isImageInUse: async () => true,
+        removeImageFiles,
+      }),
+    );
+
+    await service.deleteCategory(categoryId);
+
+    expect(removeImageFiles).not.toHaveBeenCalled();
+  });
+
+  it('responde que a categoria não existe quando nada foi apagado', async () => {
+    const service = new CategoriesService(fakeRepository({ delete: async () => null }));
+
+    await expect(service.deleteCategory(categoryId)).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it('não move a única categoria da lista', async () => {

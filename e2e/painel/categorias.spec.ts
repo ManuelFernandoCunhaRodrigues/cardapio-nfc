@@ -1,4 +1,17 @@
+import path from 'node:path';
+
 import { expect, test, type AdminDb, type Page } from '../fixtures';
+
+const PHOTO_FILE = path.join(__dirname, '../arquivos/foto-teste.jpg');
+// Imagem válida de 1 px: passa pelo navegador e a API recusa por ser menor que 400 px.
+const TOO_SMALL_PHOTO = {
+  name: 'foto-pequena.png',
+  mimeType: 'image/png',
+  buffer: Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    'base64',
+  ),
+};
 
 async function createCategory(page: Page, adminDb: AdminDb, name: string) {
   await page.goto('/admin/categorias');
@@ -24,6 +37,55 @@ async function publicCategoryOrder(page: Page) {
     .getByRole('navigation', { name: 'Categorias do cardápio' })
     .getByRole('link')
     .allTextContents();
+}
+
+async function chooseAndSavePhoto(page: Page, saveButton: string) {
+  await page.getByRole('dialog').getByLabel('Escolher foto').setInputFiles(PHOTO_FILE);
+  await expect(page.getByText('Foto pronta para salvar junto com a categoria.')).toBeVisible();
+  await page.getByRole('button', { name: saveButton }).click();
+  await expect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible();
+}
+
+async function storedImagePath(adminDb: AdminDb, categoryId: string) {
+  const { data, error } = await adminDb.client
+    .from('categories')
+    .select('image_path')
+    .eq('id', categoryId)
+    .single();
+  expect(error).toBeNull();
+  return data!.image_path;
+}
+
+async function createCategoryWithPhoto(page: Page, adminDb: AdminDb, name: string) {
+  await page.goto('/admin/categorias');
+  await page.getByRole('button', { name: 'Nova', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Nova categoria' }).getByLabel('Nome').fill(name);
+  await chooseAndSavePhoto(page, 'Criar categoria');
+  const { data, error } = await adminDb.client
+    .from('categories')
+    .select('id')
+    .eq('name', name)
+    .single();
+  expect(error).toBeNull();
+  adminDb.track('categories', data!.id);
+  const imagePath = await storedImagePath(adminDb, data!.id);
+  expect(imagePath).toMatch(new RegExp(`^categories/${data!.id}/`));
+  return { id: data!.id, imagePath: imagePath! };
+}
+
+async function expectPhotoFiles(adminDb: AdminDb, imagePath: string, shouldExist: boolean) {
+  for (const variant of ['detail', 'card']) {
+    const { error } = await adminDb.client.storage
+      .from('product-images')
+      .download(`${imagePath}-${variant}.webp`);
+    expect(error === null, `${imagePath}-${variant}.webp`).toBe(shouldExist);
+  }
+}
+
+function homeCategoryPhoto(page: Page, imagePath: string) {
+  return page
+    .getByRole('navigation', { name: 'Categorias', exact: true })
+    .locator(`img[src*="${imagePath}"]`);
 }
 
 test.describe('categorias do painel', () => {
@@ -81,6 +143,116 @@ test.describe('categorias do painel', () => {
     await page.getByRole('button', { name: `Descer ${secondName}` }).click();
     await expect(page.getByText('Ordem da categoria atualizada.')).toBeVisible();
     expect((await publicCategoryOrder(page)).slice(-2)).toEqual([firstName, secondName]);
+  });
+
+  test('envia, troca e remove a foto, que aparece no círculo da tela inicial', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    test.slow();
+    const name = uniqueName('categoria-foto');
+    const { id, imagePath } = await createCategoryWithPhoto(page, adminDb, name);
+    await expectPhotoFiles(adminDb, imagePath, true);
+    await page.goto('/');
+    await expect(homeCategoryPhoto(page, imagePath)).toBeVisible();
+
+    await page.goto('/admin/categorias');
+    const card = page.getByRole('article').filter({ hasText: name });
+    await card.getByRole('button', { name: 'Editar', exact: true }).click();
+    await chooseAndSavePhoto(page, 'Salvar categoria');
+    const replacedPath = await storedImagePath(adminDb, id);
+    expect(replacedPath).not.toBe(imagePath);
+    await expectPhotoFiles(adminDb, imagePath, false);
+    await expectPhotoFiles(adminDb, replacedPath!, true);
+
+    await page.reload();
+    await card.getByRole('button', { name: 'Editar', exact: true }).click();
+    await page.getByRole('button', { name: 'Remover foto' }).click();
+    await page
+      .getByRole('dialog', { name: 'Remover foto desta categoria?' })
+      .getByRole('button', { name: 'Excluir de vez' })
+      .click();
+    await expect(page.getByText('Foto removida.')).toBeVisible();
+    // O botão "Remover foto" some com a foto: o foco vai para o título da seção.
+    await expect(page.getByRole('dialog').getByText('Foto da categoria')).toBeFocused();
+    expect(await storedImagePath(adminDb, id)).toBeNull();
+    await expectPhotoFiles(adminDb, replacedPath!, false);
+    await page.goto('/');
+    await expect(homeCategoryPhoto(page, replacedPath!)).toHaveCount(0);
+  });
+
+  test('mantém a categoria salva quando a foto falha e deixa tentar de novo', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    test.slow();
+    const name = uniqueName('categoria-foto-falha');
+    await page.goto('/admin/categorias');
+    await page.getByRole('button', { name: 'Nova', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Nova categoria' });
+    await dialog.getByLabel('Nome').fill(name);
+    await dialog.getByLabel('Escolher foto').setInputFiles(TOO_SMALL_PHOTO);
+    await expect(page.getByText('Foto pronta para salvar junto com a categoria.')).toBeVisible();
+    await page.getByRole('button', { name: 'Criar categoria' }).click();
+
+    await expect(
+      page.getByText(
+        'Categoria salva, mas a foto não foi enviada. Escolha uma foto com pelo menos 400 px no menor lado.',
+      ),
+    ).toBeVisible();
+    const { data, error } = await adminDb.client
+      .from('categories')
+      .select('id, image_path')
+      .eq('name', name)
+      .single();
+    expect(error).toBeNull();
+    adminDb.track('categories', data!.id);
+    expect(data!.image_path).toBeNull();
+
+    await page
+      .getByRole('article')
+      .filter({ hasText: name })
+      .getByRole('button', { name: 'Editar', exact: true })
+      .click();
+    await chooseAndSavePhoto(page, 'Salvar categoria');
+    expect(await storedImagePath(adminDb, data!.id)).toMatch(
+      new RegExp(`^categories/${data!.id}/`),
+    );
+  });
+
+  test('mantém a foto ao editar só o nome e apaga o arquivo ao excluir', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    test.slow();
+    const name = uniqueName('categoria-foto-apagar');
+    const updatedName = uniqueName('categoria-foto-editada');
+    const { id, imagePath } = await createCategoryWithPhoto(page, adminDb, name);
+
+    await page
+      .getByRole('article')
+      .filter({ hasText: name })
+      .getByRole('button', { name: 'Editar', exact: true })
+      .click();
+    await page
+      .getByRole('dialog', { name: 'Editar categoria' })
+      .getByLabel('Nome')
+      .fill(updatedName);
+    await page.getByRole('button', { name: 'Salvar categoria' }).click();
+    await expect(page.getByText('Categoria atualizada com sucesso.')).toBeVisible();
+    expect(await storedImagePath(adminDb, id)).toBe(imagePath);
+
+    const card = page.getByRole('article').filter({ hasText: updatedName });
+    await card.getByRole('button', { name: 'Excluir', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: `Excluir ${updatedName}?` })
+      .getByRole('button', { name: 'Excluir de vez' })
+      .click();
+    await expect(card).toHaveCount(0);
+    await expectPhotoFiles(adminDb, imagePath, false);
   });
 
   test('apaga uma categoria vazia após confirmação', async ({ page, adminDb, uniqueName }) => {

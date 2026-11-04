@@ -61,6 +61,30 @@ describe('ImageService', () => {
     expect(removedPaths[0]?.every((path) => path.includes(productId))).toBe(true);
   });
 
+  it('guarda a foto da categoria na pasta das categorias', async () => {
+    const uploadVariants = vi.fn(async () => undefined);
+    const categoryId = '22222222-2222-4222-8222-222222222222';
+
+    const path = await new ImageService(
+      fakeRepository({ uploadVariants }),
+      async () => image,
+    ).upload('category', categoryId, file);
+
+    expect(path.startsWith(`categories/${categoryId}/`)).toBe(true);
+    expect(uploadVariants).toHaveBeenCalledWith('category', path, image);
+  });
+
+  it('avisa quando a categoria já não tem foto para remover', async () => {
+    const service = new ImageService(
+      fakeRepository({ findRecord: async () => ({ imagePath: null }) }),
+      async () => image,
+    );
+
+    await expect(service.remove('category', productId)).rejects.toThrow(
+      'Esta categoria já não tem foto.',
+    );
+  });
+
   it('não remove a foto antiga quando outro registro ainda a usa', async () => {
     const removeFiles = vi.fn(async () => undefined);
 

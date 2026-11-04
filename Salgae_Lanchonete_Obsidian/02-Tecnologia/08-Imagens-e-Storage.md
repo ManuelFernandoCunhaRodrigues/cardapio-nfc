@@ -34,7 +34,9 @@ Toda imagem enviada pelo painel é comprimida e convertida para **WebP** antes d
 | Variante | Maior lado | Meta de tamanho | Uso |
 | --- | --- | --- | --- |
 | `detail` | 1600 px | até ~300 KB | detalhe do produto e destaques |
-| `card` | 640 px | até ~80 KB | cards, categorias e miniaturas do painel |
+| `card` | 640 px | até ~80 KB | cards, círculo das categorias e miniaturas do painel |
+
+As fotos de categoria ficam no bucket `product-images`, na subpasta `categories/<id>/`. Trocar, remover ou excluir a categoria apaga o arquivo antigo, se nenhum outro registro o usa.
 
 3. **Qualidade adaptativa:** começa em qualidade **82** (`effort` 5, `smartSubsample`). Se passar da meta, reduz de 6 em 6 até o **mínimo de 70** — nunca abaixo disso, para não aparecerem borrões ou blocos. Se mesmo em 70 passar da meta, mantém 70 (qualidade vence tamanho).
 4. **Armazenamento:** as duas variantes vão para `product-images` com nome não previsível (UUID); o banco guarda só a base do caminho e a interface escolhe a variante (`srcset`).

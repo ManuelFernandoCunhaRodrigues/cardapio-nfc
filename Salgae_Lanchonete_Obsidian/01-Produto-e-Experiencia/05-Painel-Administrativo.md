@@ -32,6 +32,7 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 
 - criar, editar, ordenar, ativar e desativar;
 - impedir exclusão perigosa de categoria que ainda possui produtos, oferecendo migração ou confirmação explícita;
+- foto da categoria, com prévia redonda, troca e remoção; ela aparece no círculo da tela inicial;
 - manter um identificador estável para URLs e integrações internas.
 
 ### Produtos

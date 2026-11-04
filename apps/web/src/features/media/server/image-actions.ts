@@ -87,3 +87,31 @@ export async function removeHighlightImage(
     },
   );
 }
+
+export async function uploadCategoryImage(
+  _previous: MediaActionState,
+  formData: FormData,
+): Promise<MediaActionState> {
+  const id = readFormText(formData, 'category_id');
+  return runAdminAction(() => uploadImage(adminApiPaths.categoryImage(id), formData.get('image')), {
+    event: 'category_image_upload_failed',
+    failureMessage: 'Não foi possível processar esta foto. Tente outra imagem.',
+  });
+}
+
+export async function removeCategoryImage(
+  _previous: MediaActionState,
+  formData: FormData,
+): Promise<MediaActionState> {
+  const id = readFormText(formData, 'category_id');
+  return runAdminAction(
+    async () => {
+      await adminApi().write('DELETE', adminApiPaths.categoryImage(id));
+      return refreshAfterImageChange('Foto removida.');
+    },
+    {
+      event: 'category_image_remove_failed',
+      failureMessage: 'Não foi possível remover a foto agora.',
+    },
+  );
+}

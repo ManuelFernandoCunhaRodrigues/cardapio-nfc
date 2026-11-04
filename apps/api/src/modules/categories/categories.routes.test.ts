@@ -6,6 +6,7 @@ import type { AppHonoEnv } from '../../shared/types';
 import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
 import { createCategoriesController } from './categories.controller';
 import { createCategoriesRoutes } from './categories.routes';
+import { IMAGE_BODY_MAX_BYTES } from '../media/image/image-compressor';
 import { CategoriesService, type CategoryRepository } from './categories.service';
 
 const categoryId = '11111111-1111-4111-8111-111111111111';
@@ -19,7 +20,9 @@ function fakeRepository(): CategoryRepository {
     setActive: vi.fn(async () => true),
     listSortOrders: async () => [],
     swapSortOrders: async () => undefined,
-    delete: vi.fn(async () => true),
+    delete: vi.fn(async () => ({ imagePath: null })),
+    isImageInUse: async () => false,
+    removeImageFiles: async () => undefined,
   };
 }
 
@@ -32,6 +35,10 @@ function testApp(repository = fakeRepository()) {
     createCategoriesRoutes(
       fakeAdminClients(),
       createCategoriesController(() => service),
+      {
+        upload: async (context) => context.json({ path: 'categories/test/image' }, 201),
+        remove: async (context) => context.body(null, 204),
+      },
     ),
   );
   return app;
@@ -42,6 +49,23 @@ describe('rotas de categorias do painel', () => {
     const response = await testApp().request('/v1/admin/categories');
 
     expect(response.status).toBe(401);
+  });
+
+  it.each(['POST', 'DELETE'])('%s da foto exige token de admin', async (method) => {
+    const response = await testApp().request(`/v1/admin/categories/${categoryId}/image`, {
+      method,
+    });
+
+    expect(response.status).toBe(401);
+  });
+
+  it('recusa foto acima do limite antes de processar', async () => {
+    const response = await testApp().request(
+      `/v1/admin/categories/${categoryId}/image`,
+      adminRequest('POST', 'x'.repeat(IMAGE_BODY_MAX_BYTES + 1)),
+    );
+
+    expect(response.status).toBe(413);
   });
 
   it('POST cria a categoria e devolve o id', async () => {

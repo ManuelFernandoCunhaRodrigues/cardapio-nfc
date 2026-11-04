@@ -10,7 +10,7 @@ import {
 import { reportServerError } from '../../../shared/observability';
 import { ImageTooSmallError, InvalidImageError, type CompressedImage } from './image-compressor';
 
-export type ImageTarget = 'product' | 'highlight';
+export type ImageTarget = 'product' | 'highlight' | 'category';
 
 type MediaRecord = { imagePath: string | null; videoPath?: string | null };
 
@@ -25,19 +25,31 @@ export interface ImageRepository {
 export type ImageCompressor = (input: Buffer) => Promise<CompressedImage>;
 
 const messages = {
-  productNotFound: 'Não foi possível localizar este produto.',
-  highlightNotFound: 'Não foi possível localizar este destaque.',
   missing: 'Escolha uma foto antes de enviar.',
   invalid: 'Este arquivo não é uma imagem válida. Escolha outra foto.',
   tooSmall: 'Escolha uma foto com pelo menos 400 px no menor lado.',
   productHasVideo: 'Remova o vídeo antes de remover a foto de capa.',
-  noProductImage: 'Este produto já não tem foto.',
-  noHighlightImage: 'Este destaque já não tem foto.',
   linkFailed:
     'A foto foi validada, mas não pôde ser vinculada ao item. A foto anterior foi mantida.',
 };
 
-const targetFolder = (target: ImageTarget) => (target === 'product' ? 'products' : 'highlights');
+const targetSettings: Record<ImageTarget, { folder: string; notFound: string; noImage: string }> = {
+  product: {
+    folder: 'products',
+    notFound: 'Não foi possível localizar este produto.',
+    noImage: 'Este produto já não tem foto.',
+  },
+  highlight: {
+    folder: 'highlights',
+    notFound: 'Não foi possível localizar este destaque.',
+    noImage: 'Este destaque já não tem foto.',
+  },
+  category: {
+    folder: 'categories',
+    notFound: 'Não foi possível localizar esta categoria.',
+    noImage: 'Esta categoria já não tem foto.',
+  },
+};
 
 export class ImageService {
   constructor(
@@ -49,7 +61,7 @@ export class ImageService {
     if (!file.size) throw new ValidationError(messages.missing);
     const current = await this.requireRecord(target, id);
     const compressed = await this.compressFile(file);
-    const basePath = `${targetFolder(target)}/${id}/${randomUUID()}`;
+    const basePath = `${targetSettings[target].folder}/${id}/${randomUUID()}`;
     await this.repository.uploadVariants(target, basePath, compressed);
     try {
       if (!(await this.repository.setImagePath(target, id, basePath)))
@@ -66,13 +78,9 @@ export class ImageService {
     const current = await this.requireRecord(target, id);
     if (target === 'product' && current.videoPath)
       throw new ConflictError(messages.productHasVideo);
-    if (!current.imagePath) {
-      throw new ConflictError(
-        target === 'product' ? messages.noProductImage : messages.noHighlightImage,
-      );
-    }
+    if (!current.imagePath) throw new ConflictError(targetSettings[target].noImage);
     if (!(await this.repository.setImagePath(target, id, null)))
-      throw new NotFoundError(this.notFound(target));
+      throw new NotFoundError(targetSettings[target].notFound);
     await this.removeIfUnused(target, current.imagePath);
   }
 
@@ -88,12 +96,8 @@ export class ImageService {
 
   private async requireRecord(target: ImageTarget, id: string): Promise<MediaRecord> {
     const record = await this.repository.findRecord(target, id);
-    if (!record) throw new NotFoundError(this.notFound(target));
+    if (!record) throw new NotFoundError(targetSettings[target].notFound);
     return record;
-  }
-
-  private notFound(target: ImageTarget): string {
-    return target === 'product' ? messages.productNotFound : messages.highlightNotFound;
   }
 
   private async removeStaged(target: ImageTarget, path: string): Promise<void> {

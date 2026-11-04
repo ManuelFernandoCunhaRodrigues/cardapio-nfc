@@ -13,19 +13,26 @@ import {
   UniqueViolationError,
 } from '../../shared/errors/persistence-errors';
 import { moveInOrder, type OrderableRepository } from '../../shared/ordering/move-in-order';
+import {
+  removeImageIfUnused,
+  type DeletedRecordImageStore,
+} from '../media/image/remove-image-if-unused';
 
 export type CategoryInput = z.infer<typeof categoryFormSchema>;
 
 /** Os métodos que gravam devolvem `false` quando a categoria não existe. */
-export interface CategoryRepository extends OrderableRepository {
+export interface CategoryRepository extends OrderableRepository, DeletedRecordImageStore {
   listForAdmin(): Promise<unknown[]>;
   /** Lança `UniqueViolationError` quando o endereço curto já existe. */
   create(input: CategoryInput): Promise<string>;
   /** Lança `UniqueViolationError` quando o endereço curto já existe. */
   update(id: string, input: CategoryInput): Promise<boolean>;
   setActive(id: string, isActive: boolean): Promise<boolean>;
-  /** Lança `ReferencedRecordError` quando ainda há produtos na categoria. */
-  delete(id: string): Promise<boolean>;
+  /**
+   * Devolve a foto da categoria apagada, ou `null` quando a categoria não existe.
+   * Lança `ReferencedRecordError` quando ainda há produtos na categoria.
+   */
+  delete(id: string): Promise<{ imagePath: string | null } | null>;
 }
 
 const messages = {
@@ -61,8 +68,20 @@ export class CategoriesService {
   }
 
   async deleteCategory(id: string): Promise<void> {
+    const deleted = await this.deleteOrExplainProducts(id);
+    this.ensureFound(deleted !== null);
+    if (deleted?.imagePath) {
+      await removeImageIfUnused(
+        this.repository,
+        deleted.imagePath,
+        'category.image_cleanup_failed',
+      );
+    }
+  }
+
+  private async deleteOrExplainProducts(id: string) {
     try {
-      this.ensureFound(await this.repository.delete(id));
+      return await this.repository.delete(id);
     } catch (error) {
       if (error instanceof ReferencedRecordError) throw new ConflictError(messages.hasProducts);
       throw error;

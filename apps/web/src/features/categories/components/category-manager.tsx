@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
+import { useActionState, useCallback, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import * as m from 'motion/react-m';
@@ -13,6 +13,12 @@ import {
   toggleCategory,
   updateCategory,
 } from '@/features/categories/server/actions';
+import { usePhotoAfterSave } from '@/features/media/client/use-photo-after-save';
+import { EditorPhotoField, useEditorPhoto } from '@/features/media/components/editor-photo-field';
+import { MediaImage } from '@/features/media/components/media-image';
+import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
+import { initialMediaActionState } from '@/features/media/server/action-state';
+import { removeCategoryImage, uploadCategoryImage } from '@/features/media/server/image-actions';
 import { listReorder } from '@/components/motion/motion-primitives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +31,13 @@ import { AdminSheet } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
 
 const INITIAL: CategoryActionState = { status: 'idle' };
+
+function uploadPhoto(categoryId: string, image: File) {
+  const formData = new FormData();
+  formData.set('category_id', categoryId);
+  formData.set('image', image);
+  return uploadCategoryImage(initialMediaActionState, formData);
+}
 
 function SubmitButton({ editing }: Readonly<{ editing: boolean }>) {
   const { pending } = useFormStatus();
@@ -83,7 +96,7 @@ function CategoryEditor({
 }: Readonly<{
   category: AdminCategory | null;
   onClose: () => void;
-  onSaved: (message: string) => void;
+  onSaved: (message: string, kind: 'success' | 'error') => void;
 }>) {
   const editing = Boolean(category);
   const [createState, createAction] = useActionState(createCategory, INITIAL);
@@ -92,10 +105,12 @@ function CategoryEditor({
   const [name, setName] = useState(category?.name ?? '');
   const [slug, setSlug] = useState(category?.slug ?? '');
   const [addressEdited, setAddressEdited] = useState(Boolean(category));
+  const photo = useEditorPhoto(
+    getPublicImageVariantUrl('product-images', category?.image_path, 'card'),
+    'Foto pronta para salvar junto com a categoria.',
+  );
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
-  useEffect(() => {
-    if (state.status === 'success' && state.message) onSaved(state.message);
-  }, [onSaved, state.message, state.status]);
+  usePhotoAfterSave({ saveState: state, file: photo.file, upload: uploadPhoto, onSaved });
   return (
     <form action={editing ? updateAction : createAction} className="space-y-4" noValidate>
       {category ? <input name="id" type="hidden" value={category.id} /> : null}
@@ -144,6 +159,24 @@ function CategoryEditor({
           type="checkbox"
         />
       </label>
+      <EditorPhotoField
+        hint="Aparece no círculo da categoria, na tela inicial. Prefira uma foto quadrada."
+        photo={photo}
+        previewAlt="Prévia da categoria"
+        previewShapeClassName="rounded-full"
+        removal={
+          category
+            ? {
+                action: removeCategoryImage,
+                confirmTitle: 'Remover foto desta categoria?',
+                description: 'A categoria volta a mostrar o desenho na tela inicial.',
+                entityId: category.id,
+                fieldName: 'category_id',
+              }
+            : null
+        }
+        title="Foto da categoria"
+      />
       {/* O sucesso fecha a gaveta e aparece no aviso da lista; aqui fica só o erro. */}
       <AdminNotice kind="error" message={state.status === 'error' ? state.message : undefined} />
       <SubmitButton editing={editing} />
@@ -160,14 +193,18 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(searchParams.get('nova') === '1');
   const [selected, setSelected] = useState<AdminCategory | null>(null);
-  const [notice, setNotice] = useState<string>();
+  const [notice, setNotice] = useState<{ message: string; kind: 'success' | 'error' }>();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const edit = (category: AdminCategory | null) => {
     setSelected(category);
     setOpen(true);
   };
-  const onSaved = useCallback((message: string) => {
-    setNotice(message);
+  const onSaved = useCallback((message: string, kind: 'success' | 'error') => {
+    setNotice({
+      kind,
+      message:
+        kind === 'error' ? `Categoria salva, mas a foto não foi enviada. ${message}` : message,
+    });
     setOpen(false);
   }, []);
   return (
@@ -188,7 +225,7 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
           Nova
         </Button>
       </header>
-      <AdminNotice className="mb-4" message={notice} />
+      <AdminNotice className="mb-4" kind={notice?.kind ?? 'success'} message={notice?.message} />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {categories.map((category, index) => (
           <m.article
@@ -202,13 +239,23 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
               type="button"
             >
               <span className="flex items-start justify-between gap-3">
-                <span>
-                  <strong className="block font-[family-name:var(--font-poppins)] text-lg text-ink">
-                    {category.name}
-                  </strong>
-                  <span className="mt-1 block text-xs text-muted">
-                    {category.product_count} {category.product_count === 1 ? 'produto' : 'produtos'}{' '}
-                    · posição {index + 1}
+                <span className="flex min-w-0 items-center gap-3">
+                  {category.image_path ? (
+                    <MediaImage
+                      alt=""
+                      className="size-11 shrink-0 rounded-full"
+                      name={category.name}
+                      src={getPublicImageVariantUrl('product-images', category.image_path, 'card')}
+                    />
+                  ) : null}
+                  <span>
+                    <strong className="block font-[family-name:var(--font-poppins)] text-lg text-ink">
+                      {category.name}
+                    </strong>
+                    <span className="mt-1 block text-xs text-muted">
+                      {category.product_count}{' '}
+                      {category.product_count === 1 ? 'produto' : 'produtos'} · posição {index + 1}
+                    </span>
                   </span>
                 </span>
                 <span

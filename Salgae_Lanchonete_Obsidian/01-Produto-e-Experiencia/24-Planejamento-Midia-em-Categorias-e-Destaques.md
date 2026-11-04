@@ -5,14 +5,14 @@ tags:
   - produto
   - planejamento
   - em-analise
-atualizado: 2026-10-13
+atualizado: 2026-11-04
 ---
 # Planejamento — imagens nas categorias e imagem ou vídeo nos destaques
 
 Voltar: [[00-Comece-Aqui]] · Relacionado: [[22-Carrossel-de-Destaques]] · [[05-Painel-Administrativo]] · [[08-Imagens-e-Storage]]
 
-> **Status: planejado em 2026-10-13 entre o Claude Code e o Codex. Nada disto está em desenvolvimento.**
-> Cada pacote só começa quando o responsável disser que pode. O pacote 1 é o roteiro de teste para a próxima vez que o trabalho for retomado.
+> **Status: em 2026-11-04 o responsável decidiu fazer só a imagem nas categorias. O pacote 2 foi desenvolvido.**
+> O teste das imagens nos destaques (pacote 1) e o vídeo nos destaques (pacotes 3, 4 e 5) ficam só registrados. Só começam quando o responsável pedir.
 
 ## O que foi pedido (2026-10-13)
 
@@ -27,7 +27,7 @@ Nas palavras do responsável, organizadas:
 
 - **Conversão de imagem para WebP: já existe.** Toda foto enviada pelo painel é reduzida no navegador (até 2048 px) e, no servidor, vira WebP em dois tamanhos: um grande (até 1600 px, meta de 300 KB) e um de cartão (até 640 px, meta de 80 KB). Vale para produtos e destaques.
 - **Compactação de vídeo: já existe**, só para produtos: até 15 segundos, sem som, até 720p, arquivo final de até 4 MB.
-- **Categorias:** o banco já tem o campo de imagem da categoria e a tela inicial já mostra a imagem no círculo (sem imagem, mostra um desenho). Falta o painel: não existe onde enviar a imagem.
+- **Categorias (em 2026-10-13):** o banco já tinha o campo de imagem da categoria e a tela inicial já mostrava a imagem no círculo (sem imagem, mostra um desenho). Faltava o painel, o que o pacote 2 resolveu.
 - **Destaques:** cada destaque aceita uma foto ("Foto do banner"). Não há campo de vídeo. O carrossel com fotos nunca foi testado, porque nem o stage nem a produção têm destaque com foto.
 
 Ou seja: os dois "algoritmos" pedidos já estão no projeto e serão reaproveitados. O trabalho novo é ligar a imagem às categorias, criar um perfil de compactação próprio para o banner e fazer o banner tocar vídeo.
@@ -45,6 +45,8 @@ Achado que afeta este pacote: **imagem com fundo transparente perde a transparê
 Esforço: pequeno.
 
 ## Pacote 2 — imagem nas categorias
+
+**Desenvolvido em 2026-11-04.** Além do plano abaixo, a lista de categorias do painel mostra a miniatura redonda da foto.
 
 - No painel, o editor de categoria ganha "Foto da categoria", com prévia redonda, escolher, trocar e remover.
 - Em categoria nova: salva primeiro, depois envia a foto. Se a foto falhar, a categoria fica criada e dá para tentar de novo.

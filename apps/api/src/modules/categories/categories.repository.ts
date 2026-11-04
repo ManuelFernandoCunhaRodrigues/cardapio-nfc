@@ -1,12 +1,16 @@
 import { translateDatabaseError } from '../../shared/supabase/database-errors';
 import type { AppSupabaseClient } from '../../shared/supabase/supabase-client-factory';
+import type { ImageRepository } from '../media/image/image.service';
 import type { CategoryInput, CategoryRepository } from './categories.service';
 
 const ADMIN_CATEGORY_COLUMNS =
   'id, name, slug, description, image_path, sort_order, is_active, products(count)';
 
 export class SupabaseCategoriesRepository implements CategoryRepository {
-  constructor(private readonly supabase: AppSupabaseClient) {}
+  constructor(
+    private readonly supabase: AppSupabaseClient,
+    private readonly images: Pick<ImageRepository, 'isImageInUse' | 'removeFiles'>,
+  ) {}
 
   async listForAdmin() {
     const { data, error } = await this.supabase
@@ -74,8 +78,17 @@ export class SupabaseCategoriesRepository implements CategoryRepository {
       .from('categories')
       .delete()
       .eq('id', id)
-      .select('id');
+      .select('image_path')
+      .maybeSingle();
     if (error) throw translateDatabaseError(error);
-    return data.length > 0;
+    return data ? { imagePath: data.image_path } : null;
+  }
+
+  async isImageInUse(imagePath: string) {
+    return this.images.isImageInUse(imagePath);
+  }
+
+  async removeImageFiles(filePaths: string[]) {
+    return this.images.removeFiles('category', filePaths);
   }
 }

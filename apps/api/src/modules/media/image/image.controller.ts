@@ -8,6 +8,12 @@ import type { ImageService, ImageTarget } from './image.service';
 
 type ImageContext = Context<AppHonoEnv>;
 
+const invalidIdMessages: Record<ImageTarget, string> = {
+  product: 'Produto inválido.',
+  highlight: 'Destaque inválido.',
+  category: 'Categoria inválida.',
+};
+
 async function readImage(context: ImageContext): Promise<File> {
   let body: FormData;
   try {
@@ -29,7 +35,7 @@ export function createImageController(
   createService: ServiceFactory<ImageService>,
 ) {
   const service = (context: ImageContext) => serviceForRequest(context, createService);
-  const invalidId = target === 'product' ? 'Produto inválido.' : 'Destaque inválido.';
+  const invalidId = invalidIdMessages[target];
   return {
     upload: async (context: ImageContext) => {
       const id = readUuidParam(context, 'id', invalidId);

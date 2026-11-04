@@ -22,7 +22,7 @@ Cardápio digital de **consulta no local** para uma lanchonete: o cliente aponta
 
 - Produtos, categorias e destaques: criar, editar, ordenar, ativar e desativar.
 - Situação única por produto: no cardápio, indisponível ou oculto.
-- Envio de foto e de vídeo com otimização automática.
+- Envio de foto e de vídeo com otimização automática, inclusive a foto de cada categoria.
 - Dados e horários da loja, com abrir ou fechar manualmente em dois toques.
 - Registro de auditoria das alterações feitas no painel.
 

@@ -13,6 +13,7 @@ export const adminApiPaths = {
   category: (id: string) => `${adminRoot}/categories/${encodeURIComponent(id)}`,
   categoryActivation: (id: string) => `${adminRoot}/categories/${encodeURIComponent(id)}/active`,
   categoryOrder: (id: string) => `${adminRoot}/categories/${encodeURIComponent(id)}/order`,
+  categoryImage: (id: string) => `${adminRoot}/categories/${encodeURIComponent(id)}/image`,
   highlights: `${adminRoot}/highlights`,
   highlight: (id: string) => `${adminRoot}/highlights/${encodeURIComponent(id)}`,
   highlightActivation: (id: string) => `${adminRoot}/highlights/${encodeURIComponent(id)}/active`,

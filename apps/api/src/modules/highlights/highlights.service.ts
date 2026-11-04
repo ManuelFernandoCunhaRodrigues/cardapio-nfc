@@ -4,26 +4,26 @@ import {
   type AdminHighlight,
   type ReorderInput,
 } from '@salgae/core/contracts/admin-api';
-import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
 import type { highlightFormSchema } from '@salgae/core/schemas/highlight';
 import type { z } from 'zod';
 
 import { NotFoundError } from '../../shared/errors/domain-errors';
-import { reportServerError } from '../../shared/observability';
 import { moveInOrder, type OrderableRepository } from '../../shared/ordering/move-in-order';
+import {
+  removeImageIfUnused,
+  type DeletedRecordImageStore,
+} from '../media/image/remove-image-if-unused';
 
 export type HighlightInput = z.infer<typeof highlightFormSchema>;
 
 /** Os métodos que gravam devolvem `false` (ou `null`) quando o destaque não existe. */
-export interface HighlightRepository extends OrderableRepository {
+export interface HighlightRepository extends OrderableRepository, DeletedRecordImageStore {
   listForAdmin(): Promise<unknown[]>;
   create(input: HighlightInput): Promise<string>;
   update(id: string, input: HighlightInput): Promise<boolean>;
   setActive(id: string, isActive: boolean): Promise<boolean>;
   /** Apaga o destaque e devolve o caminho da imagem que ele usava. */
   delete(id: string): Promise<{ imagePath: string | null } | null>;
-  isImageInUse(imagePath: string): Promise<boolean>;
-  removeImageFiles(filePaths: string[]): Promise<void>;
 }
 
 const messages = {
@@ -57,16 +57,12 @@ export class HighlightsService {
   async deleteHighlight(id: string): Promise<void> {
     const deleted = await this.repository.delete(id);
     this.ensureFound(deleted !== null);
-    if (deleted?.imagePath) await this.removeImageIfUnused(deleted.imagePath);
-  }
-
-  /** O destaque já foi apagado: falhar a limpeza só deixa um arquivo órfão, então só registra. */
-  private async removeImageIfUnused(imagePath: string): Promise<void> {
-    try {
-      if (await this.repository.isImageInUse(imagePath)) return;
-      await this.repository.removeImageFiles(mediaObjectPaths(imagePath));
-    } catch (error) {
-      reportServerError({ event: 'highlight.image_cleanup_failed', error });
+    if (deleted?.imagePath) {
+      await removeImageIfUnused(
+        this.repository,
+        deleted.imagePath,
+        'highlight.image_cleanup_failed',
+      );
     }
   }
 

@@ -13,13 +13,16 @@ vi.mock('@/lib/cache/refresh-admin-panel', () =>
 );
 
 import {
+  removeCategoryImage,
   removeHighlightImage,
   removeProductImage,
+  uploadCategoryImage,
   uploadHighlightImage,
   uploadProductImage,
 } from './image-actions';
 
 const productId = '22222222-2222-4222-8222-222222222222';
+const categoryId = '55555555-5555-4555-8555-555555555555';
 const highlightId = '33333333-3333-4333-8333-333333333333';
 const photo = new File([new Uint8Array([1, 2, 3])], 'foto.webp', { type: 'image/webp' });
 
@@ -58,6 +61,22 @@ describe('Server Actions de foto', () => {
     );
   });
 
+  it('envia a foto da categoria para a rota da categoria', async () => {
+    mocks.upload.mockResolvedValue('categories/xyz');
+
+    const state = await uploadCategoryImage(
+      { status: 'idle' },
+      formDataFrom({ category_id: categoryId, image: photo }),
+    );
+
+    expect(state).toMatchObject({ status: 'success', path: 'categories/xyz' });
+    expect(mocks.upload).toHaveBeenCalledWith(
+      `/v1/admin/categories/${categoryId}/image`,
+      expect.any(FormData),
+    );
+    expect(mocks.invalidateMenuCache).toHaveBeenCalled();
+  });
+
   it.each([
     [
       'produto',
@@ -70,6 +89,12 @@ describe('Server Actions de foto', () => {
       removeHighlightImage,
       { highlight_id: highlightId },
       `/v1/admin/highlights/${highlightId}/image`,
+    ],
+    [
+      'categoria',
+      removeCategoryImage,
+      { category_id: categoryId },
+      `/v1/admin/categories/${categoryId}/image`,
     ],
   ] as const)('remove a foto do %s pela API', async (_label, action, fields, path) => {
     mocks.write.mockResolvedValue(undefined);
