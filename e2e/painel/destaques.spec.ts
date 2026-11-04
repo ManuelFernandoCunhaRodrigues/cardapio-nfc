@@ -1,4 +1,17 @@
+import path from 'node:path';
+
 import { expect, test, type AdminDb, type Page } from '../fixtures';
+
+const PHOTO_FILE = path.join(__dirname, '../arquivos/foto-teste.jpg');
+// Imagem válida de 1 px: passa pelo navegador e a API recusa por ser menor que 400 px.
+const TOO_SMALL_PHOTO = {
+  name: 'foto-pequena.png',
+  mimeType: 'image/png',
+  buffer: Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    'base64',
+  ),
+};
 
 async function createHighlight(page: Page, adminDb: AdminDb, title: string) {
   await page.goto('/admin/destaques');
@@ -32,7 +45,56 @@ async function panelTitles(page: Page) {
     );
 }
 
+async function storedHighlightImage(adminDb: AdminDb, highlightId: string) {
+  const { data, error } = await adminDb.client
+    .from('highlights')
+    .select('image_path')
+    .eq('id', highlightId)
+    .single();
+  expect(error).toBeNull();
+  return data!.image_path;
+}
+
 test.describe('destaques do painel', () => {
+  test('salva com foto, avisa quando a foto falha e remove devolvendo o foco', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    test.slow();
+    const title = uniqueName('destaque-foto');
+    const id = await createHighlight(page, adminDb, title);
+    const card = page.getByRole('article').filter({ hasText: title });
+    const editor = page.getByRole('dialog', { name: 'Editar destaque' });
+
+    await card.getByRole('button', { name: 'Editar', exact: true }).click();
+    await editor.getByLabel('Escolher foto').setInputFiles(TOO_SMALL_PHOTO);
+    await expect(page.getByText('Foto pronta para salvar junto com o destaque.')).toBeVisible();
+    await page.getByRole('button', { name: 'Salvar destaque' }).click();
+    await expect(
+      page.getByText('Escolha uma foto com pelo menos 400 px no menor lado.'),
+    ).toBeVisible();
+    expect(await storedHighlightImage(adminDb, id)).toBeNull();
+
+    await card.getByRole('button', { name: 'Editar', exact: true }).click();
+    await editor.getByLabel('Escolher foto').setInputFiles(PHOTO_FILE);
+    await expect(page.getByText('Foto pronta para salvar junto com o destaque.')).toBeVisible();
+    await page.getByRole('button', { name: 'Salvar destaque' }).click();
+    await expect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible();
+    expect(await storedHighlightImage(adminDb, id)).toMatch(new RegExp(`^highlights/${id}/`));
+
+    await page.reload();
+    await card.getByRole('button', { name: 'Editar', exact: true }).click();
+    await editor.getByRole('button', { name: 'Remover foto' }).click();
+    await page
+      .getByRole('dialog', { name: 'Remover foto deste destaque?' })
+      .getByRole('button', { name: 'Excluir de vez' })
+      .click();
+    await expect(page.getByText('Foto removida.')).toBeVisible();
+    await expect(editor.getByText('Foto do banner')).toBeFocused();
+    expect(await storedHighlightImage(adminDb, id)).toBeNull();
+  });
+
   test('cria e mostra o destaque no carrossel', async ({ page, adminDb, uniqueName }) => {
     const title = uniqueName('destaque-criar');
     await createHighlight(page, adminDb, title);
