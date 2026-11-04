@@ -29,6 +29,7 @@ import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { AdminSheet } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
+import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
 
 const INITIAL: CategoryActionState = { status: 'idle' };
 
@@ -45,47 +46,6 @@ function SubmitButton({ editing }: Readonly<{ editing: boolean }>) {
     <Button className="w-full" disabled={pending} type="submit">
       {pending ? 'Salvando…' : editing ? 'Salvar categoria' : 'Criar categoria'}
     </Button>
-  );
-}
-
-function QuickAction({
-  action,
-  values,
-  label,
-  icon,
-  disabled = false,
-}: Readonly<{
-  action: (state: CategoryActionState, formData: FormData) => Promise<CategoryActionState>;
-  values: Record<string, string>;
-  label: string;
-  icon?: 'up' | 'down';
-  disabled?: boolean;
-}>) {
-  const [state, formAction] = useActionState(action, INITIAL);
-  return (
-    <form action={formAction}>
-      {Object.entries(values).map(([name, value]) => (
-        <input key={name} name={name} type="hidden" value={value} />
-      ))}
-      <button
-        aria-label={label}
-        className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-border bg-white px-3 text-xs font-bold text-ink disabled:opacity-40"
-        disabled={disabled}
-        type="submit"
-      >
-        {icon ? <AdminIcon name={icon} /> : label}
-      </button>
-      <span
-        aria-live="polite"
-        className="sr-only"
-        role={state.status === 'error' ? 'alert' : 'status'}
-      >
-        {state.message}
-      </span>
-      {state.status === 'error' ? (
-        <AdminNotice className="mt-2" kind="error" message={state.message} />
-      ) : null}
-    </form>
   );
 }
 
@@ -208,7 +168,7 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
     setOpen(false);
   }, []);
   return (
-    <>
+    <QuickActionGroup>
       <header className="mb-5 flex items-end justify-between gap-3">
         <div>
           <h1
@@ -318,6 +278,6 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
           onSaved={onSaved}
         />
       </AdminSheet>
-    </>
+    </QuickActionGroup>
   );
 }
