@@ -55,8 +55,8 @@ test.describe('sessão expirada durante uma gravação', () => {
     await card.getByRole('button', { name: 'Esconder', exact: true }).click();
     await expect(
       page
-        .getByText('Sua sessão não permite esta alteração. Entre novamente.')
-        .filter({ visible: true }),
+        .locator('p[role="alert"]')
+        .filter({ hasText: 'Sua sessão não permite esta alteração. Entre novamente.' }),
     ).toBeVisible();
 
     await publicPage.reload();
