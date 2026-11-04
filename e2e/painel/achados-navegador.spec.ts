@@ -114,7 +114,10 @@ test.describe('categoria escondida', () => {
     await createProduct(adminDb, productName, categoryId);
 
     await page.goto('/admin');
-    const row = page.getByRole('link').filter({ hasText: categoryName }).filter({ visible: true });
+    const row = page
+      .locator('a[href="/admin/categorias"]')
+      .filter({ hasText: categoryName })
+      .filter({ visible: true });
     await expect(row).toContainText('CATEGORIA ESCONDIDA');
     await expect(row).toContainText('1 produto fora do cardápio');
 
@@ -149,9 +152,9 @@ test.describe('listas do painel', () => {
     expect(error).toBeNull();
 
     await page.getByRole('button', { name: `Descer ${firstName}` }).click();
-    const notice = page.getByText('Esta categoria já está no limite da lista.').filter({
-      visible: true,
-    });
+    const notice = page
+      .locator('p[role="alert"]')
+      .filter({ hasText: 'Esta categoria já está no limite da lista.' });
     await expect(notice).toBeVisible();
 
     await page.getByRole('button', { name: `Subir ${secondName}` }).click();
@@ -185,9 +188,10 @@ test.describe('listas do painel', () => {
       .getByRole('button', { name: `Subir ${firstName}` })
       .filter({ visible: true })
       .click();
-    const notice = page.getByText('Este produto já está no limite da categoria.').filter({
-      visible: true,
-    });
+    const notice = page
+      .getByText('Este produto já está no limite da categoria.')
+      .filter({ visible: true })
+      .first();
     await expect(notice).toBeVisible();
 
     await page
@@ -218,6 +222,8 @@ test.describe('listas do painel', () => {
 
   test('trocar de tela mostra que está carregando', { tag: '@leitura' }, async ({ page }) => {
     await page.goto('/admin');
+    // Espera os pedidos antecipados: são eles que deixam a tela de carregamento pronta para o clique.
+    await page.waitForLoadState('networkidle');
     let release = () => {};
     const held = new Promise<void>((resolve) => (release = resolve));
     await page.route('**/admin/categorias**', async (route) => {
