@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type FormEvent } from 'react';
+import { useRef, useState, useTransition, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,34 @@ import { createClient } from '@/lib/supabase/client';
 import { loginSchema } from '@salgae/core/schemas/auth';
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 
+type LoginPhase = 'idle' | 'signing-in' | 'opening-panel';
+
+function SubmitLabel({ phase }: Readonly<{ phase: LoginPhase }>) {
+  if (phase === 'idle') return 'Entrar no painel';
+  // A `key` recria o texto a cada fase, para a entrada rodar de novo na troca.
+  return (
+    <span
+      className="inline-flex animate-label-in items-center gap-2 motion-reduce:animate-none"
+      key={phase}
+    >
+      {phase === 'signing-in' ? (
+        <span
+          aria-hidden="true"
+          className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white motion-reduce:animate-none"
+          data-testid="login-spinner"
+        />
+      ) : (
+        <AdminIcon name="check" />
+      )}
+      {phase === 'signing-in' ? 'Entrando…' : 'Abrindo o painel…'}
+    </span>
+  );
+}
+
 export function LoginForm() {
   const router = useRouter();
+  // A transição segue pendente até o painel aparecer, então o botão não volta ao estado inicial.
+  const [isOpeningPanel, startOpeningPanel] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -41,8 +67,10 @@ export function LoginForm() {
         setError('Não foi possível entrar com essas credenciais. Tente novamente.');
         return;
       }
-      router.replace('/admin');
-      router.refresh();
+      startOpeningPanel(() => {
+        router.replace('/admin');
+        router.refresh();
+      });
     } catch {
       setError('Não foi possível entrar agora. Tente novamente em instantes.');
     } finally {
@@ -50,6 +78,8 @@ export function LoginForm() {
       setIsSubmitting(false);
     }
   }
+
+  const phase: LoginPhase = isOpeningPanel ? 'opening-panel' : isSubmitting ? 'signing-in' : 'idle';
 
   return (
     <form className="space-y-5" onSubmit={onSubmit} noValidate>
@@ -80,8 +110,13 @@ export function LoginForm() {
           {error}
         </p>
       ) : null}
-      <Button className="w-full" disabled={isSubmitting} type="submit">
-        {isSubmitting ? 'Entrando…' : 'Entrar no painel'}
+      <Button
+        aria-busy={phase !== 'idle'}
+        className="w-full disabled:cursor-progress disabled:opacity-100"
+        disabled={phase !== 'idle'}
+        type="submit"
+      >
+        <SubmitLabel phase={phase} />
       </Button>
     </form>
   );
