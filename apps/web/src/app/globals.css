@@ -29,6 +29,18 @@
   --font-display: var(--font-poppins);
   --font-sans: var(--font-nunito);
   --font-mono: var(--font-poppins);
+  --animate-label-in: label-in 180ms ease-out;
+
+  @keyframes label-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 :root {
