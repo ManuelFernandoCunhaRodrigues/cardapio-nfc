@@ -33,6 +33,13 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 - enquanto o login acontece, o botão mostra um indicador girando e "Entrando…"; aceito o login, mostra um sinal de confirmado e "Abrindo o painel…" até a tela trocar;
 - com "menos animação" ligado no aparelho, o botão só troca o texto.
 
+### Botões de ação rápida
+
+- valem para Subir, Descer, Esconder e Mostrar nas listas do painel;
+- a resposta pode levar alguns segundos: enquanto isso, o botão de seta mostra um indicador girando, o de texto fica mais claro, e os botões da mesma lista ficam em espera, com cliques ignorados, para não formar fila e seguir mexendo na lista depois;
+- com "menos animação" ligado no aparelho, a seta não gira, só fica mais clara;
+- em categorias e destaques, a seta fica apagada quando o item já está no início ou no fim da lista.
+
 ### Categorias
 
 - criar, editar, ordenar, ativar e desativar;

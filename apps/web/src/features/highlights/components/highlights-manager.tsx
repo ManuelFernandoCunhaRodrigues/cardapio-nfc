@@ -11,10 +11,7 @@ import {
   toggleHighlight,
   updateHighlight,
 } from '@/features/highlights/server/actions';
-import {
-  initialHighlightActionState,
-  type HighlightActionState,
-} from '@/features/highlights/server/action-state';
+import { initialHighlightActionState } from '@/features/highlights/server/action-state';
 import { removeHighlightImage, uploadHighlightImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { EditorPhotoField, useEditorPhoto } from '@/features/media/components/editor-photo-field';
@@ -36,6 +33,7 @@ import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { AdminSheet } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
+import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
 
 function SaveButton({ editing }: Readonly<{ editing: boolean }>) {
   const { pending } = useFormStatus();
@@ -43,43 +41,6 @@ function SaveButton({ editing }: Readonly<{ editing: boolean }>) {
     <Button className="w-full" disabled={pending} type="submit">
       {pending ? 'Salvando…' : editing ? 'Salvar destaque' : 'Criar destaque'}
     </Button>
-  );
-}
-function QuickAction({
-  action,
-  values,
-  label,
-  icon,
-}: Readonly<{
-  action: (state: HighlightActionState, formData: FormData) => Promise<HighlightActionState>;
-  values: Record<string, string>;
-  label: string;
-  icon?: 'up' | 'down';
-}>) {
-  const [state, formAction] = useActionState(action, initialHighlightActionState);
-  return (
-    <form action={formAction}>
-      {Object.entries(values).map(([name, value]) => (
-        <input key={name} name={name} type="hidden" value={value} />
-      ))}
-      <button
-        aria-label={label}
-        className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-border bg-white px-3 text-xs font-bold text-ink"
-        type="submit"
-      >
-        {icon ? <AdminIcon name={icon} /> : label}
-      </button>
-      <span
-        aria-live="polite"
-        className="sr-only"
-        role={state.status === 'error' ? 'alert' : 'status'}
-      >
-        {state.message}
-      </span>
-      {state.status === 'error' ? (
-        <AdminNotice className="mt-2" kind="error" message={state.message} />
-      ) : null}
-    </form>
   );
 }
 function currentTargetValue(target: string | null, kind: HighlightTargetKind) {
@@ -282,7 +243,7 @@ export function HighlightsManager({
     setOpen(false);
   }, []);
   return (
-    <>
+    <QuickActionGroup>
       <header className="mb-5 flex items-end justify-between gap-3">
         <div>
           <h1
@@ -354,12 +315,14 @@ export function HighlightsManager({
               />
               <QuickAction
                 action={reorderHighlight}
+                disabled={index === 0}
                 icon="up"
                 label={`Subir ${highlight.title}`}
                 values={{ id: highlight.id, direction: 'up' }}
               />
               <QuickAction
                 action={reorderHighlight}
+                disabled={index === highlights.length - 1}
                 icon="down"
                 label={`Descer ${highlight.title}`}
                 values={{ id: highlight.id, direction: 'down' }}
@@ -393,6 +356,6 @@ export function HighlightsManager({
           products={products}
         />
       </AdminSheet>
-    </>
+    </QuickActionGroup>
   );
 }

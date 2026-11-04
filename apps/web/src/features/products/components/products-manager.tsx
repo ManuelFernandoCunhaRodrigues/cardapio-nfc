@@ -39,6 +39,7 @@ import { formatPriceBRL } from '@salgae/core/rules/price';
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
+import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
 
 const filterParams: Record<string, ProductFilter> = {
   indisponiveis: 'unavailable',
@@ -101,40 +102,6 @@ function SituationControl({
         ))}
       </select>
     </div>
-  );
-}
-
-function QuickAction({
-  action,
-  values,
-  label,
-  icon,
-  onResult,
-}: Readonly<{
-  action: (state: ProductActionState, formData: FormData) => Promise<ProductActionState>;
-  values: Record<string, string>;
-  label: string;
-  icon: 'up' | 'down';
-  onResult: ResultHandler;
-}>) {
-  const [state, formAction] = useActionState(action, initialProductActionState);
-  useEffect(() => {
-    if (state.status !== 'idle' && state.message) onResult(state);
-  }, [onResult, state]);
-  return (
-    <form action={formAction}>
-      {Object.entries(values).map(([name, value]) => (
-        <input key={name} name={name} type="hidden" value={value} />
-      ))}
-      <button
-        aria-label={label}
-        className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-border bg-white text-ink"
-        title={label}
-        type="submit"
-      >
-        <AdminIcon name={icon} />
-      </button>
-    </form>
   );
 }
 
@@ -278,7 +245,7 @@ export function ProductsManager({
   );
 
   return (
-    <>
+    <QuickActionGroup>
       <header className="flex items-end justify-between gap-3">
         <div>
           <h1
@@ -480,6 +447,6 @@ export function ProductsManager({
           <p className="p-6 text-sm text-muted">Nenhum produto encontrado com estes filtros.</p>
         ) : null}
       </div>
-    </>
+    </QuickActionGroup>
   );
 }
