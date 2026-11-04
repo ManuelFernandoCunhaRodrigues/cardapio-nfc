@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '../fixtures';
+import { expect, test, type AdminDb, type Page } from '../fixtures';
 
 async function expectInsideHorizontalViewport(page: Page, selector: string) {
   await expect
@@ -12,20 +12,31 @@ async function expectInsideHorizontalViewport(page: Page, selector: string) {
     .toBe(true);
 }
 
-async function openProductWithVideo(page: Page) {
-  await page.goto('/cardapio');
-  const productPaths = await page
-    .locator('a[href^="/produto/"]')
-    .evaluateAll((links) => [
-      ...new Set(links.map((link) => link.getAttribute('href')).filter(Boolean)),
-    ]);
+async function openNewProductWithVideo(page: Page, adminDb: AdminDb, name: string) {
+  const slug = name.toLowerCase();
+  const { data: category, error: categoryError } = await adminDb.client
+    .from('categories')
+    .insert({ name, slug })
+    .select('id')
+    .single();
+  expect(categoryError).toBeNull();
+  adminDb.track('categories', category!.id);
+  const { data: product, error: productError } = await adminDb.client
+    .from('products')
+    .insert({
+      category_id: category!.id,
+      name,
+      slug,
+      price_cents: 1234,
+      video_path: `e2e/${slug}.mp4`,
+    })
+    .select('id')
+    .single();
+  expect(productError).toBeNull();
+  adminDb.track('products', product!.id);
 
-  for (const path of productPaths) {
-    await page.goto(path!);
-    const play = page.getByRole('button', { name: /^Assistir vídeo de / });
-    if (await play.count()) return play;
-  }
-  throw new Error('O cardápio precisa ter ao menos um produto público com vídeo para este teste.');
+  await page.goto(`/produto/${slug}`);
+  return page.getByRole('button', { name: `Assistir vídeo de ${name}` });
 }
 
 async function expectAboveProductSheet(page: Page, selector: string) {
@@ -81,8 +92,12 @@ test.describe('achados dos testes no navegador', () => {
     ).toHaveAttribute('aria-current', 'location');
   });
 
-  test('mantém o selo e os controles do vídeo acima da sobreposição', async ({ page }) => {
-    const play = await openProductWithVideo(page);
+  test('mantém o selo e os controles do vídeo acima da sobreposição', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    const play = await openNewProductWithVideo(page, adminDb, uniqueName('produto-video'));
     const badge = page.getByText('VÍDEO CURTO · SEM SOM', { exact: true });
     await expect(badge).toBeVisible();
     await expectAboveProductSheet(page, '.lbl:has-text("VÍDEO CURTO · SEM SOM")');
