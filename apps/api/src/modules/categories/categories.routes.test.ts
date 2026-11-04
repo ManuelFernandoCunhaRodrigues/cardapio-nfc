@@ -19,7 +19,9 @@ function fakeRepository(): CategoryRepository {
     setActive: vi.fn(async () => true),
     listSortOrders: async () => [],
     swapSortOrders: async () => undefined,
-    delete: vi.fn(async () => true),
+    delete: vi.fn(async () => ({ imagePath: null })),
+    isImageInUse: async () => false,
+    removeImageFiles: async () => undefined,
   };
 }
 
@@ -32,6 +34,10 @@ function testApp(repository = fakeRepository()) {
     createCategoriesRoutes(
       fakeAdminClients(),
       createCategoriesController(() => service),
+      {
+        upload: async (context) => context.json({ path: 'categories/test/image' }, 201),
+        remove: async (context) => context.body(null, 204),
+      },
     ),
   );
   return app;

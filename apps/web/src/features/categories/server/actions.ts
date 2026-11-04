@@ -18,10 +18,10 @@ function readCategoryForm(formData: FormData) {
   };
 }
 
-function refreshAfterCategoryChange(message: string): CategoryActionState {
+function refreshAfterCategoryChange(message: string, entityId?: string): CategoryActionState {
   invalidateMenuCache();
   refreshAdminPanel();
-  return { status: 'success', message };
+  return { status: 'success', message, ...(entityId ? { entityId } : {}) };
 }
 
 export async function createCategory(
@@ -30,8 +30,8 @@ export async function createCategory(
 ): Promise<CategoryActionState> {
   return runAdminAction(
     async () => {
-      await adminApi().create(adminApiPaths.categories, readCategoryForm(formData));
-      return refreshAfterCategoryChange('Categoria criada com sucesso.');
+      const id = await adminApi().create(adminApiPaths.categories, readCategoryForm(formData));
+      return refreshAfterCategoryChange('Categoria criada com sucesso.', id);
     },
     {
       event: 'category_create_failed',
@@ -48,7 +48,7 @@ export async function updateCategory(
   return runAdminAction(
     async () => {
       await adminApi().write('PUT', adminApiPaths.category(id), readCategoryForm(formData));
-      return refreshAfterCategoryChange('Categoria atualizada com sucesso.');
+      return refreshAfterCategoryChange('Categoria atualizada com sucesso.', id);
     },
     {
       event: 'category_update_failed',

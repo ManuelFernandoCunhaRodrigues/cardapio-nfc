@@ -1,7 +1,6 @@
-/* eslint-disable @next/next/no-img-element -- prévia local usa URL blob */
 'use client';
 
-import { useActionState, useCallback, useEffect, useRef, useState } from 'react';
+import { useActionState, useCallback, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import * as m from 'motion/react-m';
@@ -18,7 +17,9 @@ import {
 } from '@/features/highlights/server/action-state';
 import { removeHighlightImage, uploadHighlightImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
+import { EditorPhotoField, useEditorPhoto } from '@/features/media/components/editor-photo-field';
 import { MediaImage } from '@/features/media/components/media-image';
+import { usePhotoAfterSave } from '@/features/media/client/use-photo-after-save';
 import { listReorder } from '@/components/motion/motion-primitives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,6 @@ import {
   type HighlightTargetKind,
 } from '@/features/admin/rules/panel';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
-import { resizeImageForUpload } from '@/features/media/client/client-resize';
 import { highlightSummary } from '@/features/menu/rules/highlight-carousel';
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
@@ -89,6 +89,13 @@ function currentTargetValue(target: string | null, kind: HighlightTargetKind) {
   return kind === 'custom' ? target : '';
 }
 
+function uploadPhoto(highlightId: string, image: File) {
+  const formData = new FormData();
+  formData.set('highlight_id', highlightId);
+  formData.set('image', image);
+  return uploadHighlightImage(initialMediaActionState, formData);
+}
+
 function HighlightEditor({
   highlight,
   categories,
@@ -100,7 +107,7 @@ function HighlightEditor({
   categories: AdminCategory[];
   products: AdminProduct[];
   onClose: () => void;
-  onSaved: (message: string, kind?: 'success' | 'error') => void;
+  onSaved: (message: string, kind: 'success' | 'error') => void;
 }>) {
   const editing = Boolean(highlight);
   const [createState, createAction] = useActionState(createHighlight, initialHighlightActionState);
@@ -111,47 +118,12 @@ function HighlightEditor({
   const [targetValue, setTargetValue] = useState(
     currentTargetValue(highlight?.target ?? null, initialKind),
   );
-  const [image, setImage] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(
+  const photo = useEditorPhoto(
     getPublicImageVariantUrl('highlight-images', highlight?.image_path, 'card'),
+    'Foto pronta para salvar junto com o destaque.',
   );
-  const [mediaMessage, setMediaMessage] = useState<string>();
-  // Estado local, não a prop: a revalidação chega junto com o resultado da remoção e
-  // desmontaria a confirmação antes de ela fechar e devolver o foco.
-  const [hasStoredPhoto, setHasStoredPhoto] = useState(Boolean(highlight?.image_path));
-  const uploading = useRef(false);
-  const photoTitleRef = useRef<HTMLSpanElement>(null);
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
-  useEffect(() => {
-    const entityId = state.entityId;
-    const savedMessage = state.message;
-    if (state.status !== 'success' || !savedMessage) return;
-    if (!image) {
-      onSaved(savedMessage);
-      return;
-    }
-    if (!entityId || uploading.current) return;
-    uploading.current = true;
-    void (async () => {
-      const formData = new FormData();
-      formData.set('highlight_id', entityId);
-      formData.set('image', image);
-      const result = await uploadHighlightImage(initialMediaActionState, formData);
-      setMediaMessage(result.message);
-      onSaved(result.message ?? savedMessage, result.status === 'error' ? 'error' : 'success');
-    })();
-  }, [image, onSaved, state.entityId, state.message, state.status]);
-  async function selectImage(file?: File) {
-    if (!file) return;
-    try {
-      const prepared = await resizeImageForUpload(file);
-      setImage(prepared);
-      setPreview(URL.createObjectURL(prepared));
-      setMediaMessage('Foto pronta para salvar junto com o destaque.');
-    } catch {
-      setMediaMessage('Não foi possível preparar esta foto. Escolha outra.');
-    }
-  }
+  usePhotoAfterSave({ saveState: state, file: photo.file, upload: uploadPhoto, onSaved });
   const target = buildHighlightTarget(targetKind, targetValue) ?? '';
   return (
     <form action={editing ? updateAction : createAction} className="space-y-4" noValidate>
@@ -257,54 +229,25 @@ function HighlightEditor({
           type="checkbox"
         />
       </label>
-      <div>
-        <span className="block text-sm font-bold text-ink" ref={photoTitleRef} tabIndex={-1}>
-          Foto do banner
-        </span>
-        <div className="mt-2 flex items-center gap-3">
-          {preview ? (
-            <img
-              alt="Prévia do destaque"
-              className="size-20 rounded-xl object-cover"
-              src={preview}
-            />
-          ) : (
-            <div className="grid size-20 place-items-center rounded-xl bg-surface-inner text-xs text-muted">
-              Sem foto
-            </div>
-          )}
-          <label className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-border bg-white px-4 text-sm font-bold text-ink">
-            <input
-              accept="image/*"
-              className="sr-only"
-              onChange={(event) => void selectImage(event.target.files?.[0])}
-              type="file"
-            />
-            Escolher foto
-          </label>
-        </div>
-        {highlight && hasStoredPhoto ? (
-          <div className="mt-2">
-            <ConfirmDialog
-              action={removeHighlightImage}
-              description="A foto deixará de aparecer no banner."
-              entityId={highlight.id}
-              fallbackFocusRef={photoTitleRef}
-              fieldName="highlight_id"
-              onSuccess={() => {
-                setHasStoredPhoto(false);
-                setPreview(null);
-                setMediaMessage('Foto removida.');
-              }}
-              title="Remover foto deste destaque?"
-              triggerLabel="Remover foto"
-            />
-          </div>
-        ) : null}
-      </div>
+      <EditorPhotoField
+        photo={photo}
+        previewAlt="Prévia do destaque"
+        previewShapeClassName="rounded-xl"
+        removal={
+          highlight
+            ? {
+                action: removeHighlightImage,
+                confirmTitle: 'Remover foto deste destaque?',
+                description: 'A foto deixará de aparecer no banner.',
+                entityId: highlight.id,
+                fieldName: 'highlight_id',
+              }
+            : null
+        }
+        title="Foto do banner"
+      />
       {/* O sucesso fecha a gaveta e aparece no aviso da lista; aqui fica só o erro. */}
       <AdminNotice kind="error" message={state.status === 'error' ? state.message : undefined} />
-      <AdminNotice kind="info" message={mediaMessage} />
       <SaveButton editing={editing} />
       {editing ? (
         <Button className="w-full" onClick={onClose} variant="neutral">
