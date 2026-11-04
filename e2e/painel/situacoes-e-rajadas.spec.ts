@@ -35,6 +35,8 @@ async function createProduct(
       name,
       price_cents: 1234,
       badge: options.featured ? 'mais_pedido' : null,
+      // O banco só aceita vídeo em produto com foto.
+      image_path: options.video ? `e2e/${slugFromName(name)}` : null,
       video_path: options.video ? `e2e/${slugFromName(name)}.mp4` : null,
     })
     .select('id, slug, sort_order')

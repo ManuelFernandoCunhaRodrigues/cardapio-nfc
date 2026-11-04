@@ -28,6 +28,8 @@ async function openNewProductWithVideo(page: Page, adminDb: AdminDb, name: strin
       name,
       slug,
       price_cents: 1234,
+      // O banco só aceita vídeo em produto com foto.
+      image_path: `e2e/${slug}`,
       video_path: `e2e/${slug}.mp4`,
     })
     .select('id')
@@ -110,6 +112,7 @@ test.describe('achados dos testes no navegador', () => {
   test('trata espaços como busca vazia na tela e no endereço', async ({ page }) => {
     await page.goto('/busca');
     const productLinks = page.locator('a[href^="/produto/"]');
+    await expect(productLinks.first()).toBeVisible();
     const initialProducts = await productLinks.count();
 
     await page.getByRole('searchbox', { name: 'Buscar no cardápio' }).fill('   ');
