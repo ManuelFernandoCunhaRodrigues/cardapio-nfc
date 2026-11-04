@@ -1,6 +1,7 @@
 import { adminApiPaths, adminStoreResponseSchema } from '@salgae/core/contracts/admin-api';
 import type { StoreSettings } from '@salgae/core/schemas/store-settings';
 
+import { redirectIfSessionExpired } from '@/features/admin/server/session-redirect';
 import { adminApi } from '@/lib/api/admin-api-client';
 import { reportServerError } from '@/lib/observability';
 
@@ -16,6 +17,7 @@ export async function getAdminStoreSettings(): Promise<AdminStoreSettingsResult>
     const settings = await adminApi().read(adminApiPaths.store, adminStoreResponseSchema);
     return { status: 'loaded', settings };
   } catch (error) {
+    redirectIfSessionExpired(error);
     reportServerError('admin_store_settings_read_failed', error);
     return { status: 'unavailable' };
   }
