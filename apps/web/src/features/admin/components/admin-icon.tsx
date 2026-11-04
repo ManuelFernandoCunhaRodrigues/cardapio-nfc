@@ -20,7 +20,8 @@ export type AdminIconName =
   | 'video'
   | 'close'
   | 'clock'
-  | 'alert';
+  | 'alert'
+  | 'check';
 
 const paths: Record<AdminIconName, React.ReactNode> = {
   grid: (
@@ -114,6 +115,7 @@ const paths: Record<AdminIconName, React.ReactNode> = {
       <path d="M12 9v4M12 16h.01" />
     </>
   ),
+  check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
 };
 
 export function AdminIcon({
