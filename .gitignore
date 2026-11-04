@@ -16,4 +16,14 @@ Salgae_Lanchonete_Obsidian/.obsidian/workspace.json
 # Saídas do Playwright
 playwright-report/
 test-results/
-lib/supabase/database.types.local.ts
+e2e/playwright/.auth/
+packages/core/src/database/database.types.local.ts
+
+# Material de apoio local (fotos, vídeos, protótipos) que o código não usa
+materiais/
+
+# Build da API
+apps/api/dist/
+
+# Trava local do agendador do Claude Code
+.claude/*.lock

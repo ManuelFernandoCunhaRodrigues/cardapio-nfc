@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-10-10
+atualizado: 2026-11-03
 ---
 # Ambientes e deploy
 
@@ -50,6 +50,15 @@ Cada projeto Vercel deve receber apenas as chaves do seu ambiente:
 - `NEXT_PUBLIC_SITE_ENV`: `production` somente no projeto de produção. Ausente ou com outro valor, o site se comporta como homologação e bloqueia a indexação (`robots.txt` com `Disallow: /` e `noindex`);
 - `NEXT_PUBLIC_SITE_URL`: endereço público do ambiente, usado como base dos metadados;
 - qualquer segredo de servidor somente no ambiente privado.
+
+Desde a decisão de 2026-11-03, cada ambiente publica site e API juntos, em um único projeto. Plano em `docs/planejamento/dois-projetos-por-ambiente.md`.
+
+- **Variáveis:** só as acima; a API usa a URL e a chave pública do Supabase do próprio site. `API_URL` e `WEB_ORIGIN` não são mais necessárias na Vercel, e não há segredo novo.
+- **Build:** lê o banco direto, sem servidor de API no ar. O Supabase do ambiente precisa estar acessível durante o build.
+- **Vercel (stage):** `salgae-homologacao`, Root Directory `apps/web`, publica a `develop`. `salgae-api-stage` sai depois da validação no stage, e `salgae-web-previa` foi excluído em 2026-11-03.
+- **Vercel (produção):** `salgae-producao` publica a `main` e precisa de Root Directory `apps/web` antes de receber a `develop`. Não se cria projeto de API para produção.
+- **Vídeo:** o envio continua em uma rota do Next. Se um dia passar para uma API em outra origem, a CSP precisará liberá-la em `connect-src`.
+- **VPS:** o site roda com Node e já inclui a API. Para a API em servidor separado existe o `Dockerfile`, que exige `WEB_ORIGIN`; o passo a passo está no `README.md` ("Servidor próprio").
 
 Nunca copiar arquivo `.env` de produção para homologação sem revisar cada valor. Nunca commitar `.env` ou segredo no Git.
 

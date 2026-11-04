@@ -1,6 +1,12 @@
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": { "incremental": false },
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
   "include": ["supabase/tests/types/schema-matches-types.check.ts"],
   "exclude": ["node_modules"]
 }

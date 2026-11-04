@@ -34,11 +34,15 @@ jobs:
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
+      # Arquivos, exports e dependências sem uso (exceções justificadas em knip.jsonc).
+      - run: npm run knip
       - run: npm run test:coverage
       - name: Cobertura no resumo do job
         if: always()
+        working-directory: apps/web
         run: node scripts/resumo-cobertura.mjs >> "$GITHUB_STEP_SUMMARY"
-      - run: npm run build
+      # O build do site lê o banco; ele roda só no job de ponta a ponta, com o Supabase local no ar.
+      - run: npm run build -w @salgae/api
 
   banco-e-e2e:
     name: banco local e ponta a ponta
@@ -47,6 +51,7 @@ jobs:
     env:
       # Login que só existe no banco local criado neste job.
       E2E_ADMIN_EMAIL: admin@salgae.test
+      E2E_BASE_URL: http://127.0.0.1:3000
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
     steps:
       - uses: actions/checkout@v7
@@ -77,19 +82,50 @@ jobs:
       # funções são as mesmas do arquivo versionado.
       - name: Tipos do banco em dia com as migrations
         run: |
-          supabase gen types typescript --local --schema public > lib/supabase/database.types.local.ts
+          supabase gen types typescript --local --schema public > packages/core/src/database/database.types.local.ts
           npm run test:types-db
       - name: Testes de banco (RLS, Storage e reordenação)
         run: bash scripts/testar-banco-local.sh
       - run: npx playwright install --with-deps chromium
-      - run: npm run build
+      - run: npm run build -w @salgae/web
+      - name: Sobe o site e espera a página inicial
+        run: |
+          nohup npm run start -w @salgae/web -- --port 3000 > "$RUNNER_TEMP/web.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/web.pid"
+          for attempt in $(seq 1 60); do
+            curl -fsS "$E2E_BASE_URL" >/dev/null && exit 0
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/web.log"
+          exit 1
       - name: Testes de ponta a ponta
         run: npm run test:e2e
+      # A imagem serve a quem levar a API para um servidor separado. O /health lê o banco, então ela
+      # é conferida antes de o Supabase parar.
+      - name: Imagem da API sobe e responde ao /health
+        run: |
+          docker build -f apps/api/Dockerfile -t salgae-api .
+          docker run -d --name salgae-api --network host \
+            -e PORT=4000 \
+            -e SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            -e SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            -e WEB_ORIGIN="$NEXT_PUBLIC_SITE_URL" \
+            salgae-api
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4000/health && exit 0
+            sleep 1
+          done
+          docker logs salgae-api
+          exit 1
+      # Último passo: derruba o banco deste job.
+      - name: Banco fora do ar mantém o cardápio em cache
+        run: bash e2e/scripts/banco-fora-do-ar.sh
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright
           path: |
-            playwright-report/
-            test-results/
+            e2e/playwright-report/
+            e2e/test-results/
+            ${{ runner.temp }}/web.log
           retention-days: 7

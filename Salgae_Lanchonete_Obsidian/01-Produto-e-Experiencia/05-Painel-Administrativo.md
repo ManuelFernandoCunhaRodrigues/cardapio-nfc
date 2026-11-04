@@ -28,10 +28,16 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 - atalhos para cadastrar produto e categoria;
 - avisos que ajudem a manter o cardápio completo.
 
+### Entrada no painel
+
+- enquanto o login acontece, o botão mostra um indicador girando e "Entrando…"; aceito o login, mostra um sinal de confirmado e "Abrindo o painel…" até a tela trocar;
+- com "menos animação" ligado no aparelho, o botão só troca o texto.
+
 ### Categorias
 
 - criar, editar, ordenar, ativar e desativar;
 - impedir exclusão perigosa de categoria que ainda possui produtos, oferecendo migração ou confirmação explícita;
+- foto da categoria, com prévia redonda, troca e remoção; ela aparece no círculo da tela inicial;
 - manter um identificador estável para URLs e integrações internas.
 
 ### Produtos
