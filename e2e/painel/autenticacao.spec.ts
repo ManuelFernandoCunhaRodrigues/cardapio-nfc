@@ -38,7 +38,9 @@ test.describe('autenticação do painel', () => {
     await expect(page.getByTestId('login-spinner')).toBeVisible();
     await expect(page.getByTestId('login-spinner')).toHaveCSS('animation-name', 'spin');
 
+    await expect.poll(() => loginRequests).toBe(1);
     await page.getByLabel('Senha', { exact: true }).press('Enter');
+    await expect(button).toBeDisabled();
     expect(loginRequests).toBe(1);
 
     releaseLogin();
