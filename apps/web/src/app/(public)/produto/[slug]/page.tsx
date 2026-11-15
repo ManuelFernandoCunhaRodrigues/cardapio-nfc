@@ -7,7 +7,9 @@ import { MediaVideo } from '@/features/media/components/media-video';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
 import { getBadgeLabel } from '@salgae/core/rules/badges';
-import { getPublicProduct, getPublicSitemap } from '@/lib/api/public-api-client';
+import { getPublicProduct, getPublicSitemap, getPublicStore } from '@/lib/api/public-api-client';
+import { ProductAvailability } from '@/features/store/components/store-status-live';
+import { selectPublicStoreStatusSettings } from '@/features/store/rules/client-status';
 import { sortProductsByAvailability } from '@salgae/core/rules/product-sort';
 import { getPublicImageVariantUrl, getPublicMediaUrl } from '@/features/media/rules/media-urls';
 import { getProductMetadata } from '@/lib/seo/product-metadata';
@@ -19,10 +21,11 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const result = await getPublicProduct(slug);
+  const [result, store] = await Promise.all([getPublicProduct(slug), getPublicStore()]);
   return getProductMetadata(
     result?.product ?? null,
     getPublicImageVariantUrl('product-images', result?.product.image_path, 'detail'),
+    store.name,
   );
 }
 
@@ -34,7 +37,7 @@ export async function generateStaticParams(): Promise<{ slug: string }[]> {
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const isLegacyId = UUID_PATTERN.test(slug);
-  const productPage = await getPublicProduct(slug);
+  const [productPage, settings] = await Promise.all([getPublicProduct(slug), getPublicStore()]);
   if (!productPage) notFound();
   const { product, category } = productPage;
   if (isLegacyId) permanentRedirect(`/produto/${product.slug}`);
@@ -86,16 +89,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {product.description ? (
           <p className="mt-4 text-sm leading-5 text-body">{product.description}</p>
         ) : null}
-        <p
-          className={`mt-4 flex items-start gap-2 rounded-product px-4 py-3 text-sm font-bold ${product.is_available ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}
-        >
-          <Icon height={18} name={product.is_available ? 'check' : 'alert'} width={18} />
-          <span>
-            {product.is_available
-              ? 'Disponível agora'
-              : 'Indisponível no momento — Pergunte ao atendente quando volta.'}
-          </span>
-        </p>
+        <ProductAvailability
+          initialNow={new Date().toISOString()}
+          isAvailable={product.is_available}
+          settings={selectPublicStoreStatusSettings(settings)}
+        />
         <p className="mt-2 flex items-start gap-2 rounded-product border border-border bg-cream px-4 py-3 text-sm font-bold leading-5 text-body">
           <Icon className="shrink-0 text-muted" height={18} name="info" width={18} />
           Consulta apenas. Faça seu pedido com o atendente.

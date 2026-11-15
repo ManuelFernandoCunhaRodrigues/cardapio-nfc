@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { HighlightBanner } from '@/features/menu/components/highlight-banner';
@@ -6,48 +7,25 @@ import { MediaImage } from '@/features/media/components/media-image';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
+import { getCategoryIcon } from '@/features/menu/rules/category-icon';
 import { getPublicMenu, getPublicStore } from '@/lib/api/public-api-client';
-import { sortProductsForHome } from '@salgae/core/rules/product-sort';
+import { getPublicPageMetadata } from '@/lib/seo/public-page-metadata';
+import type { MenuCategory } from '@/features/menu/types';
+import { selectFeaturedProducts } from '@salgae/core/rules/product-sort';
 
 export const revalidate = 60;
 
-type HomePageProps = {
-  searchParams?: Promise<{ preview?: string }>;
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return getPublicPageMetadata('home', await getPublicStore());
+}
 
-const categoryEmoji: Record<string, string> = {
-  coxinhas: '🥟',
-  pasteis: '🥠',
-  porcoes: '🍟',
-  combos: '🍱',
-  drinks: '🥤',
-  bebidas: '🥤',
-  doces: '🍫',
-};
-
-export default async function HomePage({ searchParams }: HomePageProps) {
+export default async function HomePage() {
   const [menu, settings] = await Promise.all([getPublicMenu(), getPublicStore()]);
-  const products = menu.products;
-  const { preview } = (await searchParams) ?? {};
-  const localComboPreview = process.env.NODE_ENV === 'development' && preview === 'combo';
-  const highlights = localComboPreview
-    ? [
-        {
-          id: 'local-combo-preview',
-          title: 'Combo Esfiha + Suco',
-          description: 'Duas esfihas assadas com suco gelado.',
-          image_path: '/imagens-combos-promocoes/destaque-combo-esfiha-suco.png',
-          target: '/cardapio#combos',
-          sort_order: -1,
-        },
-        ...menu.highlights,
-      ]
-    : menu.highlights;
-  const featured = sortProductsForHome(products).slice(0, 8);
+  const featured = selectFeaturedProducts(menu.products, 8);
 
   return (
     <main className="px-4 pb-6 pt-1">
-      <h1 className="sr-only">Cardápio da Salgaê</h1>
+      <h1 className="sr-only">Cardápio da {settings.name}</h1>
       <Link
         className="flex min-h-12 items-center gap-3 rounded-full border border-border bg-white px-4 text-sm text-placeholder shadow-card focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/40"
         href="/busca?focus=1"
@@ -61,7 +39,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           {settings.notice}
         </p>
       ) : null}
-      <HighlightBanner highlights={highlights} />
+      <HighlightBanner highlights={menu.highlights} />
       <nav
         aria-label="Categorias"
         className="-mx-4 mt-3 flex gap-3.5 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -81,9 +59,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   src={getPublicImageVariantUrl('product-images', category.image_path, 'card')}
                 />
               ) : (
-                <span aria-hidden="true" className="grid place-items-center text-2xl">
-                  {categoryEmoji[category.slug] ?? '🍽️'}
-                </span>
+                <CategoryFallbackIcon category={category} />
               )}
             </span>
             <span className="line-clamp-1 w-16">{category.name}</span>
@@ -115,5 +91,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         )}
       </section>
     </main>
+  );
+}
+
+function CategoryFallbackIcon({ category }: Readonly<{ category: MenuCategory }>) {
+  const icon = getCategoryIcon(category);
+  return (
+    <span
+      aria-hidden="true"
+      className={`grid place-items-center ${icon.kind === 'emoji' ? 'text-2xl' : 'disp bg-peach text-xl font-bold text-brand-strong'}`}
+    >
+      {icon.symbol}
+    </span>
   );
 }

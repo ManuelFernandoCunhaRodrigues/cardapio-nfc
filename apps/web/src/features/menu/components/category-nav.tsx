@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
+import { listenScrollEnd } from '@/features/menu/client/listen-scroll-end';
 import type { MenuCategory } from '@/features/menu/types';
 
 export function CategoryNav({ categories }: Readonly<{ categories: MenuCategory[] }>) {
@@ -10,6 +11,7 @@ export function CategoryNav({ categories }: Readonly<{ categories: MenuCategory[
   const rowRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef(new Map<string, HTMLAnchorElement>());
   const navigationTargetRef = useRef<string | null>(null);
+  const releaseOnNextScrollRef = useRef(false);
 
   useEffect(() => {
     const sections = categories
@@ -26,6 +28,7 @@ export function CategoryNav({ categories }: Readonly<{ categories: MenuCategory[
       }
       if (!categorySlugs.has(hash)) return;
       navigationTargetRef.current = hash;
+      releaseOnNextScrollRef.current = false;
       setActive(hash);
     };
     const selectLastAtPageEnd = () => {
@@ -43,6 +46,19 @@ export function CategoryNav({ categories }: Readonly<{ categories: MenuCategory[
     const releaseNavigationTarget = () => {
       navigationTargetRef.current = null;
       requestAnimationFrame(selectLastAtPageEnd);
+    };
+    // Arrastar a barra de rolagem não gera touch, wheel nem tecla. Quando a rolagem até a âncora do
+    // chip termina, a próxima rolagem, de qualquer jeito, libera a marcação. Liberar já no fim da
+    // rolagem deixaria o IntersectionObserver atrasado trocar o chip clicado.
+    const armReleaseOnNextScroll = () => {
+      if (navigationTargetRef.current) releaseOnNextScrollRef.current = true;
+    };
+    const handleScroll = () => {
+      if (releaseOnNextScrollRef.current) {
+        releaseOnNextScrollRef.current = false;
+        navigationTargetRef.current = null;
+      }
+      selectLastAtPageEnd();
     };
     const releaseNavigationTargetFromKeyboard = (event: KeyboardEvent) => {
       if (['ArrowDown', 'ArrowUp', 'End', 'Home', 'PageDown', 'PageUp', ' '].includes(event.key)) {
@@ -62,14 +78,16 @@ export function CategoryNav({ categories }: Readonly<{ categories: MenuCategory[
     sections.forEach((section) => observer.observe(section));
     selectHash();
     window.addEventListener('hashchange', selectHash);
-    window.addEventListener('scroll', selectLastAtPageEnd, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    const stopListeningScrollEnd = listenScrollEnd(window, armReleaseOnNextScroll);
     window.addEventListener('touchstart', releaseNavigationTarget, { passive: true });
     window.addEventListener('wheel', releaseNavigationTarget, { passive: true });
     window.addEventListener('keydown', releaseNavigationTargetFromKeyboard);
     return () => {
       observer.disconnect();
       window.removeEventListener('hashchange', selectHash);
-      window.removeEventListener('scroll', selectLastAtPageEnd);
+      window.removeEventListener('scroll', handleScroll);
+      stopListeningScrollEnd();
       window.removeEventListener('touchstart', releaseNavigationTarget);
       window.removeEventListener('wheel', releaseNavigationTarget);
       window.removeEventListener('keydown', releaseNavigationTargetFromKeyboard);
@@ -104,6 +122,7 @@ export function CategoryNav({ categories }: Readonly<{ categories: MenuCategory[
             key={category.id}
             onClick={() => {
               navigationTargetRef.current = category.slug;
+              releaseOnNextScrollRef.current = false;
               setActive(category.slug);
             }}
             ref={(element) => {

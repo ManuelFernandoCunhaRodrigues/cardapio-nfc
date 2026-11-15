@@ -8,8 +8,12 @@ import {
   getClientStoreStatus,
   type PublicStoreStatusSettings,
 } from '@/features/store/rules/client-status';
+import {
+  getProductAvailabilityNotice,
+  type ProductAvailabilityNotice,
+} from '@/features/store/rules/product-availability';
 
-import { Icon } from '@/features/menu/components/icons';
+import { Icon, type IconName } from '@/features/menu/components/icons';
 
 const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
@@ -76,6 +80,34 @@ export function StoreInfoStatus({
         </p>
       ) : null}
     </section>
+  );
+}
+
+const availabilityStyle: Record<
+  ProductAvailabilityNotice['tone'],
+  { className: string; icon: IconName }
+> = {
+  available: { className: 'bg-green-soft text-green', icon: 'check' },
+  'store-closed': { className: 'bg-amber-soft text-ink', icon: 'clock' },
+  unavailable: { className: 'bg-danger-soft text-danger', icon: 'alert' },
+};
+
+/** Fica no navegador, como o status do topo, para a página do produto continuar estática. */
+export function ProductAvailability({
+  isAvailable,
+  settings,
+  initialNow,
+}: Readonly<{ isAvailable: boolean; settings: PublicStoreStatusSettings; initialNow: string }>) {
+  const { status } = useLiveStoreStatus(settings, initialNow);
+  const notice = getProductAvailabilityNotice(isAvailable, status);
+  const style = availabilityStyle[notice.tone];
+  return (
+    <p
+      className={`mt-4 flex items-start gap-2 rounded-product px-4 py-3 text-sm font-bold ${style.className}`}
+    >
+      <Icon className="shrink-0" height={18} name={style.icon} width={18} />
+      <span>{notice.text}</span>
+    </p>
   );
 }
 

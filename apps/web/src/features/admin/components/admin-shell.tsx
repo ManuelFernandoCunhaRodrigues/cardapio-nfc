@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { AdminIcon, type AdminIconName } from './admin-icon';
+import { BrandLogo } from '@/components/brand/brand-logo';
 import { SignOutButton } from '@/features/auth/components/sign-out-button';
 import { StoreStatusControl } from '@/features/store/components/store-status-control';
 
@@ -15,6 +15,10 @@ const links: Array<{ href: string; label: string; shortLabel: string; icon: Admi
   { href: '/admin/destaques', label: 'Destaques', shortLabel: 'Destaques', icon: 'star' },
   { href: '/admin/loja', label: 'Dados da loja', shortLabel: 'Loja', icon: 'store' },
 ];
+
+// As duas logos (barra lateral e topo do celular) usam a mesma largura para pedirem o mesmo arquivo:
+// a escondida pelo CSS também é baixada, e assim sai do cache em vez de um segundo download.
+const ADMIN_LOGO_WIDTH = 118;
 
 function isCurrent(pathname: string, href: string) {
   return href === '/admin' ? pathname === href : pathname.startsWith(href);
@@ -39,14 +43,7 @@ export function AdminShell({
     >
       <aside className="fixed inset-y-0 z-40 hidden w-[198px] flex-col bg-ink px-4 py-7 text-cream lg:flex">
         <Link className="mx-auto text-center" href="/admin">
-          <Image
-            alt="Salgaê"
-            className="h-auto w-[118px]"
-            height={76}
-            priority
-            src="/brand/salgae-logo-recortada.webp"
-            width={150}
-          />
+          <BrandLogo className="h-auto w-[118px]" width={ADMIN_LOGO_WIDTH} />
           <span className="lbl mt-1 block text-cream/65">Painel</span>
         </Link>
         <nav aria-label="Painel administrativo" className="mt-8 space-y-1">
@@ -82,14 +79,7 @@ export function AdminShell({
               <StoreStatusControl compact override={statusOverride} storeOpen={storeOpen} />
             </div>
             <Link className="text-center" href="/admin">
-              <Image
-                alt="Salgaê"
-                className="h-[36px] w-auto"
-                height={38}
-                priority
-                src="/brand/salgae-logo-recortada.webp"
-                width={76}
-              />
+              <BrandLogo className="h-[36px] w-auto" width={ADMIN_LOGO_WIDTH} />
               <span className="lbl -mt-0.5 block text-muted">Painel</span>
             </Link>
             <div className="justify-self-end">

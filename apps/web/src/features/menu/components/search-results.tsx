@@ -9,7 +9,7 @@ import * as m from 'motion/react-m';
 import { resultPresence } from '@/components/motion/motion-primitives';
 
 import { filterMenuProducts } from '@/features/menu/rules/search';
-import { sortProductsForHome } from '@salgae/core/rules/product-sort';
+import { selectFeaturedProducts } from '@salgae/core/rules/product-sort';
 import type { MenuCategory, MenuProduct } from '@/features/menu/types';
 
 import { Icon } from './icons';
@@ -30,7 +30,7 @@ export function SearchResults({ products, categories }: Readonly<SearchResultsPr
     () => filterMenuProducts(products, query, categories),
     [products, query, categories],
   );
-  const featured = useMemo(() => sortProductsForHome(products).slice(0, 4), [products]);
+  const featured = useMemo(() => selectFeaturedProducts(products, 4), [products]);
   const resultLabel = !effectiveQuery
     ? 'Escolha uma categoria ou digite o que procura'
     : results.length === 0

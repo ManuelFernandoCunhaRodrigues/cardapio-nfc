@@ -125,9 +125,10 @@ test.describe('achados dos testes no navegador', () => {
 
   test('usa títulos próprios nas páginas públicas', async ({ page }) => {
     for (const screen of [
-      { path: '/cardapio', title: 'Cardápio | Salgaê' },
-      { path: '/busca', title: 'Busca | Salgaê' },
-      { path: '/info', title: 'Informações | Salgaê' },
+      // O nome depois da barra é o cadastrado no painel (no banco de teste, "Salgaê Lanchonete").
+      { path: '/cardapio', title: /^Cardápio \| Salgaê/ },
+      { path: '/busca', title: /^Busca \| Salgaê/ },
+      { path: '/info', title: /^Informações \| Salgaê/ },
     ]) {
       await page.goto(screen.path);
       await expect(page).toHaveTitle(screen.title);
