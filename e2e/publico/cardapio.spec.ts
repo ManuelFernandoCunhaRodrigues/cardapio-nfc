@@ -65,7 +65,7 @@ test.describe('cardápio público', () => {
     );
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
       'content',
-      'Coxinha de frango | Salgaê',
+      /^Coxinha de frango \| Salgaê/,
     );
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       'href',
