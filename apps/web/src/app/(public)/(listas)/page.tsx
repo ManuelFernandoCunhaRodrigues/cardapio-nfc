@@ -6,20 +6,12 @@ import { MediaImage } from '@/features/media/components/media-image';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
+import { getCategoryIcon } from '@/features/menu/rules/category-icon';
 import { getPublicMenu, getPublicStore } from '@/lib/api/public-api-client';
+import type { MenuCategory } from '@/features/menu/types';
 import { selectFeaturedProducts } from '@salgae/core/rules/product-sort';
 
 export const revalidate = 60;
-
-const categoryEmoji: Record<string, string> = {
-  coxinhas: '🥟',
-  pasteis: '🥠',
-  porcoes: '🍟',
-  combos: '🍱',
-  drinks: '🥤',
-  bebidas: '🥤',
-  doces: '🍫',
-};
 
 export default async function HomePage() {
   const [menu, settings] = await Promise.all([getPublicMenu(), getPublicStore()]);
@@ -61,9 +53,7 @@ export default async function HomePage() {
                   src={getPublicImageVariantUrl('product-images', category.image_path, 'card')}
                 />
               ) : (
-                <span aria-hidden="true" className="grid place-items-center text-2xl">
-                  {categoryEmoji[category.slug] ?? '🍽️'}
-                </span>
+                <CategoryFallbackIcon category={category} />
               )}
             </span>
             <span className="line-clamp-1 w-16">{category.name}</span>
@@ -95,5 +85,17 @@ export default async function HomePage() {
         )}
       </section>
     </main>
+  );
+}
+
+function CategoryFallbackIcon({ category }: Readonly<{ category: MenuCategory }>) {
+  const icon = getCategoryIcon(category);
+  return (
+    <span
+      aria-hidden="true"
+      className={`grid place-items-center ${icon.kind === 'emoji' ? 'text-2xl' : 'disp bg-peach text-xl font-bold text-brand-strong'}`}
+    >
+      {icon.symbol}
+    </span>
   );
 }
