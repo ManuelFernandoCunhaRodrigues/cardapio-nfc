@@ -210,13 +210,17 @@ test.describe('listas do painel', () => {
     { tag: '@leitura' },
     async ({ page }) => {
       await page.goto('/admin/produtos');
-      const search = page.getByPlaceholder('Buscar por nome');
+      // O celular e o desktop têm cada um o seu campo de busca; só um aparece por vez.
+      const search = page.getByPlaceholder('Buscar por nome').filter({ visible: true });
       await search.fill('coxinha');
       const serverRequests: string[] = [];
       page.on('request', (request) => {
         if (request.url().includes('filtro=')) serverRequests.push(request.url());
       });
-      await page.getByRole('button', { name: 'Escondidos', exact: true }).click();
+      await page
+        .getByRole('button', { name: 'Escondidos', exact: true })
+        .filter({ visible: true })
+        .click();
       await expect(page).toHaveURL(/filtro=desativados/);
       await expect(search).toHaveValue('coxinha');
       expect(serverRequests).toEqual([]);
