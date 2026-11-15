@@ -102,7 +102,13 @@ test.describe('formulários do painel', () => {
     adminDb,
     uniqueName,
   }) => {
-    await withStoreSettingsRestored(adminDb, async () => {
+    await withStoreSettingsRestored(adminDb, async (settings) => {
+      // Parte de "auto" salvo para a troca do <select> ser uma alteração de verdade.
+      const { error } = await adminDb.client
+        .from('store_settings')
+        .update({ status_override: 'auto' })
+        .eq('id', settings.id);
+      expect(error).toBeNull();
       await page.goto('/admin/loja');
       const storeName = uniqueName('loja-digitada');
       const notice = uniqueName('aviso-digitado');
@@ -110,6 +116,8 @@ test.describe('formulários do painel', () => {
       await page.getByLabel('Aviso curto').fill(notice);
       const mapsUrl = page.getByLabel('Link do mapa');
       await mapsUrl.fill('nao-e-um-link');
+      const statusOverride = page.getByLabel('Funcionamento agora');
+      await statusOverride.selectOption('closed');
       await page
         .getByRole('button', { name: 'Salvar dados da loja' })
         .filter({ visible: true })
@@ -120,6 +128,7 @@ test.describe('formulários do painel', () => {
       await expect(mapsUrl).toHaveValue('nao-e-um-link');
       await expect(page.getByLabel('Nome da loja')).toHaveValue(storeName);
       await expect(page.getByLabel('Aviso curto')).toHaveValue(notice);
+      await expect(statusOverride).toHaveValue('closed');
     });
   });
 

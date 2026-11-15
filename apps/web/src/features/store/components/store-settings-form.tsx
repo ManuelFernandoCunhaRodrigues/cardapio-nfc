@@ -129,13 +129,14 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
         <p className="mt-1 text-sm text-muted">Horários de Fortaleza e São Paulo.</p>
         <label className="mt-4 block text-sm font-bold text-ink" htmlFor="status_override">
           Funcionamento agora
-          {/* A key recria o select com o valor salvo: o React reinicia o formulário depois da action
-              e, sem ela, o select voltaria à opção antiga e a gravaria de novo no próximo envio. */}
+          {/* O <select> só aplica o defaultValue ao montar: a key o recria com o valor salvo, ou com o
+              enviado quando a action recusa. Sem ela, o reinício do formulário depois da action
+              voltaria à opção antiga e a gravaria de novo no próximo envio. */}
           <select
             className="mt-1.5 min-h-11 w-full rounded-xl border border-border bg-surface-inner px-3.5 text-sm font-normal text-ink sm:max-w-md"
             defaultValue={defaults.text('status_override', settings.status_override)}
             id="status_override"
-            key={settings.status_override}
+            key={defaults.text('status_override', settings.status_override)}
             name="status_override"
           >
             <option value="auto">Seguir os horários abaixo</option>
