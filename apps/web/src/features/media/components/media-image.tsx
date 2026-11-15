@@ -24,8 +24,9 @@ export function MediaImage({
   srcSet,
   sizes,
 }: Readonly<MediaImageProps>) {
-  const [failed, setFailed] = useState(false);
-  if (!src || failed)
+  // Guarda qual endereço falhou: trocar o `src` (foto nova) tenta carregar de novo.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  if (!src || failedSrc === src)
     return (
       <div
         aria-hidden={alt ? undefined : true}
@@ -42,7 +43,7 @@ export function MediaImage({
       className={`object-cover ${className}`}
       fetchPriority={priority ? 'high' : undefined}
       loading={priority ? 'eager' : 'lazy'}
-      onError={() => setFailed(true)}
+      onError={() => setFailedSrc(src)}
       sizes={sizes}
       src={src}
       srcSet={srcSet}
