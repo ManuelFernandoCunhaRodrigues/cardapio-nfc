@@ -1,5 +1,5 @@
 import type { AdminProduct, FieldErrors } from '@salgae/core/contracts/admin-api';
-import { INVALID_PRICE_MESSAGE, parsePriceBRL } from '@salgae/core/rules/parse-price';
+import { parsePriceBRL, readPriceInput } from '@salgae/core/rules/parse-price';
 import {
   fieldsFromProductSituation,
   productSituationFromFields,
@@ -83,8 +83,8 @@ export function validateProductDraft(draft: ProductDraft): FieldErrors | null {
     const field = issue.path.join('.');
     fieldErrors[field] ??= [issue.message];
   }
-  if (!fieldErrors.price && parsePriceBRL(draft.price) === null) {
-    fieldErrors.price = [INVALID_PRICE_MESSAGE];
-  }
+  // Mesma leitura da API: preço inválido ou acima do teto vira erro no campo antes de enviar.
+  const price = readPriceInput(draft.price);
+  if (!fieldErrors.price && !price.ok) fieldErrors.price = [price.message];
   return Object.keys(fieldErrors).length ? fieldErrors : null;
 }
