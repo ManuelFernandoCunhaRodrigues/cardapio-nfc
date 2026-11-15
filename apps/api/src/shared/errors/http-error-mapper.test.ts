@@ -5,7 +5,9 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  PayloadTooLargeError,
   UnauthorizedError,
+  UnsupportedMediaTypeError,
   ValidationError,
 } from './domain-errors';
 import { mapErrorToHttp } from './http-error-mapper';
@@ -17,6 +19,8 @@ describe('mapErrorToHttp', () => {
     ['autorização', new ForbiddenError('forbidden'), 403],
     ['recurso ausente', new NotFoundError('not found'), 404],
     ['conflito', new ConflictError('conflict'), 409],
+    ['conteúdo grande demais', new PayloadTooLargeError('too large'), 413],
+    ['formato não suportado', new UnsupportedMediaTypeError('unsupported'), 415],
   ])('mapeia o erro de %s para o status correto', (_label, error, status) => {
     expect(mapErrorToHttp(error)).toEqual({ status, message: error.message, report: false });
   });

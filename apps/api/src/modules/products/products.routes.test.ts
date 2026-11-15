@@ -10,7 +10,16 @@ import type { AppHonoEnv } from '../../shared/types';
 import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
 import { itRequiresAdmin } from '../../test-support/admin-only-routes';
 import { createImageController } from '../media/image/image.controller';
-import { ImageService, type ImageRepository } from '../media/image/image.service';
+import {
+  ImageResolutionTooHighError,
+  ImageTooLargeError,
+  UnsupportedImageFormatError,
+} from '../media/image/image-compressor';
+import {
+  ImageService,
+  type ImageCompressor,
+  type ImageRepository,
+} from '../media/image/image.service';
 import { createProductsController } from './products.controller';
 import { createProductsRoutes } from './products.routes';
 import { ProductsService, type ProductRepository } from './products.service';
@@ -55,12 +64,14 @@ function fakeImageRepository(): ImageRepository {
   };
 }
 
-function testApp(productRepository = fakeProductRepository()) {
+const compressedImage: ImageCompressor = async () => ({
+  detail: Buffer.from('detail'),
+  card: Buffer.from('card'),
+});
+
+function testApp(productRepository = fakeProductRepository(), compress = compressedImage) {
   const products = new ProductsService(productRepository);
-  const images = new ImageService(fakeImageRepository(), async () => ({
-    detail: Buffer.from('detail'),
-    card: Buffer.from('card'),
-  }));
+  const images = new ImageService(fakeImageRepository(), compress);
   const app = new Hono<AppHonoEnv>();
   app.onError(errorHandler);
   app.route(
@@ -210,5 +221,34 @@ describe('rotas de produtos do painel', () => {
     expect(await response.json()).toMatchObject({
       message: expect.stringContaining('imagem válida'),
     });
+  });
+
+  it('POST /:id/image grava a foto e devolve o caminho', async () => {
+    const file = new File([Buffer.from('jpeg')], 'photo.jpg', { type: 'image/jpeg' });
+
+    const response = await testApp().request(
+      `/v1/admin/products/${productId}/image`,
+      imageRequest(file),
+    );
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({
+      path: expect.stringMatching(new RegExp(`^products/${productId}/`)),
+    });
+  });
+
+  it.each([
+    ['HEIC do iPhone', new UnsupportedImageFormatError(), 415, 'HEIC/HEIF'],
+    ['pixels demais', new ImageResolutionTooHighError(), 413, '40 megapixels'],
+    ['acima do limite do bucket', new ImageTooLargeError(), 413, 'menos de 1 MB'],
+  ])('foto %s responde %i com mensagem clara', async (_label, error, status, text) => {
+    const file = new File([Buffer.from('heic')], 'IMG_0001.HEIC', { type: 'image/heic' });
+
+    const response = await testApp(fakeProductRepository(), async () => {
+      throw error;
+    }).request(`/v1/admin/products/${productId}/image`, imageRequest(file));
+
+    expect(response.status).toBe(status);
+    expect(await response.json()).toMatchObject({ message: expect.stringContaining(text) });
   });
 });

@@ -6,11 +6,13 @@ import {
   type DomainError,
   ForbiddenError,
   NotFoundError,
+  PayloadTooLargeError,
   UnauthorizedError,
+  UnsupportedMediaTypeError,
   ValidationError,
 } from './domain-errors';
 
-type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 500 | 504;
+type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 500 | 504;
 
 type HttpError = {
   status: ErrorStatus;
@@ -28,6 +30,8 @@ const domainErrorMappings: Array<{
   { type: ForbiddenError, status: 403 },
   { type: NotFoundError, status: 404 },
   { type: ConflictError, status: 409 },
+  { type: PayloadTooLargeError, status: 413 },
+  { type: UnsupportedMediaTypeError, status: 415 },
 ];
 
 function findDomainMapping(error: Error) {

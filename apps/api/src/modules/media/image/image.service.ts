@@ -5,10 +5,19 @@ import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
 import {
   ConflictError,
   NotFoundError,
+  PayloadTooLargeError,
+  UnsupportedMediaTypeError,
   ValidationError,
 } from '../../../shared/errors/domain-errors';
 import { reportServerError } from '../../../shared/observability';
-import { ImageTooSmallError, InvalidImageError, type CompressedImage } from './image-compressor';
+import {
+  ImageResolutionTooHighError,
+  ImageTooLargeError,
+  ImageTooSmallError,
+  InvalidImageError,
+  UnsupportedImageFormatError,
+  type CompressedImage,
+} from './image-compressor';
 
 export type ImageTarget = 'product' | 'highlight' | 'category';
 
@@ -28,6 +37,11 @@ const messages = {
   missing: 'Escolha uma foto antes de enviar.',
   invalid: 'Este arquivo não é uma imagem válida. Escolha outra foto.',
   tooSmall: 'Escolha uma foto com pelo menos 400 px no menor lado.',
+  unsupportedFormat:
+    'Fotos HEIC/HEIF (padrão do iPhone) não são aceitas. Envie a foto em JPEG, PNG ou WebP.',
+  resolutionTooHigh: 'A foto tem pixels demais (máximo de 40 megapixels). Reduza e envie de novo.',
+  tooLarge:
+    'Não foi possível deixar esta foto com menos de 1 MB. Recorte a imagem ou escolha outra foto.',
   productHasVideo: 'Remova o vídeo antes de remover a foto de capa.',
   linkFailed:
     'A foto foi validada, mas não pôde ser vinculada ao item. A foto anterior foi mantida.',
@@ -50,6 +64,19 @@ const targetSettings: Record<ImageTarget, { folder: string; notFound: string; no
     noImage: 'Esta categoria já não tem foto.',
   },
 };
+
+function translateCompressionError(error: unknown): unknown {
+  if (error instanceof ImageTooSmallError) return new ValidationError(messages.tooSmall);
+  if (error instanceof InvalidImageError) return new ValidationError(messages.invalid);
+  if (error instanceof UnsupportedImageFormatError) {
+    return new UnsupportedMediaTypeError(messages.unsupportedFormat);
+  }
+  if (error instanceof ImageResolutionTooHighError) {
+    return new PayloadTooLargeError(messages.resolutionTooHigh);
+  }
+  if (error instanceof ImageTooLargeError) return new PayloadTooLargeError(messages.tooLarge);
+  return error;
+}
 
 export class ImageService {
   constructor(
@@ -88,9 +115,7 @@ export class ImageService {
     try {
       return await this.compress(Buffer.from(await file.arrayBuffer()));
     } catch (error) {
-      if (error instanceof ImageTooSmallError) throw new ValidationError(messages.tooSmall);
-      if (error instanceof InvalidImageError) throw new ValidationError(messages.invalid);
-      throw error;
+      throw translateCompressionError(error);
     }
   }
 
