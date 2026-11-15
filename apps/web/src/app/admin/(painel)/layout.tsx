@@ -13,9 +13,9 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 export default async function AdminPanelLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const admin = await requireAdmin();
+  // As duas leituras não dependem uma da outra; em série, cada clique esperava as duas idas à API.
+  const [admin, store] = await Promise.all([requireAdmin(), getAdminStoreSettings()]);
   if (!admin) return <UnauthorizedAccess />;
-  const store = await getAdminStoreSettings();
   const loaded = store.status === 'loaded';
   return (
     <MotionProvider>
