@@ -5,8 +5,9 @@ import { timeout } from 'hono/timeout';
 import { RequestCancelledError } from '../errors/request-cancelled-error';
 import type { AppHonoEnv } from '../types';
 
-const REQUEST_TIMEOUT_MS = 15_000;
+export const DEFAULT_REQUEST_TIMEOUT_MS = 15_000;
 const NEVER_CANCELLED = new AbortController().signal;
+type TimeoutDuration = number | ((context: Context<AppHonoEnv>) => number);
 
 /**
  * Responde 504 depois do tempo limite e cancela o AbortSignal da requisição. O `timeout` do Hono
@@ -15,9 +16,10 @@ const NEVER_CANCELLED = new AbortController().signal;
  * subiu os arquivos deve terminar o vínculo mesmo se a aba fechar.
  */
 export function requestTimeoutMiddleware(
-  timeoutMs = REQUEST_TIMEOUT_MS,
+  duration: TimeoutDuration = DEFAULT_REQUEST_TIMEOUT_MS,
 ): MiddlewareHandler<AppHonoEnv> {
   return async (context, next) => {
+    const timeoutMs = typeof duration === 'function' ? duration(context) : duration;
     const controller = new AbortController();
     context.set('requestSignal', controller.signal);
     const cancelOnTimeout = timeout(timeoutMs, () => {

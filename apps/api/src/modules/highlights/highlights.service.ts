@@ -5,19 +5,19 @@ import {
   type ReorderInput,
 } from '@salgae/core/contracts/admin-api';
 import type { highlightFormSchema } from '@salgae/core/schemas/highlight';
+import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
 import type { z } from 'zod';
 
 import { requireFound } from '../../shared/errors/record-guards';
 import { moveInOrder, type OrderableRepository } from '../../shared/ordering/move-in-order';
-import {
-  removeImageIfUnused,
-  type DeletedRecordImageStore,
-} from '../media/image/remove-image-if-unused';
+import { removeMediaIfUnused } from '../media/remove-media-if-unused';
 
 export type HighlightInput = z.infer<typeof highlightFormSchema>;
 
 /** Os métodos que gravam devolvem `false` (ou `null`) quando o destaque não existe. */
-export interface HighlightRepository extends OrderableRepository, DeletedRecordImageStore {
+export interface HighlightRepository extends OrderableRepository {
+  isImageInUse(imagePath: string): Promise<boolean>;
+  removeImageFiles(filePaths: string[]): Promise<void>;
   listForAdmin(): Promise<unknown[]>;
   create(input: HighlightInput): Promise<string>;
   update(id: string, input: HighlightInput): Promise<boolean>;
@@ -62,9 +62,12 @@ export class HighlightsService {
   async deleteHighlight(id: string): Promise<void> {
     const deleted = requireFound(await this.repository.delete(id), messages.notFound);
     if (deleted.imagePath) {
-      await removeImageIfUnused(
-        this.repository,
+      await removeMediaIfUnused(
         deleted.imagePath,
+        {
+          isInUse: (path) => this.repository.isImageInUse(path),
+          remove: (path) => this.repository.removeImageFiles(mediaObjectPaths(path)),
+        },
         'highlight.image_cleanup_failed',
       );
     }

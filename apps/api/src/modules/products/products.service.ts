@@ -12,8 +12,8 @@ import { fieldsFromProductSituation } from '@salgae/core/rules/product-situation
 import { ValidationError } from '../../shared/errors/domain-errors';
 import { MissingReferenceError } from '../../shared/errors/persistence-errors';
 import { requireFound, withUniqueSlug } from '../../shared/errors/record-guards';
-import { reportServerError } from '../../shared/observability';
 import { moveInOrder } from '../../shared/ordering/move-in-order';
+import { removeMediaIfUnused } from '../media/remove-media-if-unused';
 
 type ProductMedia = { imagePath: string | null; videoPath: string | null };
 
@@ -88,18 +88,19 @@ export class ProductsService {
   }
 
   private async cleanupMedia(kind: 'image' | 'video', path: string | null): Promise<void> {
-    if (!path) return;
-    try {
-      const inUse =
-        kind === 'image'
-          ? await this.repository.isImageInUse(path)
-          : await this.repository.isVideoInUse(path);
-      if (inUse) return;
-      if (kind === 'image') await this.repository.removeImageFiles(mediaObjectPaths(path));
-      else await this.repository.removeVideoFile(path);
-    } catch (error) {
-      reportServerError({ event: `product.${kind}_cleanup_failed`, error });
-    }
+    await removeMediaIfUnused(
+      path,
+      kind === 'image'
+        ? {
+            isInUse: (current) => this.repository.isImageInUse(current),
+            remove: (current) => this.repository.removeImageFiles(mediaObjectPaths(current)),
+          }
+        : {
+            isInUse: (current) => this.repository.isVideoInUse(current),
+            remove: (current) => this.repository.removeVideoFile(current),
+          },
+      `product.${kind}_cleanup_failed`,
+    );
   }
 
   /** O preço só é conferido depois dos outros campos, como no formulário de antes. */

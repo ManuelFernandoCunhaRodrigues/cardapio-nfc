@@ -2,6 +2,8 @@ import {
   apiErrorResponseSchema,
   createdResponseSchema,
   imageResponseSchema,
+  videoResponseSchema,
+  videoUploadResponseSchema,
 } from '@salgae/core/contracts/admin-api';
 import type { z } from 'zod';
 
@@ -60,6 +62,12 @@ export function createAdminApiClient({ getToken, fetchImplementation }: AdminApi
     },
     async upload(path: string, body: FormData): Promise<string> {
       return imageResponseSchema.parse(await (await send('POST', path, body)).json()).path;
+    },
+    async prepareVideo(path: string, body: { mimeType: string; size: number }) {
+      return videoUploadResponseSchema.parse(await (await send('POST', path, body)).json());
+    },
+    async processVideo(path: string, rawPath: string) {
+      return videoResponseSchema.parse(await (await send('POST', path, { path: rawPath })).json());
     },
   };
 }

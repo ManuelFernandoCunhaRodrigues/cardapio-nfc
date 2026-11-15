@@ -43,9 +43,8 @@ const eslintConfig = [
     rules: restrictImports([...supabaseImports, ...mediaProcessingImports]),
   },
   {
-    // O vídeo fica no Next (ver docs/planejamento/dois-projetos-por-ambiente.md) e os testes
-    // geram imagens de verdade.
-    files: ['src/features/media/server/video/**', 'src/**/*.test.ts'],
+    // Testes de QR code geram imagens reais com Sharp.
+    files: ['src/**/*.test.ts'],
     rules: restrictImports([...supabaseImports, ...backendImports]),
   },
 ];

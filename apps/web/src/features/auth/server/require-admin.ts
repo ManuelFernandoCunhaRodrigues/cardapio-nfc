@@ -10,7 +10,7 @@ export type AdminSession = {
   name: string | null;
 };
 
-export type AdminAuthorization =
+type AdminAuthorization =
   | { status: 'unauthenticated' }
   | { status: 'forbidden' }
   | { status: 'authorized'; admin: AdminSession };
@@ -19,7 +19,7 @@ export type AdminAuthorization =
  * A API confere o token e o perfil (`role = admin` e ativo); aqui só lemos o veredito, uma vez por
  * renderização (`cache`), mesmo que layout e página perguntem.
  */
-export const getAdminAuthorization = cache(async (): Promise<AdminAuthorization> => {
+const getAdminAuthorization = cache(async (): Promise<AdminAuthorization> => {
   try {
     const session = await adminApi().read(adminApiPaths.session, adminSessionResponseSchema);
     return { status: 'authorized', admin: { userId: session.userId, name: session.name } };

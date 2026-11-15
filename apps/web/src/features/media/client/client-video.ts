@@ -5,7 +5,7 @@ import {
   VIDEO_DURATION_TOLERANCE_SECONDS,
   VIDEO_RAW_MAX_BYTES,
   type AcceptedVideoMimeType,
-} from '@/features/media/server/video/constants';
+} from '@salgae/core/rules/video-limits';
 
 export const VIDEO_MAX_BYTES = VIDEO_RAW_MAX_BYTES;
 const VIDEO_MAX_DURATION_SECONDS = VIDEO_DURATION_TOLERANCE_SECONDS;

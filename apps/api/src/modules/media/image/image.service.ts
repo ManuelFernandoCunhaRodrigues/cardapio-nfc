@@ -18,6 +18,7 @@ import {
   UnsupportedImageFormatError,
   type CompressedImage,
 } from './image-compressor';
+import { removeMediaIfUnused } from '../remove-media-if-unused';
 
 export type ImageTarget = 'product' | 'highlight' | 'category';
 
@@ -181,12 +182,13 @@ export class ImageService {
   }
 
   private async removeIfUnused(target: ImageTarget, path: string | null): Promise<void> {
-    if (!path) return;
-    try {
-      if (await this.repository.isImageInUse(path)) return;
-      await this.repository.removeFiles(target, mediaObjectPaths(path));
-    } catch (error) {
-      reportServerError({ event: 'image.previous_cleanup_failed', error });
-    }
+    await removeMediaIfUnused(
+      path,
+      {
+        isInUse: (current) => this.repository.isImageInUse(current),
+        remove: (current) => this.repository.removeFiles(target, mediaObjectPaths(current)),
+      },
+      'image.previous_cleanup_failed',
+    );
   }
 }

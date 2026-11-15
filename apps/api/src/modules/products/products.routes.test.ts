@@ -1,4 +1,6 @@
 import { Hono } from 'hono';
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { errorHandler } from '../../shared/http/error-handler';
@@ -11,6 +13,8 @@ import type { AppHonoEnv } from '../../shared/types';
 import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
 import { itRequiresAdmin } from '../../test-support/admin-only-routes';
 import { createImageController } from '../media/image/image.controller';
+import { createVideoController } from '../media/video/video.controller';
+import { VideoService, type VideoRepository } from '../media/video/video.service';
 import {
   ImageResolutionTooHighError,
   ImageTooLargeError,
@@ -65,12 +69,31 @@ function fakeImageRepository(): ImageRepository {
   };
 }
 
+function fakeVideoRepository(): VideoRepository {
+  return {
+    findProduct: async () => ({ imagePath: 'products/id/cover', videoPath: null }),
+    replaceVideoPath: async () => true,
+    createSignedUploadUrl: async () => ({ signedUrl: '/signed', token: 'token' }),
+    downloadRaw: async () => new Blob([Buffer.from('video')]),
+    uploadVideo: async () => undefined,
+    isVideoInUse: async () => false,
+    removeVideo: async () => undefined,
+    removeRaw: async () => undefined,
+  };
+}
+
 const compressedImage: ImageCompressor = async () => ({
   detail: Buffer.from('detail'),
   card: Buffer.from('card'),
 });
 
-function testApp(productRepository = fakeProductRepository(), compress = compressedImage) {
+function testApp(
+  productRepository = fakeProductRepository(),
+  compress = compressedImage,
+  videos = new VideoService(fakeVideoRepository(), async () => {
+    throw new Error('compactação não esperada neste teste');
+  }),
+) {
   const products = new ProductsService(productRepository);
   const images = new ImageService(fakeImageRepository(), compress);
   const app = new Hono<AppHonoEnv>();
@@ -81,6 +104,7 @@ function testApp(productRepository = fakeProductRepository(), compress = compres
       fakeAdminClients(),
       createProductsController(() => products),
       createImageController('product', () => images),
+      createVideoController(() => videos),
     ),
   );
   return app;
@@ -100,6 +124,9 @@ describe('rotas de produtos do painel', () => {
     ['POST', `/v1/admin/products/${productId}/order`],
     ['POST', `/v1/admin/products/${productId}/image`],
     ['DELETE', `/v1/admin/products/${productId}/image`],
+    ['POST', `/v1/admin/products/${productId}/video/upload`],
+    ['POST', `/v1/admin/products/${productId}/video`],
+    ['DELETE', `/v1/admin/products/${productId}/video`],
     ['DELETE', `/v1/admin/products/${productId}`],
   ] as const);
 
@@ -180,6 +207,39 @@ describe('rotas de produtos do painel', () => {
     expect(repository.update).not.toHaveBeenCalled();
   });
 
+  it('POST /:id/video responde 409 quando outra requisição troca o vídeo primeiro', async () => {
+    const repository = fakeVideoRepository();
+    repository.replaceVideoPath = async () => false;
+    const videos = new VideoService(repository, async ({ workDir }) => {
+      const outputPath = join(workDir!, 'compactado.mp4');
+      await writeFile(outputPath, Buffer.from('compactado'));
+      return {
+        outputPath,
+        inputBytes: 10,
+        outputBytes: 10,
+        duration: 1,
+        width: 320,
+        height: 180,
+        fps: 24,
+        hdrConverted: false,
+        usedFallback: false,
+        elapsedMs: 1,
+      };
+    });
+    const rawPath = `uploads/${productId}_33333333-3333-4333-8333-333333333333.mp4`;
+
+    const response = await testApp(fakeProductRepository(), compressedImage, videos).request(
+      `/v1/admin/products/${productId}/video`,
+      adminRequest('POST', { path: rawPath }),
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      status: 'error',
+      message: expect.stringContaining('outra aba'),
+    });
+  });
+
   it('PUT edita e DELETE apaga o produto', async () => {
     const repository = fakeProductRepository();
     const app = testApp(repository);
@@ -239,6 +299,19 @@ describe('rotas de produtos do painel', () => {
   });
 
   it.each([
+    ['formato inválido', { mimeType: 'video/avi', size: 1_024 }, 415],
+    ['arquivo grande demais', { mimeType: 'video/mp4', size: 52_428_801 }, 413],
+  ])('POST /:id/video/upload recusa %s com %i', async (_label, body, status) => {
+    const response = await testApp().request(
+      `/v1/admin/products/${productId}/video/upload`,
+      adminRequest('POST', body),
+    );
+
+    expect(response.status).toBe(status);
+    expect(await response.json()).toMatchObject({ status: 'error', message: expect.any(String) });
+  });
+
+  it.each([
     ['HEIC do iPhone', new UnsupportedImageFormatError(), 415, 'HEIC/HEIF'],
     ['pixels demais', new ImageResolutionTooHighError(), 413, '40 megapixels'],
     ['acima do limite do bucket', new ImageTooLargeError(), 413, 'menos de 1 MB'],
@@ -278,6 +351,12 @@ describe('rotas de produtos do painel', () => {
           fakeAdminClients(),
           createProductsController(() => new ProductsService(fakeProductRepository())),
           createImageController('product', () => images),
+          createVideoController(
+            () =>
+              new VideoService(fakeVideoRepository(), async () => {
+                throw new Error('compactação não esperada neste teste');
+              }),
+          ),
         ),
       );
       const file = new File([Buffer.from('jpeg')], 'photo.jpg', { type: 'image/jpeg' });
