@@ -27,8 +27,7 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Renova a sessão vencida e confere a assinatura do token com a chave pública, sem ir ao Auth a
-  // cada clique. Não substitua por getSession(), que não confere nada; quem decide o acesso é a API.
-  await supabase.auth.getClaims();
+  // Não substitua por getSession(): getUser valida o token com o Auth do Supabase.
+  await supabase.auth.getUser();
   return response;
 }
