@@ -71,6 +71,20 @@ describe('ProductsService', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it('recusa preço acima do teto antes de chegar ao banco', async () => {
+    const create = vi.fn(async () => productId);
+
+    const error = await new ProductsService(fakeRepository({ create }))
+      .createProduct({ ...input, price: 'R$ 30.000.000,00' })
+      .catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(ValidationError);
+    expect(error).toMatchObject({
+      fieldErrors: { price: ['O preço máximo é R$ 99.999,99. Confira se não sobrou um zero.'] },
+    });
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('converte a situação em campos de visibilidade', async () => {
     const setSituation = vi.fn(async () => true);
 

@@ -28,7 +28,7 @@ export class SupabaseProductsRepository implements ProductRepository {
       .insert(record)
       .select('id')
       .single();
-    if (error) throw translateDatabaseError(error);
+    if (error) throw translateDatabaseError(error, 'save');
     return data.id;
   }
 
@@ -38,7 +38,7 @@ export class SupabaseProductsRepository implements ProductRepository {
       .update(record)
       .eq('id', id)
       .select('id');
-    if (error) throw translateDatabaseError(error);
+    if (error) throw translateDatabaseError(error, 'save');
     return data.length > 0;
   }
 

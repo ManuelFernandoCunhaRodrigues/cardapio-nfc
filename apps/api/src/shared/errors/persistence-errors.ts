@@ -7,3 +7,8 @@ export class UniqueViolationError extends Error {
 export class ReferencedRecordError extends Error {
   override readonly name = 'ReferencedRecordError';
 }
+
+/** O banco recusou a gravação porque o registro apontado (a categoria, por exemplo) não existe. */
+export class MissingReferenceError extends Error {
+  override readonly name = 'MissingReferenceError';
+}

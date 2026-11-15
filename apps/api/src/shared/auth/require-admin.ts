@@ -1,8 +1,10 @@
+import { isActiveAdmin } from '@salgae/core/rules/admin-access';
 import type { MiddlewareHandler } from 'hono';
 
 import { ForbiddenError, UnauthorizedError } from '../errors/domain-errors';
 import type { SupabaseClientFactory } from '../supabase/supabase-client-factory';
 import type { AppHonoEnv } from '../types';
+import { SupabaseAdminProfileRepository } from './admin-profile.repository';
 
 const unauthorizedMessage = 'Sua sessão expirou. Entre novamente.';
 const forbiddenMessage = 'Você não tem permissão para acessar este recurso.';
@@ -21,15 +23,8 @@ export function requireAdmin(clients: SupabaseClientFactory): MiddlewareHandler<
     const { data: authData, error: authError } = await supabase.auth.getUser(accessToken);
     if (authError || !authData.user) throw new UnauthorizedError(unauthorizedMessage);
 
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role, is_active, name')
-      .eq('id', authData.user.id)
-      .maybeSingle();
-    if (profileError) throw profileError;
-    if (profile?.role !== 'admin' || !profile.is_active) {
-      throw new ForbiddenError(forbiddenMessage);
-    }
+    const profile = await new SupabaseAdminProfileRepository(supabase).findById(authData.user.id);
+    if (!isActiveAdmin(profile)) throw new ForbiddenError(forbiddenMessage);
 
     context.set('user', authData.user);
     context.set('adminName', profile.name);
