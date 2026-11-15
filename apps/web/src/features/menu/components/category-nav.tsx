@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 import { listenScrollEnd } from '@/features/menu/client/listen-scroll-end';
+import { useHorizontalWheel } from '@/features/menu/hooks/use-horizontal-wheel';
 import type { MenuCategory } from '@/features/menu/types';
 
 export function CategoryNav({ categories }: Readonly<{ categories: MenuCategory[] }>) {
@@ -12,6 +13,7 @@ export function CategoryNav({ categories }: Readonly<{ categories: MenuCategory[
   const chipRefs = useRef(new Map<string, HTMLAnchorElement>());
   const navigationTargetRef = useRef<string | null>(null);
   const releaseOnNextScrollRef = useRef(false);
+  useHorizontalWheel(rowRef);
 
   useEffect(() => {
     const sections = categories
@@ -109,9 +111,10 @@ export function CategoryNav({ categories }: Readonly<{ categories: MenuCategory[
   }, [active]);
 
   return (
-    <nav aria-label="Categorias do cardápio" className="sticky top-0 z-20 bg-cream py-1">
+    <nav aria-label="Categorias do cardápio" className="sticky top-0 z-20 bg-cream pb-1">
+      {/* pt-1: o contorno de foco dos botões fica para fora e a trilha com rolagem o cortaria. */}
       <div
-        className="flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-2 overflow-x-auto px-4 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         ref={rowRef}
       >
         {categories.map((category) => (

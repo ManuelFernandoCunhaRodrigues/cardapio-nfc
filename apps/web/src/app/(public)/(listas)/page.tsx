@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { HighlightBanner } from '@/features/menu/components/highlight-banner';
+import { HorizontalScroll } from '@/features/menu/components/horizontal-scroll';
 import { Icon } from '@/features/menu/components/icons';
 import { MediaImage } from '@/features/media/components/media-image';
 import { ProductCard } from '@/features/menu/components/product-card';
@@ -40,8 +41,9 @@ export default async function HomePage() {
         </p>
       ) : null}
       <HighlightBanner highlights={menu.highlights} />
-      <nav
+      <HorizontalScroll
         aria-label="Categorias"
+        as="nav"
         className="-mx-4 mt-3 flex gap-3.5 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {menu.categories.map((category) => (
@@ -65,7 +67,7 @@ export default async function HomePage() {
             <span className="line-clamp-1 w-16">{category.name}</span>
           </Link>
         ))}
-      </nav>
+      </HorizontalScroll>
       <section className="mt-5" aria-labelledby="mais-pedidos">
         <div className="flex items-center justify-between gap-3">
           <h2 className="disp text-lg font-semibold text-ink" id="mais-pedidos">
