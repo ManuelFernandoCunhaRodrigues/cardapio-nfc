@@ -16,9 +16,7 @@ export function HighlightSlide({
   isActive,
 }: Readonly<{ highlight: MenuHighlight; position: number; total: number; isActive: boolean }>) {
   const title = splitLastWord(highlight.title);
-  const imageSrc = highlight.image_path?.startsWith('/')
-    ? highlight.image_path
-    : getPublicImageVariantUrl('highlight-images', highlight.image_path, 'detail');
+  const imageSrc = getPublicImageVariantUrl('highlight-images', highlight.image_path, 'detail');
   return (
     <div
       aria-hidden={!isActive}
