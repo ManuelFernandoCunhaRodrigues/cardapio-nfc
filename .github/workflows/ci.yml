@@ -36,6 +36,8 @@ jobs:
       - run: npm run typecheck
       # Arquivos, exports e dependências sem uso (exceções justificadas em knip.jsonc).
       - run: npm run knip
+      # Falhas conhecidas nas dependências que vão para o ar (hono e next já passaram por isso).
+      - run: npm audit --omit=dev --audit-level=moderate
       - run: npm run test:coverage
       - name: Cobertura no resumo do job
         if: always()

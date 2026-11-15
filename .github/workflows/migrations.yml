@@ -8,7 +8,9 @@ name: Migrations
 # - push na main -> confere de novo e aplica o que faltar.
 #
 # Segredos do repositório: SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD_STAGE e
-# SUPABASE_DB_PASSWORD_PRODUCAO. Sem eles o job avisa e termina sem fazer nada.
+# SUPABASE_DB_PASSWORD_PRODUCAO. Sem eles o job FALHA e diz o que falta: um check
+# verde sem segredos dava a impressão de que a produção estava conferida.
+# O "Run workflow" na produção só aceita as branches develop e main.
 
 on:
   push:
@@ -72,13 +74,16 @@ jobs:
             echo "modo=$modo"
             echo "project_ref=$project_ref"
           } >> "$GITHUB_OUTPUT"
-          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$db_password" ]; then
-            echo "::warning::Segredos do Supabase não configurados para $ambiente; nenhuma migration foi conferida nem aplicada."
-            echo "pronto=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "SUPABASE_DB_PASSWORD=$db_password" >> "$GITHUB_ENV"
-            echo "pronto=true" >> "$GITHUB_OUTPUT"
+          if [ "$EVENT_NAME" = workflow_dispatch ] && [ "$ambiente" = producao ]             && [ "$REF_NAME" != develop ] && [ "$REF_NAME" != main ]; then
+            echo "::error::Migrations na produção só saem da develop ou da main (pedido na branch $REF_NAME)."
+            exit 1
           fi
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$db_password" ]; then
+            echo "::error::Faltam os segredos SUPABASE_ACCESS_TOKEN e/ou a senha do banco de $ambiente em Settings > Secrets and variables > Actions; nenhuma migration foi conferida nem aplicada."
+            exit 1
+          fi
+          echo "SUPABASE_DB_PASSWORD=$db_password" >> "$GITHUB_ENV"
+          echo "pronto=true" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v7
         if: steps.alvo.outputs.pronto == 'true'
       - uses: supabase/setup-cli@v3
