@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 
+import { BrandLogo } from '@/components/brand/brand-logo';
 import type { PublicStoreStatusSettings } from '@/features/store/rules/client-status';
 
 import { Icon } from './icons';
@@ -18,13 +18,7 @@ export function PublicHeader({
         href="/"
       >
         <span className="sr-only">Página inicial da</span>
-        <Image
-          alt="Salgaê"
-          className="h-11 w-auto"
-          height={583}
-          src="/brand/salgae-logo-recortada.webp"
-          width={1042}
-        />
+        <BrandLogo className="h-11 w-auto" width={79} />
         <span className="mt-0.5 whitespace-nowrap font-[family-name:var(--font-poppins)] text-[10px] font-semibold tracking-[0.14em] text-muted">
           SALGADOS QUENTES
         </span>
