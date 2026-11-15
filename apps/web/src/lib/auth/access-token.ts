@@ -1,22 +1,17 @@
-import { cache } from 'react';
-
 import { createClient } from '@/lib/supabase/server';
 
 /**
- * Token do admin para chamar a API; sem sessão válida, devolve `null`.
- *
- * `getSession()` lê os cookies e renova o token se ele venceu; `getClaims()` confere a assinatura
- * localmente com a chave pública do projeto (só cai no Auth se o projeto usar chave simétrica).
- * A conferência forte, no Auth e no perfil, continua na API, que recebe este token em toda chamada.
- *
- * `cache` faz layout e páginas de uma mesma renderização dividirem uma única leitura da sessão.
+ * Token do admin para chamar a API. `getUser()` valida a sessão no Supabase Auth (e a renova se
+ * preciso) antes de `getSession()` entregar o token já renovado; sem sessão, devolve `null`.
  */
-export const getAccessToken = cache(async (): Promise<string | null> => {
+export async function getAccessToken(): Promise<string | null> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  if (!session) return null;
-  const { data, error } = await supabase.auth.getClaims(session.access_token);
-  return error || !data ? null : session.access_token;
-});
+  return session?.access_token ?? null;
+}
