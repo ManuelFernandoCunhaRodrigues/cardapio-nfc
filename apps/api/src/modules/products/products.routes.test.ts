@@ -2,7 +2,10 @@ import { Hono } from 'hono';
 import { describe, expect, it, vi } from 'vitest';
 
 import { errorHandler } from '../../shared/http/error-handler';
-import { UniqueViolationError } from '../../shared/errors/persistence-errors';
+import {
+  MissingReferenceError,
+  UniqueViolationError,
+} from '../../shared/errors/persistence-errors';
 import type { AppHonoEnv } from '../../shared/types';
 import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
 import { createImageController } from '../media/image/image.controller';
@@ -117,6 +120,29 @@ describe('rotas de produtos do painel', () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toMatchObject({ fieldErrors: { slug: [expect.any(String)] } });
   });
+
+  it.each([
+    ['POST', '/v1/admin/products', 'create'],
+    ['PUT', `/v1/admin/products/${productId}`, 'update'],
+  ] as const)(
+    '%s responde 400 no campo category_id quando a categoria não existe',
+    async (method, path, operation) => {
+      const repository = fakeProductRepository({
+        [operation]: async () => {
+          throw new MissingReferenceError('violates foreign key constraint');
+        },
+      });
+
+      const response = await testApp(repository).request(path, adminRequest(method, validInput));
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        status: 'error',
+        message: 'A categoria escolhida não existe mais. Escolha outra.',
+        fieldErrors: { category_id: ['Escolha uma categoria válida.'] },
+      });
+    },
+  );
 
   it('PUT edita e DELETE apaga o produto', async () => {
     const repository = fakeProductRepository();

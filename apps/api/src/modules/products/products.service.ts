@@ -10,7 +10,10 @@ import { parsePriceBRL } from '@salgae/core/rules/parse-price';
 import { fieldsFromProductSituation } from '@salgae/core/rules/product-situation';
 
 import { ConflictError, NotFoundError, ValidationError } from '../../shared/errors/domain-errors';
-import { UniqueViolationError } from '../../shared/errors/persistence-errors';
+import {
+  MissingReferenceError,
+  UniqueViolationError,
+} from '../../shared/errors/persistence-errors';
 import { reportServerError } from '../../shared/observability';
 import { moveInOrder } from '../../shared/ordering/move-in-order';
 
@@ -40,6 +43,8 @@ const messages = {
   slugField: 'Esse endereço curto já está em uso.',
   atListEdge: 'Este produto já está no limite da categoria.',
   invalidPrice: 'Informe um preço válido, como R$ 8,90.',
+  missingCategory: 'A categoria escolhida não existe mais. Escolha outra.',
+  missingCategoryField: 'Escolha uma categoria válida.',
 };
 
 export class ProductsService {
@@ -51,12 +56,12 @@ export class ProductsService {
 
   async createProduct(input: ProductInput): Promise<string> {
     const record = this.toRecord(input);
-    return this.withUniqueSlug(() => this.repository.create(record));
+    return this.translateSaveErrors(() => this.repository.create(record));
   }
 
   async updateProduct(id: string, input: ProductInput): Promise<void> {
     const record = this.toRecord(input);
-    this.ensureFound(await this.withUniqueSlug(() => this.repository.update(id, record)));
+    this.ensureFound(await this.translateSaveErrors(() => this.repository.update(id, record)));
   }
 
   async setProductSituation(id: string, input: ProductSituationInput): Promise<void> {
@@ -112,12 +117,18 @@ export class ProductsService {
     return { ...fields, ...(slug ? { slug } : {}), price_cents };
   }
 
-  private async withUniqueSlug<T>(save: () => Promise<T>): Promise<T> {
+  private async translateSaveErrors<T>(save: () => Promise<T>): Promise<T> {
     try {
       return await save();
     } catch (error) {
       if (error instanceof UniqueViolationError) {
         throw new ConflictError(messages.slugInUse, { slug: [messages.slugField] });
+      }
+      // A categoria pode ter sido apagada em outra aba depois que o formulário abriu.
+      if (error instanceof MissingReferenceError) {
+        throw new ValidationError(messages.missingCategory, {
+          category_id: [messages.missingCategoryField],
+        });
       }
       throw error;
     }
