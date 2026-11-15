@@ -188,11 +188,21 @@ test.describe('listas do painel', () => {
     const [firstName, secondName, lastName] = names;
     const moveButton = (label: string) =>
       page.getByRole('button', { name: label }).filter({ visible: true });
-    // O filtro da categoria não muda os limites: eles vêm da lista completa.
-    await page.goto(`/admin/produtos?categoria=${categoryId}&filtro=sem-foto`);
-
+    await page.goto(`/admin/produtos?categoria=${categoryId}`);
     await expect(moveButton(`Subir ${firstName}`)).toBeDisabled();
     await expect(moveButton(`Descer ${lastName}`)).toBeDisabled();
+    await expect(moveButton(`Subir ${secondName}`)).toBeEnabled();
+
+    // Com foto, o primeiro some do filtro "Sem foto". O segundo vira o primeiro visível, mas a API
+    // troca com o vizinho da categoria inteira: a subida dele continua valendo.
+    const { error: imageError } = await adminDb.client
+      .from('products')
+      .update({ image_path: `e2e/${ids[0]}` })
+      .eq('id', ids[0]);
+    expect(imageError).toBeNull();
+    await page.goto(`/admin/produtos?categoria=${categoryId}&filtro=sem-foto`);
+    await expect(panelLink(page, secondName)).toBeVisible();
+    await expect(page.getByRole('link', { name: firstName, exact: true })).toHaveCount(0);
     await expect(moveButton(`Subir ${secondName}`)).toBeEnabled();
 
     // Outra aba põe o segundo no topo: a tela ainda não sabe, e a API recusa a subida.
@@ -208,7 +218,7 @@ test.describe('listas do painel', () => {
       .first();
     await expect(notice).toBeInViewport();
 
-    await moveButton(`Descer ${firstName}`).click();
+    await moveButton(`Descer ${secondName}`).click();
     await expect(notice).toBeHidden();
     await expect(page.getByText('Ordem do produto atualizada.')).toBeVisible();
   });
