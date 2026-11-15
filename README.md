@@ -228,7 +228,9 @@ docker run -d --restart unless-stopped -p 127.0.0.1:4000:4000 \
 
 ## Banco de dados
 
-As migrations ficam em `supabase/migrations/` e são aplicadas pelo GitHub Actions, com a CLI do Supabase: no stage, a cada merge na `develop`; em produção, por um passo manual antes da promoção, e o PR para a `main` é reprovado enquanto a produção não tiver a migration. O passo a passo e a configuração dos segredos estão em [Migrations pelo CI](docs/migrations-pelo-ci.md).
+As migrations ficam em `supabase/migrations/` e são aplicadas pelo GitHub Actions, com a CLI do Supabase: no stage, a cada merge na `develop`; em produção, por um passo manual antes da promoção, e o PR para a `main` é reprovado enquanto a produção não tiver a migration. O passo a passo e a configuração dos segredos estão em [Migrations pelo CI](docs/migrations-pelo-ci.md). Sem os segredos cadastrados o workflow falha, de propósito, em vez de passar sem conferir nada.
+
+O workflow **Ambientes no ar** chama o `/api/health` do stage e da produção a cada 2 dias (a rota consulta o banco, o que evita a pausa do Supabase gratuito e avisa quando algum ambiente cai) e, aos domingos, guarda uma cópia do banco da produção como artefato por 30 dias.
 
 O mesmo comando funciona à mão, se for preciso:
 
