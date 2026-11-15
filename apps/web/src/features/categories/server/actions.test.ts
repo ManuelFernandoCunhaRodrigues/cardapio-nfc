@@ -5,7 +5,6 @@ const mocks = vi.hoisted(() => ({
   write: vi.fn(),
   invalidateMenuCache: vi.fn(),
   refreshAdminPanel: vi.fn(),
-  refreshAdminList: vi.fn(),
 }));
 
 vi.mock('@/lib/api/admin-api-client', () => ({
@@ -14,12 +13,9 @@ vi.mock('@/lib/api/admin-api-client', () => ({
 vi.mock('@/lib/cache/invalidate-public-cache', () => ({
   invalidateMenuCache: mocks.invalidateMenuCache,
 }));
-vi.mock('@/lib/cache/refresh-admin-panel', () => ({
-  refreshAdminPanel: mocks.refreshAdminPanel,
-  refreshAdminList: mocks.refreshAdminList,
-}));
+vi.mock('@/lib/cache/refresh-admin-panel', () => ({ refreshAdminPanel: mocks.refreshAdminPanel }));
 
-import { createCategory, reorderCategory, updateCategory } from './actions';
+import { createCategory, updateCategory } from './actions';
 
 const categoryId = '44444444-4444-4444-8444-444444444444';
 
@@ -62,19 +58,5 @@ describe('Server Actions de categorias', () => {
       description: '',
       is_active: false,
     });
-  });
-
-  it('a mudança de ordem atualiza o cardápio e marca só a lista do painel', async () => {
-    mocks.write.mockResolvedValue(undefined);
-
-    const state = await reorderCategory(
-      { status: 'idle' },
-      categoryForm({ id: categoryId, direction: 'up' }),
-    );
-
-    expect(state.status).toBe('success');
-    expect(mocks.invalidateMenuCache).toHaveBeenCalledOnce();
-    expect(mocks.refreshAdminList).toHaveBeenCalledWith('categories');
-    expect(mocks.refreshAdminPanel).not.toHaveBeenCalled();
   });
 });

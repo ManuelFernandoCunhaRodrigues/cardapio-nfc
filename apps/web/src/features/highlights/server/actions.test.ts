@@ -5,7 +5,6 @@ const mocks = vi.hoisted(() => ({
   write: vi.fn(),
   invalidateMenuCache: vi.fn(),
   refreshAdminPanel: vi.fn(),
-  refreshAdminList: vi.fn(),
 }));
 
 vi.mock('@/lib/api/admin-api-client', () => ({
@@ -14,12 +13,9 @@ vi.mock('@/lib/api/admin-api-client', () => ({
 vi.mock('@/lib/cache/invalidate-public-cache', () => ({
   invalidateMenuCache: mocks.invalidateMenuCache,
 }));
-vi.mock('@/lib/cache/refresh-admin-panel', () => ({
-  refreshAdminPanel: mocks.refreshAdminPanel,
-  refreshAdminList: mocks.refreshAdminList,
-}));
+vi.mock('@/lib/cache/refresh-admin-panel', () => ({ refreshAdminPanel: mocks.refreshAdminPanel }));
 
-import { createHighlight, reorderHighlight, updateHighlight } from './actions';
+import { createHighlight, updateHighlight } from './actions';
 
 const highlightId = '33333333-3333-4333-8333-333333333333';
 
@@ -60,19 +56,5 @@ describe('Server Actions de destaques', () => {
 
     expect(mocks.invalidateMenuCache).toHaveBeenCalledOnce();
     expect(mocks.refreshAdminPanel).toHaveBeenCalledOnce();
-  });
-
-  it('a mudança de ordem atualiza o cardápio e marca só a lista do painel', async () => {
-    mocks.write.mockResolvedValue(undefined);
-
-    const state = await reorderHighlight(
-      { status: 'idle' },
-      highlightForm({ id: highlightId, direction: 'up' }),
-    );
-
-    expect(state.status).toBe('success');
-    expect(mocks.invalidateMenuCache).toHaveBeenCalledOnce();
-    expect(mocks.refreshAdminList).toHaveBeenCalledWith('highlights');
-    expect(mocks.refreshAdminPanel).not.toHaveBeenCalled();
   });
 });

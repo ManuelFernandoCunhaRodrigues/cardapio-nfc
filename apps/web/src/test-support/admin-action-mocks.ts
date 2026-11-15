@@ -12,7 +12,6 @@ export const adminActionMocks = {
   invalidateMenuCache: vi.fn(),
   invalidateStoreCache: vi.fn(),
   refreshAdminPanel: vi.fn(),
-  refreshAdminList: vi.fn(),
 };
 
 export const adminApiModule = {
@@ -28,10 +27,7 @@ export const publicCacheModule = {
   invalidateStoreCache: adminActionMocks.invalidateStoreCache,
 };
 
-export const adminPanelCacheModule = {
-  refreshAdminPanel: adminActionMocks.refreshAdminPanel,
-  refreshAdminList: adminActionMocks.refreshAdminList,
-};
+export const adminPanelCacheModule = { refreshAdminPanel: adminActionMocks.refreshAdminPanel };
 
 export function formDataFrom(fields: Record<string, string | File>): FormData {
   const formData = new FormData();

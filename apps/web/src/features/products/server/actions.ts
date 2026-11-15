@@ -5,7 +5,7 @@ import { adminApiPaths } from '@salgae/core/contracts/admin-api';
 import { readFormText, runAdminAction } from '@/features/admin/server/run-admin-action';
 import { adminApi } from '@/lib/api/admin-api-client';
 import { invalidateMenuCache } from '@/lib/cache/invalidate-public-cache';
-import { refreshAdminList, refreshAdminPanel } from '@/lib/cache/refresh-admin-panel';
+import { refreshAdminPanel } from '@/lib/cache/refresh-admin-panel';
 
 import type { ProductActionState } from './action-state';
 
@@ -87,10 +87,7 @@ export async function reorderProduct(
   return runAdminAction(
     async () => {
       await adminApi().write('POST', adminApiPaths.productOrder(id), { direction });
-      // A ordem só aparece na lista; o resto do painel não precisa ser marcado.
-      invalidateMenuCache(id);
-      refreshAdminList('products');
-      return { status: 'success', message: 'Ordem do produto atualizada.', entityId: id };
+      return refreshAfterProductChange('Ordem do produto atualizada.', id);
     },
     {
       event: 'product_reorder_failed',

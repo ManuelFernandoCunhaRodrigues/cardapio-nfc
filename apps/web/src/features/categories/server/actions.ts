@@ -5,7 +5,7 @@ import { adminApiPaths } from '@salgae/core/contracts/admin-api';
 import { readFormText, runAdminAction } from '@/features/admin/server/run-admin-action';
 import { adminApi } from '@/lib/api/admin-api-client';
 import { invalidateMenuCache } from '@/lib/cache/invalidate-public-cache';
-import { refreshAdminList, refreshAdminPanel } from '@/lib/cache/refresh-admin-panel';
+import { refreshAdminPanel } from '@/lib/cache/refresh-admin-panel';
 
 import type { CategoryActionState } from './action-state';
 
@@ -84,10 +84,7 @@ export async function reorderCategory(
   return runAdminAction(
     async () => {
       await adminApi().write('POST', adminApiPaths.categoryOrder(id), { direction });
-      // A ordem só aparece na lista; o resto do painel não precisa ser marcado.
-      invalidateMenuCache();
-      refreshAdminList('categories');
-      return { status: 'success', message: 'Ordem da categoria atualizada.' };
+      return refreshAfterCategoryChange('Ordem da categoria atualizada.');
     },
     {
       event: 'category_reorder_failed',
