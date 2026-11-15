@@ -19,11 +19,11 @@ const product = {
 
 describe('getProductMetadata', () => {
   test('usa os metadados padrão para produto ausente', () => {
-    expect(getProductMetadata(null, null)).toEqual({ title: 'Produto | Salgaê' });
+    expect(getProductMetadata(null, null, 'Salgaê')).toEqual({ title: 'Produto | Salgaê' });
   });
 
-  test('monta título, descrição de fallback e canonical sem foto', () => {
-    const metadata = getProductMetadata(product, null);
+  test('monta título, descrição de fallback e canonical; sem foto, usa a imagem padrão', () => {
+    const metadata = getProductMetadata(product, null, 'Salgaê');
 
     expect(metadata.title).toBe('Coxinha de frango | Salgaê');
     expect(metadata.description).toMatch(/^Conheça Coxinha de frango por R\$\s7,00 na Salgaê\.$/);
@@ -33,13 +33,17 @@ describe('getProductMetadata', () => {
       locale: 'pt_BR',
       siteName: 'Salgaê',
     });
-    expect(metadata.twitter).toMatchObject({ card: 'summary' });
+    expect(metadata.twitter).toMatchObject({
+      card: 'summary_large_image',
+      images: ['/brand/compartilhar.jpg'],
+    });
   });
 
   test('inclui a variante detail na imagem social', () => {
     const metadata = getProductMetadata(
       { ...product, description: 'Massa crocante.', image_path: 'coxinha' },
       'https://example.supabase.co/storage/v1/object/public/product-images/coxinha-detail.webp',
+      'Salgaê',
     );
 
     expect(metadata.description).toBe('Massa crocante.');
@@ -50,5 +54,13 @@ describe('getProductMetadata', () => {
       card: 'summary_large_image',
       images: [expect.stringMatching(/coxinha-detail\.webp$/)],
     });
+  });
+
+  test('usa o nome da loja cadastrado no painel', () => {
+    const metadata = getProductMetadata(product, null, 'Lanchonete do Zé');
+
+    expect(metadata.title).toBe('Coxinha de frango | Lanchonete do Zé');
+    expect(metadata.description).toMatch(/na Lanchonete do Zé\.$/);
+    expect(metadata.openGraph).toMatchObject({ siteName: 'Lanchonete do Zé' });
   });
 });

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { HighlightBanner } from '@/features/menu/components/highlight-banner';
@@ -8,10 +9,15 @@ import { ProductRow } from '@/features/menu/components/product-row';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import { getCategoryIcon } from '@/features/menu/rules/category-icon';
 import { getPublicMenu, getPublicStore } from '@/lib/api/public-api-client';
+import { getPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 import type { MenuCategory } from '@/features/menu/types';
 import { selectFeaturedProducts } from '@salgae/core/rules/product-sort';
 
 export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  return getPublicPageMetadata('home', await getPublicStore());
+}
 
 export default async function HomePage() {
   const [menu, settings] = await Promise.all([getPublicMenu(), getPublicStore()]);

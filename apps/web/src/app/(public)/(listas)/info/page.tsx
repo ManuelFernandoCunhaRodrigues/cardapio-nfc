@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Icon, type IconName } from '@/features/menu/components/icons';
 import { StoreInfoStatus, StoreOpeningHours } from '@/features/store/components/store-status-live';
 import { getPublicStore } from '@/lib/api/public-api-client';
+import { getPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 import { selectPublicStoreStatusSettings } from '@/features/store/rules/client-status';
 import {
   buildInstagramHref,
@@ -12,7 +13,9 @@ import {
 } from '@/features/store/rules/contact-links';
 
 export const revalidate = 60;
-export const metadata: Metadata = { title: 'Informações | Salgaê' };
+export async function generateMetadata(): Promise<Metadata> {
+  return getPublicPageMetadata('info', await getPublicStore());
+}
 
 export default async function InfoPage() {
   const settings = await getPublicStore();

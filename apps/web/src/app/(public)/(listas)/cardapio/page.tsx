@@ -4,12 +4,15 @@ import { CategoryNav } from '@/features/menu/components/category-nav';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
 import { MenuCardStagger, MenuEntrance } from '@/components/motion/motion-primitives';
-import { getPublicMenu } from '@/lib/api/public-api-client';
+import { getPublicMenu, getPublicStore } from '@/lib/api/public-api-client';
+import { getPublicPageMetadata } from '@/lib/seo/public-page-metadata';
 import { formatItemCount } from '@/features/menu/rules/presentation';
 import { sortProductsByAvailability } from '@salgae/core/rules/product-sort';
 
 export const revalidate = 60;
-export const metadata: Metadata = { title: 'Cardápio | Salgaê' };
+export async function generateMetadata(): Promise<Metadata> {
+  return getPublicPageMetadata('menu', await getPublicStore());
+}
 
 export default async function CardapioPage() {
   const { categories, products } = await getPublicMenu();

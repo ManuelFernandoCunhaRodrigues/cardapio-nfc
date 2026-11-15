@@ -21,10 +21,11 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const result = await getPublicProduct(slug);
+  const [result, store] = await Promise.all([getPublicProduct(slug), getPublicStore()]);
   return getProductMetadata(
     result?.product ?? null,
     getPublicImageVariantUrl('product-images', result?.product.image_path, 'detail'),
+    store.name,
   );
 }
 
