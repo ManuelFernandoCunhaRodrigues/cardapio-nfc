@@ -1,3 +1,4 @@
+import type { AdminCategory } from '@salgae/core/contracts/admin-api';
 import type { AdminProduct } from '@/features/admin/server/catalog';
 
 export type ProductFilter = 'all' | 'unavailable' | 'without-image' | 'hidden';
@@ -20,6 +21,19 @@ export function productsNeedingAttention<
     const reasons = attentionReasons(product);
     return reasons.length ? [{ product, reasons }] : [];
   });
+}
+
+/** Produto ativo em categoria escondida não aparece para o cliente: a contagem precisa saber disso. */
+export function productsOnMenu<T extends Pick<AdminProduct, 'is_active' | 'category_id'>>(
+  products: T[],
+  categories: Pick<AdminCategory, 'id' | 'is_active'>[],
+): T[] {
+  const hiddenCategories = new Set(
+    categories.filter((category) => !category.is_active).map((category) => category.id),
+  );
+  return products.filter(
+    (product) => product.is_active && !hiddenCategories.has(product.category_id),
+  );
 }
 
 function normalize(value: string): string {

@@ -57,20 +57,22 @@ export function MediaVideo({ poster, posterSrcSet, video, name }: Readonly<Media
       </div>
     );
   return (
-    <video
-      aria-label={`Vídeo de ${name}`}
-      autoPlay={!reduceMotion}
-      className="h-full w-full object-cover"
-      controls
-      loop={!reduceMotion}
-      muted
-      playsInline
-      poster={poster ?? undefined}
-      preload="none"
-      ref={videoRef}
-      src={video}
-    >
-      Seu navegador não suporta vídeo.
-    </video>
+    <div className="h-[calc(100%_-_1.75rem)] w-full">
+      <video
+        aria-label={`Vídeo de ${name}`}
+        autoPlay={!reduceMotion}
+        className="h-full w-full object-cover"
+        controls
+        loop={!reduceMotion}
+        muted
+        playsInline
+        poster={poster ?? undefined}
+        preload="none"
+        ref={videoRef}
+        src={video}
+      >
+        Seu navegador não suporta vídeo.
+      </video>
+    </div>
   );
 }

@@ -4,7 +4,7 @@ import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { MediaImage } from '@/features/media/components/media-image';
 import { Card } from '@/components/ui/card';
 import { getAdminCategories, getAdminProducts } from '@/features/admin/server/catalog';
-import { productsNeedingAttention } from '@/features/admin/rules/panel';
+import { productsNeedingAttention, productsOnMenu } from '@/features/admin/rules/panel';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import { getSaoPauloWeekday } from '@/features/menu/rules/presentation';
 import { getAdminStoreSettings } from '@/features/store/server/get-store-settings';
@@ -22,21 +22,21 @@ export default async function AdminDashboardPage() {
     getAdminCategories(),
     getAdminStoreSettings(),
   ]);
-  const active = products.filter((product) => product.is_active).length;
-  const unavailable = products.filter(
-    (product) => product.is_active && !product.is_available,
-  ).length;
+  const onMenu = productsOnMenu(products, categories);
+  const unavailable = onMenu.filter((product) => !product.is_available).length;
+  const hiddenCategories = categories.filter((category) => !category.is_active);
   const withoutImage = products.filter((product) => !product.image_path).length;
-  const attention = productsNeedingAttention(products);
+  // Só o que o cliente vê: produto de categoria escondida não precisa de atenção agora.
+  const attention = productsNeedingAttention(onMenu);
   const now = new Date();
   const settings = store.status === 'loaded' ? store.settings : undefined;
   const status = settings ? getStoreStatus(settings, now) : null;
   const today = settings?.opening_hours.find((hour) => hour.day === getSaoPauloWeekday(now));
   const cards = [
     {
-      label: 'Produtos ativos',
-      value: active,
-      detail: 'Aparecem no cardápio',
+      label: 'No cardápio',
+      value: onMenu.length,
+      detail: 'Produtos que o cliente vê',
       href: '/admin/produtos',
     },
     {
@@ -56,8 +56,11 @@ export default async function AdminDashboardPage() {
     {
       label: 'Categorias',
       value: categories.length,
-      detail: 'Organizam o cardápio',
+      detail: hiddenCategories.length
+        ? `${hiddenCategories.length} ${hiddenCategories.length === 1 ? 'escondida' : 'escondidas'}`
+        : 'Organizam o cardápio',
       href: '/admin/categorias',
+      attention: hiddenCategories.length > 0,
     },
   ];
   const formattedDate = new Intl.DateTimeFormat('pt-BR', {
@@ -169,8 +172,35 @@ export default async function AdminDashboardPage() {
               </Link>
             ) : null}
           </div>
-          {attention.length ? (
+          {attention.length || hiddenCategories.length ? (
             <ul className="mt-2 divide-y divide-border-inner">
+              {hiddenCategories.map((category) => (
+                <li key={category.id}>
+                  <Link
+                    className="flex min-h-[62px] items-center gap-3 py-2 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
+                    href="/admin/categorias"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <strong className="block truncate font-[family-name:var(--font-poppins)] text-sm text-ink">
+                        {category.name}
+                      </strong>
+                      <span className="text-xs text-muted">
+                        {category.product_count}{' '}
+                        {category.product_count === 1 ? 'produto fora' : 'produtos fora'} do
+                        cardápio
+                      </span>
+                    </span>
+                    <span className="rounded-full bg-danger-soft px-2 py-1 font-[family-name:var(--font-poppins)] text-[9px] font-semibold text-danger">
+                      CATEGORIA ESCONDIDA
+                    </span>
+                    <AdminIcon
+                      className="shrink-0 text-muted"
+                      name="down"
+                      style={{ transform: 'rotate(-90deg)' }}
+                    />
+                  </Link>
+                </li>
+              ))}
               {attention.slice(0, 8).map(({ product, reasons }) => (
                 <li key={product.id}>
                   <Link

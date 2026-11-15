@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { copyOpeningHourToEveryDay, type OpeningHourInput } from '@/features/admin/rules/panel';
 import type { StoreSettings } from '@salgae/core/schemas/store-settings';
 
+import { useLeaveGuard } from '@/features/admin/client/use-leave-guard';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 
 const DAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -26,6 +27,8 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
   const formRef = useRef<HTMLFormElement>(null);
   const [hours, setHours] = useState<OpeningHourInput[]>(settings.opening_hours);
   const [copySource, setCopySource] = useState(1);
+  const [dirty, setDirty] = useState(false);
+  useLeaveGuard(dirty || state.status === 'error');
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
   useEffect(() => {
     if (state.status === 'error')
@@ -37,7 +40,14 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
     );
 
   return (
-    <form action={formAction} className="space-y-4 pb-28 lg:pb-0" noValidate ref={formRef}>
+    <form
+      action={formAction}
+      className="space-y-4 pb-28 lg:pb-0"
+      noValidate
+      onChange={() => setDirty(true)}
+      onSubmit={() => setDirty(false)}
+      ref={formRef}
+    >
       <section className="rounded-card bg-white p-4 shadow-card lg:p-5">
         <h2 className="disp text-lg font-semibold text-ink">Informações da loja</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -152,13 +162,25 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
             </select>
           </label>
           <Button
-            onClick={() => setHours(copyOpeningHourToEveryDay(hours, copySource))}
+            onClick={() => {
+              setHours(copyOpeningHourToEveryDay(hours, copySource));
+              setDirty(true);
+            }}
             variant="neutral"
           >
             Copiar para todos os dias
           </Button>
         </div>
         <div className="mt-3 divide-y divide-border-inner rounded-xl border border-border bg-surface-inner px-2">
+          {/* Os campos já têm rótulo próprio; este título é só para quem enxerga a tabela. */}
+          <div
+            aria-hidden="true"
+            className="grid grid-cols-[minmax(56px,1fr)_96px_96px] gap-2 py-2 text-xs font-bold text-muted"
+          >
+            <span>Dia fechado?</span>
+            <span className="text-center">Abre</span>
+            <span className="text-center">Fecha</span>
+          </div>
           {hours.map((hour) => {
             const hourError = errorFor(`opening_hours.${hour.day}.close`);
             return (

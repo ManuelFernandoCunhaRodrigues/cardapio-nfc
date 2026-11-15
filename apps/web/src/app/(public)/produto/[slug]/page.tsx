@@ -60,7 +60,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
         <BackToMenu iconOnly />
         {product.video_path && product.is_available ? (
-          <span className="lbl absolute bottom-4 left-5 rounded-full bg-ink/85 px-2 py-1 text-white">
+          <span className="lbl absolute right-5 top-5 rounded-full bg-ink/85 px-2 py-1 text-white">
             VÍDEO CURTO · SEM SOM
           </span>
         ) : null}

@@ -7,6 +7,7 @@ import {
   copyOpeningHourToEveryDay,
   filterAdminProducts,
   productsNeedingAttention,
+  productsOnMenu,
   runProductCreationFlow,
   singleFlight,
 } from './panel';
@@ -41,6 +42,23 @@ describe('regras do painel', () => {
     });
     expect(fieldsFromProductSituation('hidden')).toEqual({ is_active: false, is_available: false });
     expect(productSituationFromFields({ is_active: false, is_available: true })).toBe('hidden');
+  });
+
+  it('não conta como no cardápio o produto de categoria escondida nem o escondido', () => {
+    const categories = [
+      { id: 'c1', is_active: true },
+      { id: 'c2', is_active: false },
+    ];
+    const products = [
+      { ...base, id: 'visivel' },
+      { ...base, id: 'em-falta', is_available: false },
+      { ...base, id: 'escondido', is_active: false },
+      { ...base, id: 'categoria-escondida', category_id: 'c2' },
+    ];
+    expect(productsOnMenu(products, categories).map((product) => product.id)).toEqual([
+      'visivel',
+      'em-falta',
+    ]);
   });
 
   it('não repete produtos que precisam de atenção e preserva os dois motivos', () => {

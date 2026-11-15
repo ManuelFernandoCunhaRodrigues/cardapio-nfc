@@ -1,9 +1,11 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { SearchResults } from '@/features/menu/components/search-results';
 import { getPublicMenu } from '@/lib/api/public-api-client';
 
 export const revalidate = 60;
+export const metadata: Metadata = { title: 'Busca | Salgaê' };
 
 // O termo (?q=) e o foco (?focus=1) são lidos no navegador para a página continuar estática.
 export default async function BuscaPage() {

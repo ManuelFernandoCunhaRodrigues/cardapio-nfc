@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
   startTransition,
   useActionState,
@@ -49,7 +49,7 @@ const filterParams: Record<string, ProductFilter> = {
 const filterLabels = [
   { param: 'indisponiveis', label: 'Indisponíveis' },
   { param: 'sem-foto', label: 'Sem foto' },
-  { param: 'desativados', label: 'Desativados' },
+  { param: 'desativados', label: 'Escondidos' },
 ];
 const situationLabels: Record<ProductSituation, string> = {
   menu: 'No cardápio',
@@ -210,7 +210,6 @@ export function ProductsManager({
   categories,
   products,
 }: Readonly<{ categories: AdminCategory[]; products: AdminProduct[] }>) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [term, setTerm] = useState('');
@@ -223,10 +222,15 @@ export function ProductsManager({
     if (value) next.set(name, value);
     else next.delete(name);
     const suffix = next.toString();
-    router.replace(`/admin/produtos${suffix ? `?${suffix}` : ''}`, { scroll: false });
+    // Os filtros rodam no navegador: sem ida ao servidor, a resposta é imediata e a tela não recarrega.
+    window.history.replaceState(null, '', `/admin/produtos${suffix ? `?${suffix}` : ''}`);
   };
   const onResult = useCallback((state: ProductActionState) => {
-    if (!state.message || state.status === 'idle') return;
+    if (state.status === 'idle') {
+      setFeedback(null);
+      return;
+    }
+    if (!state.message) return;
     setFeedback({ message: state.message, kind: state.status === 'error' ? 'error' : 'success' });
   }, []);
   const filtered = useMemo(
@@ -338,7 +342,8 @@ export function ProductsManager({
         {groups.map((group) => (
           <section key={group.category.id}>
             <h2 className="mb-2 font-[family-name:var(--font-poppins)] text-sm font-semibold text-muted">
-              {group.category.name} · {group.products.length}
+              {group.category.name}
+              {group.category.is_active ? '' : ' (escondida)'} · {group.products.length}
             </h2>
             <div className="space-y-2">
               {group.products.map((product) => (
@@ -390,7 +395,12 @@ export function ProductsManager({
                       {product.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-2 text-muted">{group.category.name}</td>
+                  <td className="px-4 py-2 text-muted">
+                    {group.category.name}
+                    {group.category.is_active ? null : (
+                      <span className="mt-0.5 block text-xs font-bold text-danger">escondida</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2 font-bold text-ink">
                     {formatPriceBRL(product.price_cents)}
                   </td>

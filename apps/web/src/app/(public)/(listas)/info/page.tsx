@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { Icon, type IconName } from '@/features/menu/components/icons';
@@ -6,6 +7,7 @@ import { getPublicStore } from '@/lib/api/public-api-client';
 import { selectPublicStoreStatusSettings } from '@/features/store/rules/client-status';
 
 export const revalidate = 60;
+export const metadata: Metadata = { title: 'Informações | Salgaê' };
 
 export default async function InfoPage() {
   const settings = await getPublicStore();
