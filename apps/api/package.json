@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./embedded": "./src/embedded.ts"
+    "./embedded": "./src/embedded.ts",
+    "./modules/media/video/ffmpeg-asset": "./src/modules/media/video/ffmpeg-asset.ts"
   },
   "engines": {
     "node": ">=22.0.0"

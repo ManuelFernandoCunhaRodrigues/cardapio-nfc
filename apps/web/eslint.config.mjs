@@ -43,6 +43,11 @@ const eslintConfig = [
     rules: restrictImports([...supabaseImports, ...mediaProcessingImports]),
   },
   {
+    // A rota longa referencia o ativo da API para isolá-lo no trace da função.
+    files: ['src/app/admin/(painel)/midia/video/route.ts'],
+    rules: restrictImports([...supabaseImports, ...mediaProcessingImports]),
+  },
+  {
     // Testes de QR code geram imagens reais com Sharp.
     files: ['src/**/*.test.ts'],
     rules: restrictImports([...supabaseImports, ...backendImports]),

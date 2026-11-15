@@ -84,4 +84,20 @@ describe('actions de vídeo', () => {
     expect(mocks.refreshAdminPanel).toHaveBeenCalled();
     expect(result).toEqual({ status: 'success', message: 'Vídeo removido.' });
   });
+
+  it('invalida o catálogo mesmo quando a API falha depois de desvincular', async () => {
+    mocks.write.mockRejectedValue(new ApiRequestError(500, 'Falha depois do vínculo.'));
+
+    const result = await removeProductVideo(
+      initialMediaActionState,
+      form({ product_id: productId }),
+    );
+
+    expect(mocks.invalidateMenuCache).toHaveBeenCalledWith(productId);
+    expect(mocks.refreshAdminPanel).toHaveBeenCalled();
+    expect(result).toEqual({
+      status: 'error',
+      message: 'Não foi possível remover o vídeo agora.',
+    });
+  });
 });

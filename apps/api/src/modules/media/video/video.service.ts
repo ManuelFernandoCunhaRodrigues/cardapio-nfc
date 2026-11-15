@@ -19,10 +19,12 @@ import { reportServerError } from '../../../shared/observability';
 import { removeMediaIfUnused } from '../remove-media-if-unused';
 import {
   ACCEPTED_VIDEO_MIME_TYPES,
+  VIDEO_DOWNLOAD_TIMEOUT_MS,
   VIDEO_FINALIZATION_RESERVE_MS,
   VIDEO_PROCESSING_TIMEOUT_MS,
   VIDEO_RAW_MAX_BYTES,
   VIDEO_ROUTE_BUDGET_MS,
+  VIDEO_UPLOAD_TIMEOUT_MS,
 } from './constants';
 import type { CompressedVideo, CompressVideoFileOptions } from './compress';
 import { VideoCompressionError } from './errors';
@@ -46,6 +48,18 @@ export type VideoCleanup = (options: {
   cleanupUploads?: boolean;
   productId?: string;
 }) => Promise<void>;
+
+type VideoServiceOptions = {
+  downloadTimeoutMs?: number;
+  uploadTimeoutMs?: number;
+  now?: () => number;
+};
+
+type VideoDeadlines = {
+  downloadTimeoutMs: number;
+  uploadTimeoutMs: number;
+  now: () => number;
+};
 
 const messages = {
   notFound: 'Não foi possível localizar este produto.',
@@ -93,12 +107,50 @@ function formatMegabytes(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',');
 }
 
+function withTimeoutAndSignal<T>(
+  operation: Promise<T>,
+  timeoutMs: number,
+  signal: AbortSignal,
+): Promise<T> {
+  if (signal.aborted) return Promise.reject(signal.reason);
+  if (timeoutMs <= 0) return Promise.reject(new VideoCompressionError('video_timeout'));
+  return new Promise<T>((resolve, reject) => {
+    let settled = false;
+    const finish = (complete: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      signal.removeEventListener('abort', abort);
+      complete();
+    };
+    const abort = () => finish(() => reject(signal.reason));
+    const timeout = setTimeout(
+      () => finish(() => reject(new VideoCompressionError('video_timeout'))),
+      timeoutMs,
+    );
+    signal.addEventListener('abort', abort, { once: true });
+    void operation.then(
+      (value) => finish(() => resolve(value)),
+      (error) => finish(() => reject(error)),
+    );
+  });
+}
+
 export class VideoService {
+  private readonly deadlines: VideoDeadlines;
+
   constructor(
     private readonly repository: VideoRepository,
     private readonly compress: VideoCompressor,
     private readonly cleanupOrphans: VideoCleanup = async () => undefined,
-  ) {}
+    options: VideoServiceOptions = {},
+  ) {
+    this.deadlines = {
+      downloadTimeoutMs: options.downloadTimeoutMs ?? VIDEO_DOWNLOAD_TIMEOUT_MS,
+      uploadTimeoutMs: options.uploadTimeoutMs ?? VIDEO_UPLOAD_TIMEOUT_MS,
+      now: options.now ?? Date.now,
+    };
+  }
 
   async prepareUpload(
     productId: string,
@@ -134,7 +186,7 @@ export class VideoService {
     compressedBytes: number;
   }> {
     this.validateRawPath(productId, rawPath);
-    const deadline = Date.now() + VIDEO_ROUTE_BUDGET_MS;
+    const deadline = this.deadlines.now() + VIDEO_ROUTE_BUDGET_MS;
     let workDir: string | undefined;
     let compressed: CompressedVideo | undefined;
     let stagedPath: string | undefined;
@@ -142,7 +194,7 @@ export class VideoService {
     try {
       const current = await this.requireProduct(productId);
       if (!current.imagePath) throw new ValidationError(messages.coverRequired);
-      const raw = await this.downloadRaw(rawPath);
+      const raw = await this.downloadRaw(rawPath, deadline, signal);
       if (!raw.size) throw new UnsupportedMediaTypeError(messages.invalidVideo);
       if (raw.size > VIDEO_RAW_MAX_BYTES) throw new PayloadTooLargeError(messages.tooLarge);
       signal.throwIfAborted();
@@ -152,11 +204,7 @@ export class VideoService {
       compressed = await this.compressVideo(inputPath, workDir, deadline);
       signal.throwIfAborted();
       stagedPath = `products/${productId}/${randomUUID()}.mp4`;
-      try {
-        await this.repository.uploadVideo(stagedPath, await readFile(compressed.outputPath));
-      } catch {
-        throw new ServiceError(messages.uploadFailed);
-      }
+      await this.uploadVideo(stagedPath, await readFile(compressed.outputPath), deadline, signal);
       signal.throwIfAborted();
       if (
         !(await this.repository.replaceVideoPath(productId, {
@@ -194,7 +242,9 @@ export class VideoService {
       throw await this.lostReplaceError(productId);
     }
     await this.removeIfUnused(current.videoPath);
-    await this.cleanupOrphans({ productId });
+    void this.cleanupOrphans({ productId }).catch((error) => {
+      reportServerError({ event: 'media.video_orphan_cleanup_failed', error });
+    });
   }
 
   private validateRawPath(productId: string, rawPath: string): void {
@@ -207,17 +257,44 @@ export class VideoService {
   private async compressVideo(inputPath: string, workDir: string, deadline: number) {
     const timeoutMs = Math.min(
       VIDEO_PROCESSING_TIMEOUT_MS,
-      deadline - Date.now() - VIDEO_FINALIZATION_RESERVE_MS,
+      deadline - this.deadlines.now() - VIDEO_FINALIZATION_RESERVE_MS,
     );
     if (timeoutMs <= 0) throw new VideoCompressionError('video_timeout');
     return this.compress({ inputPath, workDir, timeoutMs });
   }
 
-  private async downloadRaw(path: string): Promise<Blob> {
+  private remainingTime(deadline: number): number {
+    return deadline - this.deadlines.now();
+  }
+
+  private async downloadRaw(path: string, deadline: number, signal: AbortSignal): Promise<Blob> {
     try {
-      return await this.repository.downloadRaw(path);
-    } catch {
+      return await withTimeoutAndSignal(
+        this.repository.downloadRaw(path),
+        Math.min(this.deadlines.downloadTimeoutMs, this.remainingTime(deadline)),
+        signal,
+      );
+    } catch (error) {
+      if (error instanceof VideoCompressionError || signal.aborted) throw error;
       throw new ValidationError(messages.downloadFailed);
+    }
+  }
+
+  private async uploadVideo(
+    path: string,
+    bytes: Buffer,
+    deadline: number,
+    signal: AbortSignal,
+  ): Promise<void> {
+    try {
+      await withTimeoutAndSignal(
+        this.repository.uploadVideo(path, bytes),
+        Math.min(this.deadlines.uploadTimeoutMs, this.remainingTime(deadline)),
+        signal,
+      );
+    } catch (error) {
+      if (error instanceof VideoCompressionError || signal.aborted) throw error;
+      throw new ServiceError(messages.uploadFailed);
     }
   }
 

@@ -67,6 +67,15 @@ describe('proxy do processamento de vídeo', () => {
     });
   });
 
+  it.each([401, 403])('preserva erro de autorização %i da API', async (status) => {
+    mocks.processVideo.mockRejectedValue(new ApiRequestError(status, 'Acesso negado.'));
+
+    const response = await POST(request({ productId, path: rawPath }));
+
+    expect(response.status).toBe(status);
+    expect(await response.json()).toEqual({ status: 'error', message: 'Acesso negado.' });
+  });
+
   it('recusa outra origem antes de chamar a API', async () => {
     const response = await POST(request({ productId, path: rawPath }, 'https://evil.test'));
 

@@ -1,3 +1,4 @@
+import { ffmpegBinaryPath } from '@salgae/api/modules/media/video/ffmpeg-asset';
 import { adminApiPaths } from '@salgae/core/contracts/admin-api';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -9,6 +10,9 @@ import { reportServerError } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 export const maxDuration = 180;
+
+// Mantém o binário somente no trace desta função longa do Next.
+if (ffmpegBinaryPath) process.env.FFMPEG_PATH ??= ffmpegBinaryPath;
 
 const bodySchema = z.object({ productId: z.string().uuid(), path: z.string().min(1) });
 

@@ -36,9 +36,13 @@ export async function removeProductVideo(
   const productId = readFormText(formData, 'product_id');
   return runAdminAction(
     async () => {
-      await adminApi().write('DELETE', adminApiPaths.productVideo(productId));
-      invalidateMenuCache(productId);
-      refreshAdminPanel();
+      try {
+        await adminApi().write('DELETE', adminApiPaths.productVideo(productId));
+      } finally {
+        // A API pode falhar na resposta depois de já ter desvinculado o vídeo.
+        invalidateMenuCache(productId);
+        refreshAdminPanel();
+      }
       return { status: 'success' as const, message: 'Vídeo removido.' };
     },
     {
