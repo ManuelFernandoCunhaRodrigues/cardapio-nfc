@@ -4,7 +4,7 @@ export const IMAGE_BODY_MAX_BYTES = 4 * 1024 * 1024;
 /** `file_size_limit` dos buckets de foto (migration 20261009121148_media_storage.sql). */
 export const IMAGE_BUCKET_MAX_BYTES = 1_048_576;
 /** Bem acima dos 2048 px que o painel envia, mas barra a imagem pequena em bytes e enorme em pixels. */
-export const IMAGE_MAX_INPUT_PIXELS = 40_000_000;
+const IMAGE_MAX_INPUT_PIXELS = 40_000_000;
 const IMAGE_MIN_SIDE = 400;
 const WEBP_QUALITIES = [82, 76, 70] as const;
 const LOWEST_QUALITY = WEBP_QUALITIES[WEBP_QUALITIES.length - 1];

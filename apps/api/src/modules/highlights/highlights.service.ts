@@ -7,7 +7,7 @@ import {
 import type { highlightFormSchema } from '@salgae/core/schemas/highlight';
 import type { z } from 'zod';
 
-import { NotFoundError } from '../../shared/errors/domain-errors';
+import { requireFound } from '../../shared/errors/record-guards';
 import { moveInOrder, type OrderableRepository } from '../../shared/ordering/move-in-order';
 import {
   removeImageIfUnused,
@@ -43,11 +43,11 @@ export class HighlightsService {
   }
 
   async updateHighlight(id: string, input: HighlightInput): Promise<void> {
-    this.ensureFound(await this.repository.update(id, input));
+    requireFound(await this.repository.update(id, input), messages.notFound);
   }
 
   async setHighlightActive(id: string, { is_active }: ActivationInput): Promise<void> {
-    this.ensureFound(await this.repository.setActive(id, is_active));
+    requireFound(await this.repository.setActive(id, is_active), messages.notFound);
   }
 
   async moveHighlight(id: string, { direction }: ReorderInput): Promise<void> {
@@ -60,18 +60,13 @@ export class HighlightsService {
   }
 
   async deleteHighlight(id: string): Promise<void> {
-    const deleted = await this.repository.delete(id);
-    this.ensureFound(deleted !== null);
-    if (deleted?.imagePath) {
+    const deleted = requireFound(await this.repository.delete(id), messages.notFound);
+    if (deleted.imagePath) {
       await removeImageIfUnused(
         this.repository,
         deleted.imagePath,
         'highlight.image_cleanup_failed',
       );
     }
-  }
-
-  private ensureFound(found: boolean): void {
-    if (!found) throw new NotFoundError(messages.notFound);
   }
 }
