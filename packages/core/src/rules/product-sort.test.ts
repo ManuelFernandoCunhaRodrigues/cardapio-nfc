@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { sortProductsByAvailability, sortProductsForHome } from './product-sort';
+import {
+  selectFeaturedProducts,
+  sortProductsByAvailability,
+  sortProductsForHome,
+} from './product-sort';
 import type { Product } from '../schemas/product';
 
 const base = {
@@ -73,6 +77,44 @@ describe('ordenacao do cardapio', () => {
       'Disponivel 2',
       'Indisponivel 1',
       'Indisponivel 1b',
+    ]);
+  });
+
+  it('deixa os indisponiveis fora da vitrine de mais pedidos', () => {
+    const products: Product[] = [
+      { ...base, name: 'Esgotado', badge: 'mais_pedido', sort_order: 0, is_available: false },
+      {
+        ...base,
+        id: 'c76b1cd3-7525-4f9f-8e90-0c14e66bd00a',
+        name: 'Disponivel comum',
+        badge: null,
+        sort_order: 1,
+      },
+      {
+        ...base,
+        id: 'd76b1cd3-7525-4f9f-8e90-0c14e66bd00a',
+        name: 'Disponivel mais pedido',
+        badge: 'mais_pedido',
+        sort_order: 5,
+      },
+    ];
+    expect(selectFeaturedProducts(products, 8).map((product) => product.name)).toEqual([
+      'Disponivel mais pedido',
+      'Disponivel comum',
+    ]);
+  });
+
+  it('respeita o limite da vitrine', () => {
+    const products: Product[] = [0, 1, 2].map((sort_order) => ({
+      ...base,
+      id: `${sort_order}76b1cd3-7525-4f9f-8e90-0c14e66bd00a`,
+      name: `Item ${sort_order}`,
+      badge: null,
+      sort_order,
+    }));
+    expect(selectFeaturedProducts(products, 2).map((product) => product.name)).toEqual([
+      'Item 0',
+      'Item 1',
     ]);
   });
 });

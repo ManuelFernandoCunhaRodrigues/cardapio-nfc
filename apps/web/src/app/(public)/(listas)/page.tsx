@@ -7,7 +7,7 @@ import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import { getPublicMenu, getPublicStore } from '@/lib/api/public-api-client';
-import { sortProductsForHome } from '@salgae/core/rules/product-sort';
+import { selectFeaturedProducts } from '@salgae/core/rules/product-sort';
 
 export const revalidate = 60;
 
@@ -23,7 +23,7 @@ const categoryEmoji: Record<string, string> = {
 
 export default async function HomePage() {
   const [menu, settings] = await Promise.all([getPublicMenu(), getPublicStore()]);
-  const featured = sortProductsForHome(menu.products).slice(0, 8);
+  const featured = selectFeaturedProducts(menu.products, 8);
 
   return (
     <main className="px-4 pb-6 pt-1">
