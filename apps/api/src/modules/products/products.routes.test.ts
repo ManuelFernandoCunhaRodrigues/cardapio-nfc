@@ -144,6 +144,19 @@ describe('rotas de produtos do painel', () => {
     },
   );
 
+  it('PUT responde 400 no campo price quando o preço passa do teto', async () => {
+    const repository = fakeProductRepository();
+
+    const response = await testApp(repository).request(
+      `/v1/admin/products/${productId}`,
+      adminRequest('PUT', { ...validInput, price: '99.999.999' }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ fieldErrors: { price: [expect.any(String)] } });
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
   it('PUT edita e DELETE apaga o produto', async () => {
     const repository = fakeProductRepository();
     const app = testApp(repository);

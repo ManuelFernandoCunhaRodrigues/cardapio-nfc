@@ -6,7 +6,7 @@ import {
   type ReorderInput,
 } from '@salgae/core/contracts/admin-api';
 import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
-import { parsePriceBRL } from '@salgae/core/rules/parse-price';
+import { readPriceInput } from '@salgae/core/rules/parse-price';
 import { fieldsFromProductSituation } from '@salgae/core/rules/product-situation';
 
 import { ConflictError, NotFoundError, ValidationError } from '../../shared/errors/domain-errors';
@@ -42,7 +42,6 @@ const messages = {
   slugInUse: 'Esse endereço curto já está em uso. Escolha outro.',
   slugField: 'Esse endereço curto já está em uso.',
   atListEdge: 'Este produto já está no limite da categoria.',
-  invalidPrice: 'Informe um preço válido, como R$ 8,90.',
   missingCategory: 'A categoria escolhida não existe mais. Escolha outra.',
   missingCategoryField: 'Escolha uma categoria válida.',
 };
@@ -110,11 +109,9 @@ export class ProductsService {
 
   /** O preço só é conferido depois dos outros campos, como no formulário de antes. */
   private toRecord({ price, slug, ...fields }: ProductInput): ProductRecord {
-    const price_cents = parsePriceBRL(price);
-    if (price_cents === null) {
-      throw new ValidationError(messages.invalidPrice, { price: [messages.invalidPrice] });
-    }
-    return { ...fields, ...(slug ? { slug } : {}), price_cents };
+    const reading = readPriceInput(price);
+    if (!reading.ok) throw new ValidationError(reading.message, { price: [reading.message] });
+    return { ...fields, ...(slug ? { slug } : {}), price_cents: reading.cents };
   }
 
   private async translateSaveErrors<T>(save: () => Promise<T>): Promise<T> {
