@@ -10,7 +10,12 @@ export default async function PublicListsLayout({
   const publicSettings = selectPublicStoreStatusSettings(settings);
   return (
     <>
-      <PublicHeader initialNow={initialNow} settings={publicSettings} />
+      <PublicHeader
+        initialNow={initialNow}
+        settings={publicSettings}
+        storeName={settings.name}
+        tagline={settings.tagline}
+      />
       {children}
     </>
   );

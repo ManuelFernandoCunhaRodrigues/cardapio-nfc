@@ -25,7 +25,7 @@ export default async function HomePage() {
 
   return (
     <main className="px-4 pb-6 pt-1">
-      <h1 className="sr-only">Cardápio da Salgaê</h1>
+      <h1 className="sr-only">Cardápio da {settings.name}</h1>
       <Link
         className="flex min-h-12 items-center gap-3 rounded-full border border-border bg-white px-4 text-sm text-placeholder shadow-card focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/40"
         href="/busca?focus=1"
