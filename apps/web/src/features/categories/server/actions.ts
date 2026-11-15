@@ -36,6 +36,7 @@ export async function createCategory(
     {
       event: 'category_create_failed',
       failureMessage: 'Não foi possível criar a categoria agora. Tente novamente.',
+      submitted: formData,
     },
   );
 }
@@ -53,6 +54,7 @@ export async function updateCategory(
     {
       event: 'category_update_failed',
       failureMessage: 'Não foi possível salvar a categoria agora. Tente novamente.',
+      submitted: formData,
     },
   );
 }

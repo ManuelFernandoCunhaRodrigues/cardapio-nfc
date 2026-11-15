@@ -36,6 +36,7 @@ export async function createHighlight(
     {
       event: 'highlight_create_failed',
       failureMessage: 'Não foi possível criar o destaque agora.',
+      submitted: formData,
     },
   );
 }
@@ -53,6 +54,7 @@ export async function updateHighlight(
     {
       event: 'highlight_update_failed',
       failureMessage: 'Não foi possível salvar o destaque agora.',
+      submitted: formData,
     },
   );
 }

@@ -77,6 +77,7 @@ export async function updateStoreSettings(
     {
       event: 'store_settings_update_failed',
       failureMessage: 'Não foi possível salvar agora. Tente novamente em instantes.',
+      submitted: formData,
     },
   );
 }

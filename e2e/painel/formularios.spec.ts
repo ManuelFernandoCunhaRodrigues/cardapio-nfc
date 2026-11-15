@@ -1,4 +1,4 @@
-import { expect, test, type AdminDb, type Page } from '../fixtures';
+import { expect, test, withStoreSettingsRestored, type AdminDb, type Page } from '../fixtures';
 
 async function createProduct(page: Page, adminDb: AdminDb, name: string) {
   await page.goto('/admin/produtos/novo');
@@ -67,5 +67,52 @@ test.describe('formulários do painel', () => {
       page.getByRole('alert').filter({ hasText: 'Informe um preço válido, como R$ 8,90.' }),
     ).toBeVisible();
     await expect(page).toHaveURL(/\/admin\/produtos\/novo/);
+  });
+
+  // O React 19 reinicia os campos não controlados quando a action termina, mesmo com erro: o
+  // formulário precisa voltar ao que foi digitado, e não ao valor salvo.
+  test('erro de validação na Loja mantém o que foi digitado nos outros campos', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    await withStoreSettingsRestored(adminDb, async () => {
+      await page.goto('/admin/loja');
+      const storeName = uniqueName('loja-digitada');
+      const notice = uniqueName('aviso-digitado');
+      await page.getByLabel('Nome da loja').fill(storeName);
+      await page.getByLabel('Aviso curto').fill(notice);
+      const mapsUrl = page.getByLabel('Link do mapa');
+      await mapsUrl.fill('nao-e-um-link');
+      await page
+        .getByRole('button', { name: 'Salvar dados da loja' })
+        .filter({ visible: true })
+        .click();
+
+      await expect(mapsUrl).toHaveAttribute('aria-invalid', 'true');
+      await expect(mapsUrl).toBeFocused();
+      await expect(mapsUrl).toHaveValue('nao-e-um-link');
+      await expect(page.getByLabel('Nome da loja')).toHaveValue(storeName);
+      await expect(page.getByLabel('Aviso curto')).toHaveValue(notice);
+    });
+  });
+
+  test('erro de validação no destaque novo mantém descrição e visibilidade', async ({
+    page,
+    uniqueName,
+  }) => {
+    await page.goto('/admin/destaques');
+    await page.getByRole('button', { name: 'Novo', exact: true }).click();
+    const description = uniqueName('destaque-sem-titulo');
+    await page.getByLabel('Descrição').fill(description);
+    const visible = page.getByRole('switch', { name: 'Destaque visível' });
+    await visible.uncheck();
+    await page.getByRole('button', { name: 'Criar destaque' }).click();
+
+    const title = page.getByLabel('Título');
+    await expect(title).toHaveAttribute('aria-invalid', 'true');
+    await expect(title).toBeFocused();
+    await expect(page.getByLabel('Descrição')).toHaveValue(description);
+    await expect(visible).not.toBeChecked();
   });
 });
