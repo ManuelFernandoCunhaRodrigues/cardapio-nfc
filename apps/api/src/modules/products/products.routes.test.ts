@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { errorHandler } from '../../shared/http/error-handler';
+import { requestTimeoutMiddleware } from '../../shared/http/request-timeout';
 import {
   MissingReferenceError,
   UniqueViolationError,
@@ -57,7 +58,7 @@ function fakeProductRepository(overrides: Partial<ProductRepository> = {}): Prod
 function fakeImageRepository(): ImageRepository {
   return {
     findRecord: async () => ({ imagePath: null, videoPath: null }),
-    setImagePath: async () => true,
+    replaceImagePath: async () => true,
     uploadVariants: async () => undefined,
     removeFiles: async () => undefined,
     isImageInUse: async () => false,
@@ -250,5 +251,48 @@ describe('rotas de produtos do painel', () => {
 
     expect(response.status).toBe(status);
     expect(await response.json()).toMatchObject({ message: expect.stringContaining(text) });
+  });
+
+  describe('com o timeout de 15 segundos', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    it('o envio que passa do prazo responde 504 e não troca a foto depois', async () => {
+      vi.useFakeTimers();
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const imageRepository = fakeImageRepository();
+      const uploadVariants = vi.spyOn(imageRepository, 'uploadVariants');
+      const replaceImagePath = vi.spyOn(imageRepository, 'replaceImagePath');
+      const images = new ImageService(imageRepository, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20_000));
+        return { detail: Buffer.from('detail'), card: Buffer.from('card') };
+      });
+      const app = new Hono<AppHonoEnv>();
+      app.use('*', requestTimeoutMiddleware());
+      app.onError(errorHandler);
+      app.route(
+        '/v1/admin/products',
+        createProductsRoutes(
+          fakeAdminClients(),
+          createProductsController(() => new ProductsService(fakeProductRepository())),
+          createImageController('product', () => images),
+        ),
+      );
+      const file = new File([Buffer.from('jpeg')], 'photo.jpg', { type: 'image/jpeg' });
+
+      const responsePromise = app.request(
+        `/v1/admin/products/${productId}/image`,
+        imageRequest(file),
+      );
+      await vi.advanceTimersByTimeAsync(15_000);
+      const response = await responsePromise;
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      expect(response.status).toBe(504);
+      expect(uploadVariants).not.toHaveBeenCalled();
+      expect(replaceImagePath).not.toHaveBeenCalled();
+    });
   });
 });

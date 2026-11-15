@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 
 import { ValidationError } from '../../../shared/errors/domain-errors';
-import { readUuidParam } from '../../../shared/http/index';
+import { readUuidParam, requestSignal } from '../../../shared/http/index';
 import { serviceForRequest, type ServiceFactory } from '../../../shared/supabase/request-service';
 import type { AppHonoEnv } from '../../../shared/types';
 import type { ImageService, ImageTarget } from './image.service';
@@ -39,12 +39,13 @@ export function createImageController(
   return {
     upload: async (context: ImageContext) => {
       const id = readUuidParam(context, 'id', invalidId);
-      const path = await service(context).upload(target, id, await readImage(context));
+      const file = await readImage(context);
+      const path = await service(context).upload(target, id, file, requestSignal(context));
       return context.json({ path }, 201);
     },
     remove: async (context: ImageContext) => {
       const id = readUuidParam(context, 'id', invalidId);
-      await service(context).remove(target, id);
+      await service(context).remove(target, id, requestSignal(context));
       return context.body(null, 204);
     },
   };
