@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ConflictError, NotFoundError } from '../errors/domain-errors';
+import { ConflictError } from '../errors/domain-errors';
 import { moveInOrder, type OrderableRepository } from './move-in-order';
 
 function fakeRepository(): OrderableRepository {
@@ -13,13 +13,11 @@ function fakeRepository(): OrderableRepository {
   };
 }
 
-const messages = { edgeMessage: 'limite', notFoundMessage: 'sumiu' };
-
 describe('moveInOrder', () => {
   it('troca a posição com o vizinho na direção pedida', async () => {
     const repository = fakeRepository();
 
-    await moveInOrder(repository, { id: 'b', direction: 'up', ...messages });
+    await moveInOrder(repository, { id: 'b', direction: 'up', edgeMessage: 'limite' });
 
     expect(repository.swapSortOrders).toHaveBeenCalledWith('b', 'a');
   });
@@ -28,17 +26,8 @@ describe('moveInOrder', () => {
     const repository = fakeRepository();
 
     await expect(
-      moveInOrder(repository, { id: 'b', direction: 'down', ...messages }),
+      moveInOrder(repository, { id: 'b', direction: 'down', edgeMessage: 'limite' }),
     ).rejects.toEqual(new ConflictError('limite'));
-    expect(repository.swapSortOrders).not.toHaveBeenCalled();
-  });
-
-  it('responde não encontrado quando o item não está na lista', async () => {
-    const repository = fakeRepository();
-
-    await expect(
-      moveInOrder(repository, { id: 'apagado', direction: 'up', ...messages }),
-    ).rejects.toEqual(new NotFoundError('sumiu'));
     expect(repository.swapSortOrders).not.toHaveBeenCalled();
   });
 });

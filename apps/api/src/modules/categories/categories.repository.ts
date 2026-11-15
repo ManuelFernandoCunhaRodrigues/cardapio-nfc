@@ -31,7 +31,7 @@ export class SupabaseCategoriesRepository implements CategoryRepository {
       .insert(input)
       .select('id')
       .single();
-    if (error) throw translateDatabaseError(error, 'save');
+    if (error) throw translateDatabaseError(error);
     return data.id;
   }
 
@@ -41,7 +41,7 @@ export class SupabaseCategoriesRepository implements CategoryRepository {
       .update(input)
       .eq('id', id)
       .select('id');
-    if (error) throw translateDatabaseError(error, 'save');
+    if (error) throw translateDatabaseError(error);
     return data.length > 0;
   }
 
@@ -80,7 +80,7 @@ export class SupabaseCategoriesRepository implements CategoryRepository {
       .eq('id', id)
       .select('image_path')
       .maybeSingle();
-    if (error) throw translateDatabaseError(error, 'delete');
+    if (error) throw translateDatabaseError(error);
     return data ? { imagePath: data.image_path } : null;
   }
 
