@@ -54,9 +54,10 @@ test.describe('cardápio público', () => {
 
     await expect(page).toHaveURL(/\/produto\/coxinha-de-frango$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Coxinha de frango' })).toBeVisible();
-    await expect(page.getByText('Disponível agora')).toBeVisible();
+    // Com a loja aberta diz "agora"; fechada (o CI roda em qualquer dia e hora), "no horário da loja".
+    await expect(page.getByText(/^Disponível (agora|no horário da loja)/)).toBeVisible();
     await expect(page.getByText('Consulta apenas. Faça seu pedido com o atendente.')).toBeVisible();
-    await expect(page).toHaveTitle('Coxinha de frango | Salgaê');
+    await expect(page).toHaveTitle(/^Coxinha de frango \| Salgaê/);
     // Prévia usada por WhatsApp e redes sociais.
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
