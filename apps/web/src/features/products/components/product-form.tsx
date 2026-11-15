@@ -215,7 +215,12 @@ export function ProductForm({
   const [createState, setCreateState] = useState<ProductActionState>(initialProductActionState);
   // Erros achados antes do envio: valem até o próximo envio, na edição e na criação.
   const [validationState, setValidationState] = useState<ProductActionState | null>(null);
-  const state = validationState ?? (editing ? updateState : createState);
+  const serverState = editing ? updateState : createState;
+  // Cada tentativa de envio aposenta o resultado anterior do servidor: sem isto, o erro antigo
+  // voltaria a aparecer enquanto o envio novo, já aprovado na validação local, está em andamento.
+  const [supersededState, setSupersededState] = useState<ProductActionState | null>(null);
+  const state =
+    validationState ?? (serverState === supersededState ? initialProductActionState : serverState);
   const defaultCategoryId = categories[0]?.id ?? '';
   // O produto salvo volta do servidor depois de cada gravação: comparar com ele faz o formulário
   // deixar de estar alterado assim que salva.
@@ -253,6 +258,7 @@ export function ProductForm({
   /** Confere o rascunho com o schema da API e mostra os erros de campo; diz se pode enviar. */
   function acceptDraft(): boolean {
     const fieldErrors = validateProductDraft(draft);
+    setSupersededState(serverState);
     setValidationState(
       fieldErrors ? { status: 'error', message: REVIEW_FIELDS_MESSAGE, fieldErrors } : null,
     );
