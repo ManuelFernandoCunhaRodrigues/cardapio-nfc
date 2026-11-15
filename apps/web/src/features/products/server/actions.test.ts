@@ -75,7 +75,36 @@ describe('Server Actions de produtos', () => {
         ...(method === 'DELETE' ? [] : [expect.anything()]),
       );
       expect(mocks.invalidateMenuCache).toHaveBeenCalledWith(productId);
-      expect(mocks.refreshAdminPanel).toHaveBeenCalledOnce();
     },
   );
+
+  it.each([
+    ['edição', updateProduct],
+    ['situação', setProductSituation],
+    ['exclusão', deleteProduct],
+  ] as const)('a %s marca o painel inteiro para renderizar de novo', async (_label, action) => {
+    mocks.write.mockResolvedValue(undefined);
+
+    await action({ status: 'idle' }, formDataFrom({ ...productFields, id: productId }));
+
+    expect(mocks.refreshAdminPanel).toHaveBeenCalledOnce();
+    expect(mocks.refreshAdminList).not.toHaveBeenCalled();
+  });
+
+  it('a mudança de ordem marca só a lista de produtos', async () => {
+    mocks.write.mockResolvedValue(undefined);
+
+    const state = await reorderProduct(
+      { status: 'idle' },
+      formDataFrom({ id: productId, direction: 'down' }),
+    );
+
+    expect(state).toEqual({
+      status: 'success',
+      message: 'Ordem do produto atualizada.',
+      entityId: productId,
+    });
+    expect(mocks.refreshAdminList).toHaveBeenCalledWith('products');
+    expect(mocks.refreshAdminPanel).not.toHaveBeenCalled();
+  });
 });
