@@ -5,6 +5,11 @@ import { Icon, type IconName } from '@/features/menu/components/icons';
 import { StoreInfoStatus, StoreOpeningHours } from '@/features/store/components/store-status-live';
 import { getPublicStore } from '@/lib/api/public-api-client';
 import { selectPublicStoreStatusSettings } from '@/features/store/rules/client-status';
+import {
+  buildInstagramHref,
+  buildPhoneHref,
+  buildWhatsAppHref,
+} from '@/features/store/rules/contact-links';
 
 export const revalidate = 60;
 export const metadata: Metadata = { title: 'Informações | Salgaê' };
@@ -38,18 +43,18 @@ export default async function InfoPage() {
           ) : null}
           <div className="mt-2 grid grid-cols-3 gap-2">
             {settings.phone ? (
-              <ContactLink href={`tel:${settings.phone}`} icon="phone" label="Ligar" />
+              <ContactLink href={buildPhoneHref(settings.phone)} icon="phone" label="Ligar" />
             ) : null}
             {settings.whatsapp ? (
               <ContactLink
-                href={`https://wa.me/${settings.whatsapp}`}
+                href={buildWhatsAppHref(settings.whatsapp)}
                 icon="whatsapp"
                 label="WhatsApp"
               />
             ) : null}
             {settings.instagram ? (
               <ContactLink
-                href={`https://instagram.com/${settings.instagram}`}
+                href={buildInstagramHref(settings.instagram)}
                 icon="instagram"
                 label="Instagram"
               />
