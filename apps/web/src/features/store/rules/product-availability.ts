@@ -1,6 +1,6 @@
 import type { StoreStatus } from '@salgae/core/rules/opening-hours';
 
-import { formatStoreStatusTime } from '@/features/menu/rules/presentation';
+import { formatNextOpening } from '@/features/menu/rules/presentation';
 
 export type ProductAvailabilityNotice = {
   tone: 'available' | 'store-closed' | 'unavailable';
@@ -11,6 +11,7 @@ export type ProductAvailabilityNotice = {
 export function getProductAvailabilityNotice(
   isAvailable: boolean,
   store: StoreStatus,
+  now: Date,
 ): ProductAvailabilityNotice {
   if (!isAvailable) {
     return {
@@ -23,7 +24,7 @@ export function getProductAvailabilityNotice(
   return {
     tone: 'store-closed',
     text: store.opensNext
-      ? `${storeHours} · abre ${formatStoreStatusTime(store.opensNext, true)}`
+      ? `${storeHours} · abre ${formatNextOpening(store.opensNext, now)}`
       : storeHours,
   };
 }
