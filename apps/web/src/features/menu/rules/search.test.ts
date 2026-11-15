@@ -34,4 +34,15 @@ describe('busca do cardapio', () => {
   it('encontra produtos pelo nome da categoria', () => {
     expect(filterMenuProducts([product], 'DOCES', [category])).toEqual([product]);
   });
+
+  it('mostra os indisponíveis depois dos disponíveis, na ordem do cardápio', () => {
+    const esgotada = { ...product, id: 'c1', name: 'Coxinha de Costela', is_available: false };
+    const catupiry = { ...product, id: 'c2', name: 'Coxinha com Catupiry' };
+    const pastel = { ...product, id: 'p1', name: 'Pastel de Coxinha', sort_order: 0 };
+    const frango = { ...product, id: 'c3', name: 'Coxinha de Frango', sort_order: 5 };
+
+    expect(
+      filterMenuProducts([esgotada, catupiry, pastel, frango], 'coxinha').map(({ id }) => id),
+    ).toEqual(['c2', 'p1', 'c3', 'c1']);
+  });
 });
