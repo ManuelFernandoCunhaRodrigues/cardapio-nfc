@@ -11,10 +11,6 @@ import { sortProductsForHome } from '@salgae/core/rules/product-sort';
 
 export const revalidate = 60;
 
-type HomePageProps = {
-  searchParams?: Promise<{ preview?: string }>;
-};
-
 const categoryEmoji: Record<string, string> = {
   coxinhas: '🥟',
   pasteis: '🥠',
@@ -25,25 +21,9 @@ const categoryEmoji: Record<string, string> = {
   doces: '🍫',
 };
 
-export default async function HomePage({ searchParams }: HomePageProps) {
+export default async function HomePage() {
   const [menu, settings] = await Promise.all([getPublicMenu(), getPublicStore()]);
-  const products = menu.products;
-  const { preview } = (await searchParams) ?? {};
-  const localComboPreview = process.env.NODE_ENV === 'development' && preview === 'combo';
-  const highlights = localComboPreview
-    ? [
-        {
-          id: 'local-combo-preview',
-          title: 'Combo Esfiha + Suco',
-          description: 'Duas esfihas assadas com suco gelado.',
-          image_path: '/imagens-combos-promocoes/destaque-combo-esfiha-suco.png',
-          target: '/cardapio#combos',
-          sort_order: -1,
-        },
-        ...menu.highlights,
-      ]
-    : menu.highlights;
-  const featured = sortProductsForHome(products).slice(0, 8);
+  const featured = sortProductsForHome(menu.products).slice(0, 8);
 
   return (
     <main className="px-4 pb-6 pt-1">
@@ -61,7 +41,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           {settings.notice}
         </p>
       ) : null}
-      <HighlightBanner highlights={highlights} />
+      <HighlightBanner highlights={menu.highlights} />
       <nav
         aria-label="Categorias"
         className="-mx-4 mt-3 flex gap-3.5 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
