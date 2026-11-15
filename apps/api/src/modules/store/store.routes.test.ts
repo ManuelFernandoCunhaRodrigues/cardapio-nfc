@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { errorHandler } from '../../shared/http/error-handler';
 import type { AppHonoEnv } from '../../shared/types';
 import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
+import { itRequiresAdmin } from '../../test-support/admin-only-routes';
 import { createAdminStoreController, createPublicStoreController } from './store.controller';
 import { createAdminStoreRoutes, createPublicStoreRoutes } from './store.routes';
 import { StoreService, type StoreRepository } from './store.service';
@@ -43,6 +44,11 @@ const validSettingsInput = {
 };
 
 describe('rotas da loja', () => {
+  itRequiresAdmin(() => testApp(), [
+    ['PUT', '/v1/admin/store'],
+    ['PUT', '/v1/admin/store/status'],
+  ] as const);
+
   it('GET /v1/store devolve as configurações públicas sem token', async () => {
     const response = await testApp().request('/v1/store');
 

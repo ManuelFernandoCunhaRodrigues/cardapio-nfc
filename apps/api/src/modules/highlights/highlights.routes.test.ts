@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { errorHandler } from '../../shared/http/error-handler';
 import type { AppHonoEnv } from '../../shared/types';
 import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
+import { itRequiresAdmin } from '../../test-support/admin-only-routes';
 import { createHighlightsController } from './highlights.controller';
 import { createHighlightsRoutes } from './highlights.routes';
 import { HighlightsService, type HighlightRepository } from './highlights.service';
@@ -47,6 +48,16 @@ function testApp(repository = fakeRepository()) {
 }
 
 describe('rotas de destaques do painel', () => {
+  itRequiresAdmin(() => testApp(), [
+    ['POST', '/v1/admin/highlights'],
+    ['PUT', `/v1/admin/highlights/${highlightId}`],
+    ['PUT', `/v1/admin/highlights/${highlightId}/active`],
+    ['POST', `/v1/admin/highlights/${highlightId}/order`],
+    ['POST', `/v1/admin/highlights/${highlightId}/image`],
+    ['DELETE', `/v1/admin/highlights/${highlightId}/image`],
+    ['DELETE', `/v1/admin/highlights/${highlightId}`],
+  ] as const);
+
   it('exigem token de admin', async () => {
     const response = await testApp().request('/v1/admin/highlights', { method: 'POST' });
 

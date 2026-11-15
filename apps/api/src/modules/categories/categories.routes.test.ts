@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { errorHandler } from '../../shared/http/error-handler';
 import type { AppHonoEnv } from '../../shared/types';
 import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
+import { itRequiresAdmin } from '../../test-support/admin-only-routes';
 import { createCategoriesController } from './categories.controller';
 import { createCategoriesRoutes } from './categories.routes';
 import { IMAGE_BODY_MAX_BYTES } from '../media/image/image-compressor';
@@ -45,6 +46,16 @@ function testApp(repository = fakeRepository()) {
 }
 
 describe('rotas de categorias do painel', () => {
+  itRequiresAdmin(() => testApp(), [
+    ['POST', '/v1/admin/categories'],
+    ['PUT', `/v1/admin/categories/${categoryId}`],
+    ['PUT', `/v1/admin/categories/${categoryId}/active`],
+    ['POST', `/v1/admin/categories/${categoryId}/order`],
+    ['POST', `/v1/admin/categories/${categoryId}/image`],
+    ['DELETE', `/v1/admin/categories/${categoryId}/image`],
+    ['DELETE', `/v1/admin/categories/${categoryId}`],
+  ] as const);
+
   it('exigem token de admin', async () => {
     const response = await testApp().request('/v1/admin/categories');
 

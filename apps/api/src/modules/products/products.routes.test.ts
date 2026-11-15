@@ -8,6 +8,7 @@ import {
 } from '../../shared/errors/persistence-errors';
 import type { AppHonoEnv } from '../../shared/types';
 import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
+import { itRequiresAdmin } from '../../test-support/admin-only-routes';
 import { createImageController } from '../media/image/image.controller';
 import { ImageService, type ImageRepository } from '../media/image/image.service';
 import { createProductsController } from './products.controller';
@@ -80,6 +81,16 @@ function imageRequest(file: File): RequestInit {
 }
 
 describe('rotas de produtos do painel', () => {
+  itRequiresAdmin(() => testApp(), [
+    ['POST', '/v1/admin/products'],
+    ['PUT', `/v1/admin/products/${productId}`],
+    ['PUT', `/v1/admin/products/${productId}/situation`],
+    ['POST', `/v1/admin/products/${productId}/order`],
+    ['POST', `/v1/admin/products/${productId}/image`],
+    ['DELETE', `/v1/admin/products/${productId}/image`],
+    ['DELETE', `/v1/admin/products/${productId}`],
+  ] as const);
+
   it('exigem token de admin', async () => {
     expect((await testApp().request('/v1/admin/products')).status).toBe(401);
   });
