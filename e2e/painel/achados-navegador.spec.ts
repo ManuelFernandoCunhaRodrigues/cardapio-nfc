@@ -108,7 +108,7 @@ test.describe('categoria escondida', () => {
     adminDb,
     uniqueName,
   }) => {
-    const categoryName = uniqueName('resumo-escondida');
+    const categoryName = uniqueName('resumo-fora');
     const categoryId = await createCategory(adminDb, categoryName, false);
     const productName = uniqueName('resumo-produto');
     await createProduct(adminDb, productName, categoryId);
@@ -125,9 +125,10 @@ test.describe('categoria escondida', () => {
     await expect(
       page.getByRole('link', { name: productName }).filter({ visible: true }).first(),
     ).toBeVisible();
+    // O nome da categoria não contém "escondida": só a marcação faz este texto aparecer.
     await expect(
       page
-        .getByText(/escondida/)
+        .getByText(/\(escondida\)|^escondida$/)
         .filter({ visible: true })
         .first(),
     ).toBeVisible();

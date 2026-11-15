@@ -30,8 +30,13 @@ export function CategoryNav({ categories }: Readonly<{ categories: MenuCategory[
     };
     const selectLastAtPageEnd = () => {
       if (navigationTargetRef.current || !lastSection) return false;
+      const { scrollHeight } = document.documentElement;
+      // Página que não rola (poucas categorias, tela alta) não "chegou ao fim": fica a primeira.
+      const pageScrolls = scrollHeight > window.innerHeight + 2;
       const reachedPageEnd =
-        window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+        pageScrolls &&
+        window.scrollY > 0 &&
+        window.scrollY + window.innerHeight >= scrollHeight - 2;
       if (reachedPageEnd) setActive(lastSection.id);
       return reachedPageEnd;
     };

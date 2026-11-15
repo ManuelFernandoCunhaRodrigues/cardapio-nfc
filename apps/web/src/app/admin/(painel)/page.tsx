@@ -26,7 +26,8 @@ export default async function AdminDashboardPage() {
   const unavailable = onMenu.filter((product) => !product.is_available).length;
   const hiddenCategories = categories.filter((category) => !category.is_active);
   const withoutImage = products.filter((product) => !product.image_path).length;
-  const attention = productsNeedingAttention(products);
+  // Só o que o cliente vê: produto de categoria escondida não precisa de atenção agora.
+  const attention = productsNeedingAttention(onMenu);
   const now = new Date();
   const settings = store.status === 'loaded' ? store.settings : undefined;
   const status = settings ? getStoreStatus(settings, now) : null;
