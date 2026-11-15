@@ -51,7 +51,12 @@ export class HighlightsService {
   }
 
   async moveHighlight(id: string, { direction }: ReorderInput): Promise<void> {
-    await moveInOrder(this.repository, { id, direction, edgeMessage: messages.atListEdge });
+    await moveInOrder(this.repository, {
+      id,
+      direction,
+      edgeMessage: messages.atListEdge,
+      notFoundMessage: messages.notFound,
+    });
   }
 
   async deleteHighlight(id: string): Promise<void> {

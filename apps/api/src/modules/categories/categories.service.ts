@@ -64,7 +64,12 @@ export class CategoriesService {
   }
 
   async moveCategory(id: string, { direction }: ReorderInput): Promise<void> {
-    await moveInOrder(this.repository, { id, direction, edgeMessage: messages.atListEdge });
+    await moveInOrder(this.repository, {
+      id,
+      direction,
+      edgeMessage: messages.atListEdge,
+      notFoundMessage: messages.notFound,
+    });
   }
 
   async deleteCategory(id: string): Promise<void> {

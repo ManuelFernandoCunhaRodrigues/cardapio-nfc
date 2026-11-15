@@ -74,7 +74,7 @@ export class ProductsService {
         swapSortOrders: (sourceId, neighborId) =>
           this.repository.swapSortOrders(sourceId, neighborId),
       },
-      { id, ...input, edgeMessage: messages.atListEdge },
+      { id, ...input, edgeMessage: messages.atListEdge, notFoundMessage: messages.notFound },
     );
   }
 

@@ -118,6 +118,16 @@ describe('rotas de categorias do painel', () => {
     expect(repository.setActive).toHaveBeenCalledWith(categoryId, false);
   });
 
+  it('POST /:id/order responde 404 quando a categoria não está mais na lista', async () => {
+    const response = await testApp().request(
+      `/v1/admin/categories/${categoryId}/order`,
+      adminRequest('POST', { direction: 'up' }),
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ message: 'Categoria não encontrada.' });
+  });
+
   it('DELETE apaga a categoria', async () => {
     const repository = fakeRepository();
 

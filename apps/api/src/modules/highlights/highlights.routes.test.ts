@@ -101,6 +101,19 @@ describe('rotas de destaques do painel', () => {
     );
   });
 
+  it('POST /:id/order responde 404 para destaque apagado em outra aba', async () => {
+    const repository = fakeRepository();
+
+    const response = await testApp(repository).request(
+      '/v1/admin/highlights/55555555-5555-4555-8555-555555555555/order',
+      adminRequest('POST', { direction: 'up' }),
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ message: 'Destaque não encontrado.' });
+    expect(repository.swapSortOrders).not.toHaveBeenCalled();
+  });
+
   it('corpo que não é JSON responde 400', async () => {
     const response = await testApp().request('/v1/admin/highlights', {
       ...adminRequest('POST'),
