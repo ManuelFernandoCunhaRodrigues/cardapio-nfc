@@ -137,6 +137,29 @@ test.describe('movimento público sem redução', () => {
     await expect(activeSlide(page)).toHaveAttribute('aria-label', /^1 de/);
   });
 
+  test('pausa a troca automática pelo botão até tocar de novo', async ({
+    page,
+    browser,
+    adminDb,
+    uniqueName,
+  }) => {
+    await createHighlights(browser, adminDb, [uniqueName('botao-a'), uniqueName('botao-b')]);
+    await page.clock.install();
+    await page.goto('/');
+    await expect(activeSlide(page)).toHaveAttribute('aria-label', /^1 de/);
+
+    await carousel(page).getByRole('button', { name: 'Pausar destaques' }).click();
+    // Tira o ponteiro de cima: a pausa que fica é só a do botão.
+    await page.mouse.move(0, 0);
+    await page.clock.fastForward(6_100);
+    await expect(activeSlide(page)).toHaveAttribute('aria-label', /^1 de/);
+
+    await carousel(page).getByRole('button', { name: 'Continuar destaques' }).click();
+    await page.mouse.move(0, 0);
+    await page.clock.fastForward(6_100);
+    await expect(activeSlide(page)).toHaveAttribute('aria-label', /^2 de/);
+  });
+
   test('termina a entrada dos cards do cardápio visíveis e no lugar', async ({ page }) => {
     await page.goto('/cardapio');
 
