@@ -11,6 +11,7 @@ import {
   ValidationError,
 } from './domain-errors';
 import { mapErrorToHttp } from './http-error-mapper';
+import { RequestCancelledError } from './request-cancelled-error';
 
 describe('mapErrorToHttp', () => {
   it.each([
@@ -43,6 +44,14 @@ describe('mapErrorToHttp', () => {
       status: 504,
       message: 'A solicitação demorou mais que o esperado.',
       report: true,
+    });
+  });
+
+  it('não registra de novo o handler que parou depois do timeout', () => {
+    expect(mapErrorToHttp(new RequestCancelledError())).toEqual({
+      status: 504,
+      message: 'A solicitação demorou mais que o esperado.',
+      report: false,
     });
   });
 

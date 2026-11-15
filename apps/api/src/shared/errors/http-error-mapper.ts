@@ -11,8 +11,11 @@ import {
   UnsupportedMediaTypeError,
   ValidationError,
 } from './domain-errors';
+import { RequestCancelledError } from './request-cancelled-error';
 
 type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 500 | 504;
+
+const TIMEOUT_MESSAGE = 'A solicitação demorou mais que o esperado.';
 
 type HttpError = {
   status: ErrorStatus;
@@ -50,8 +53,13 @@ export function mapErrorToHttp(error: Error): HttpError {
     };
   }
 
+  // O 504 já foi respondido e registrado pelo middleware de timeout; aqui só o handler parando.
+  if (error instanceof RequestCancelledError) {
+    return { status: 504, message: TIMEOUT_MESSAGE, report: false };
+  }
+
   if (error instanceof HTTPException && error.status === 504) {
-    return { status: 504, message: 'A solicitação demorou mais que o esperado.', report: true };
+    return { status: 504, message: TIMEOUT_MESSAGE, report: true };
   }
 
   return {

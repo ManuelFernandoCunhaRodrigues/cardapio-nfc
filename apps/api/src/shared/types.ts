@@ -7,6 +7,8 @@ type AppVariables = {
   user: User;
   adminName: string | null;
   supabase: AppSupabaseClient;
+  /** Cancelado quando a requisição passa do tempo limite (ver `requestTimeoutMiddleware`). */
+  requestSignal?: AbortSignal;
 };
 
 export type AppHonoEnv = { Variables: AppVariables };
