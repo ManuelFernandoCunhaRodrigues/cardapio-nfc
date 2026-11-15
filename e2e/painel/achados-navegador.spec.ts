@@ -164,43 +164,51 @@ test.describe('listas do painel', () => {
     await expect(notice).toBeHidden();
   });
 
-  test('em Produtos, o aviso de erro some quando outra ação começa', async ({
+  test('em Produtos, as setas param no limite da categoria e o aviso fica à vista', async ({
     page,
     adminDb,
     uniqueName,
   }) => {
     const categoryId = await createCategory(adminDb, uniqueName('aviso-produtos'));
-    const firstName = uniqueName('aviso-produto-a');
-    const secondName = uniqueName('aviso-produto-b');
-    const firstId = await createProduct(adminDb, firstName, categoryId);
-    const secondId = await createProduct(adminDb, secondName, categoryId);
-    for (const [id, sortOrder] of [
-      [firstId, 0],
-      [secondId, 1],
-    ] as const) {
+    const names = [
+      uniqueName('aviso-produto-a'),
+      uniqueName('aviso-produto-b'),
+      uniqueName('aviso-produto-c'),
+    ];
+    const ids: string[] = [];
+    for (const [sortOrder, name] of names.entries()) {
+      const id = await createProduct(adminDb, name, categoryId);
       const { error } = await adminDb.client
         .from('products')
         .update({ sort_order: sortOrder })
         .eq('id', id);
       expect(error).toBeNull();
+      ids.push(id);
     }
-    await page.goto(`/admin/produtos?categoria=${categoryId}`);
+    const [firstName, secondName, lastName] = names;
+    const moveButton = (label: string) =>
+      page.getByRole('button', { name: label }).filter({ visible: true });
+    // O filtro da categoria não muda os limites: eles vêm da lista completa.
+    await page.goto(`/admin/produtos?categoria=${categoryId}&filtro=sem-foto`);
 
-    // O primeiro da categoria não tem para onde subir: a API recusa e o aviso aparece.
-    await page
-      .getByRole('button', { name: `Subir ${firstName}` })
-      .filter({ visible: true })
-      .click();
+    await expect(moveButton(`Subir ${firstName}`)).toBeDisabled();
+    await expect(moveButton(`Descer ${lastName}`)).toBeDisabled();
+    await expect(moveButton(`Subir ${secondName}`)).toBeEnabled();
+
+    // Outra aba põe o segundo no topo: a tela ainda não sabe, e a API recusa a subida.
+    const { error } = await adminDb.client
+      .from('products')
+      .update({ sort_order: -1 })
+      .eq('id', ids[1]);
+    expect(error).toBeNull();
+    await moveButton(`Subir ${secondName}`).click();
     const notice = page
       .getByText('Este produto já está no limite da categoria.')
       .filter({ visible: true })
       .first();
-    await expect(notice).toBeVisible();
+    await expect(notice).toBeInViewport();
 
-    await page
-      .getByRole('button', { name: `Subir ${secondName}` })
-      .filter({ visible: true })
-      .click();
+    await moveButton(`Descer ${firstName}`).click();
     await expect(notice).toBeHidden();
     await expect(page.getByText('Ordem do produto atualizada.')).toBeVisible();
   });

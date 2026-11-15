@@ -235,8 +235,9 @@ test.describe('situações públicas e rajadas do painel', () => {
     const moveUp = page
       .getByRole('button', { name: `Subir ${secondName}` })
       .filter({ visible: true });
+    // O primeiro da categoria não sobe (seta desativada): o outro item é a descida dele.
     const otherItem = page
-      .getByRole('button', { name: `Subir ${firstName}` })
+      .getByRole('button', { name: `Descer ${firstName}` })
       .filter({ visible: true });
     await moveUp.focus();
     await moveUp.evaluate((button: HTMLElement) => {
