@@ -379,6 +379,7 @@ test.describe('categorias do painel', () => {
     ).toBeVisible();
     await question.getByRole('button', { name: 'Voltar' }).click();
     await expect(question).toHaveCount(0);
+    await expect(card.getByRole('button', { name: 'Esconder', exact: true })).toBeFocused();
     await expect(card.getByText('VISÍVEL', { exact: true })).toBeVisible();
   });
 });

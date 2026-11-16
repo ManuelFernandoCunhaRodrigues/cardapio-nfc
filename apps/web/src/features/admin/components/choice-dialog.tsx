@@ -45,12 +45,25 @@ function ChoiceFrame({
   const cancelRef = useRef<HTMLButtonElement>(null);
   const isPresent = useIsPresent();
   const titleId = `choice-${useId()}`;
+  const descriptionId = `${titleId}-descricao`;
   const [origin] = useState(() => document.activeElement as HTMLElement | null);
 
-  // Quem desiste volta para onde estava (o botão Sair, o campo da gaveta).
+  // Nas duas respostas o foco volta para quem abriu a pergunta (o botão Sair, Esconder, um campo
+  // da gaveta). Se esse lugar saiu da tela ou ficou inerte (a gaveta fechando), quem fecha cuida.
+  function restoreFocus() {
+    requestAnimationFrame(() => {
+      if (origin?.isConnected && !origin.closest('[inert]')) origin.focus();
+    });
+  }
+
   function cancel() {
     onCancel();
-    requestAnimationFrame(() => origin?.focus());
+    restoreFocus();
+  }
+
+  function confirm() {
+    onConfirm();
+    restoreFocus();
   }
 
   useFocusTrap({
@@ -64,6 +77,7 @@ function ChoiceFrame({
     <m.div
       {...overlayFade}
       {...layerAttributes(isPresent)}
+      aria-describedby={descriptionId}
       aria-labelledby={titleId}
       aria-modal="true"
       className="fixed inset-0 z-[100] grid place-items-center bg-ink/55 p-4"
@@ -85,12 +99,14 @@ function ChoiceFrame({
         <h2 className="disp text-2xl font-extrabold text-ink" id={titleId}>
           {title}
         </h2>
-        <p className="mt-3 text-sm leading-6 text-body">{description}</p>
+        <p className="mt-3 text-sm leading-6 text-body" id={descriptionId}>
+          {description}
+        </p>
         <div className="mt-6 flex flex-wrap justify-end gap-3">
           <Button onClick={cancel} ref={cancelRef} type="button" variant="neutral">
             {cancelLabel}
           </Button>
-          <Button onClick={onConfirm} type="button" variant="danger">
+          <Button onClick={confirm} type="button" variant="danger">
             {confirmLabel}
           </Button>
         </div>

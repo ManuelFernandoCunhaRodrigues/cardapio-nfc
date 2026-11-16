@@ -202,6 +202,8 @@ test.describe('situações públicas e rajadas do painel', () => {
     await confirmHide(page, categoryName);
     await expect(page.getByText('Categoria escondida.')).toBeVisible();
     card = page.getByRole('article').filter({ hasText: categoryName });
+    // Depois de confirmar, o foco volta ao botão que abriu a pergunta (agora "Mostrar").
+    await expect(card.getByRole('button', { name: 'Mostrar', exact: true })).toBeFocused();
     await card.getByRole('button', { name: 'Mostrar', exact: true }).click();
     await expect(page.getByText('Categoria visível.')).toBeVisible();
     await expectProductOnPublicPages(page, productName, category.slug);
