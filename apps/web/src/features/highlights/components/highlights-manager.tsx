@@ -17,6 +17,8 @@ import { initialMediaActionState } from '@/features/media/server/action-state';
 import { EditorPhotoField, useEditorPhoto } from '@/features/media/components/editor-photo-field';
 import { MediaImage } from '@/features/media/components/media-image';
 import { usePhotoAfterSave } from '@/features/media/client/use-photo-after-save';
+import { useFocusFirstInvalid } from '@/features/admin/client/use-focus-first-invalid';
+import { fieldDefaults } from '@/features/admin/rules/submitted-values';
 import { listReorder } from '@/components/motion/motion-primitives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -83,14 +85,22 @@ function HighlightEditor({
     getPublicImageVariantUrl('highlight-images', highlight?.image_path, 'card'),
     'Foto pronta para salvar junto com o destaque.',
   );
+  const formRef = useRef<HTMLFormElement>(null);
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
+  const defaults = fieldDefaults(state.values);
+  useFocusFirstInvalid(formRef, state);
   usePhotoAfterSave({ saveState: state, file: photo.file, upload: uploadPhoto, onSaved });
   const target = buildHighlightTarget(targetKind, targetValue) ?? '';
   return (
-    <form action={editing ? updateAction : createAction} className="space-y-4" noValidate>
+    <form
+      action={editing ? updateAction : createAction}
+      className="space-y-4"
+      noValidate
+      ref={formRef}
+    >
       {highlight ? <input name="id" type="hidden" value={highlight.id} /> : null}
       <Input
-        defaultValue={highlight?.title ?? ''}
+        defaultValue={defaults.text('title', highlight?.title ?? '')}
         error={errorFor('title')}
         label="Título"
         maxLength={120}
@@ -103,7 +113,7 @@ function HighlightEditor({
         </label>
         <textarea
           className="min-h-24 w-full rounded-xl border border-border bg-surface-inner px-3.5 py-3 text-sm text-ink focus:outline-hidden focus:ring-4 focus:ring-brand/20"
-          defaultValue={highlight?.description ?? ''}
+          defaultValue={defaults.text('description', highlight?.description ?? '')}
           id="highlight-description"
           maxLength={600}
           name="description"
@@ -184,7 +194,7 @@ function HighlightEditor({
         Destaque visível
         <input
           className="size-5 accent-green"
-          defaultChecked={highlight?.is_active ?? true}
+          defaultChecked={defaults.checked('is_active', highlight?.is_active ?? true)}
           name="is_active"
           role="switch"
           type="checkbox"

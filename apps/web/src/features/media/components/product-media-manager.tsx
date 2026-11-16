@@ -7,6 +7,7 @@ import { removeProductVideo } from '@/features/media/server/actions';
 import { removeProductImage, uploadProductImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { resizeImageForUpload } from '@/features/media/client/client-resize';
+import { validateVideoForUpload } from '@/features/media/client/client-video';
 import { getPublicImageVariantUrl, getPublicMediaUrl } from '@/features/media/rules/media-urls';
 import {
   friendlyVideoError,
@@ -111,16 +112,32 @@ export function ProductMediaManager({
     }
   }
 
-  async function selectVideo(file: File | undefined) {
-    if (!file || !hasImage) return;
-    setError(false);
-    const localPreview = URL.createObjectURL(file);
-    setVideoPreview(localPreview);
-    onVideoPrepared?.(file, localPreview);
-    if (!productId) {
+  function showVideoError(caught: unknown) {
+    setError(true);
+    setProgress(undefined);
+    setMessage(friendlyVideoError(caught));
+  }
+
+  // No produto novo o vídeo só sobe depois de criar o produto: sem conferir agora, um vídeo longo
+  // criaria o produto e só então falharia.
+  async function prepareVideoForCreation(file: File) {
+    setBusy(true);
+    setMessage('Validando vídeo…');
+    try {
+      await validateVideoForUpload(file);
+      const localPreview = URL.createObjectURL(file);
+      setVideoPreview(localPreview);
+      onVideoPrepared?.(file, localPreview);
       setMessage('Vídeo pronto para ser enviado ao criar o produto.');
-      return;
+    } catch (caught) {
+      showVideoError(caught);
+    } finally {
+      setBusy(false);
     }
+  }
+
+  async function uploadVideo(file: File) {
+    setVideoPreview(URL.createObjectURL(file));
     setBusy(true);
     try {
       const path = await uploadProductVideoFile(productId, file, {
@@ -129,12 +146,17 @@ export function ProductMediaManager({
       });
       setHasVideo(Boolean(path));
     } catch (caught) {
-      setError(true);
-      setProgress(undefined);
-      setMessage(friendlyVideoError(caught));
+      showVideoError(caught);
     } finally {
       setBusy(false);
     }
+  }
+
+  async function selectVideo(file: File | undefined) {
+    if (!file || !hasImage) return;
+    setError(false);
+    if (productId) await uploadVideo(file);
+    else await prepareVideoForCreation(file);
   }
 
   return (

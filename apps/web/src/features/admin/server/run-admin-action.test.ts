@@ -55,6 +55,43 @@ describe('runAdminAction', () => {
     expect(state).toEqual({ status: 'error', message: 'Tente novamente.' });
     expect(mocks.reportServerError).toHaveBeenCalledWith('category_create_failed', failure);
   });
+
+  it('devolve o que foi digitado em qualquer erro, para o formulário não apagar os campos', async () => {
+    const submitted = new FormData();
+    submitted.set('name', 'Coxinhas');
+    submitted.set('slug', 'url invalida');
+
+    const rejected = await runAdminAction(
+      async () => {
+        throw new ApiRequestError(400, 'Revise os campos.', { slug: ['Inválido.'] });
+      },
+      { ...options, submitted },
+    );
+    const failed = await runAdminAction(
+      async () => {
+        throw new TypeError('fetch failed');
+      },
+      { ...options, submitted },
+    );
+
+    const values = { name: 'Coxinhas', slug: 'url invalida' };
+    expect(rejected).toEqual({
+      status: 'error',
+      message: 'Revise os campos.',
+      fieldErrors: { slug: ['Inválido.'] },
+      values,
+    });
+    expect(failed).toEqual({ status: 'error', message: 'Tente novamente.', values });
+  });
+
+  it('não devolve os campos enviados quando a ação dá certo', async () => {
+    const submitted = new FormData();
+    submitted.set('name', 'Coxinhas');
+
+    await expect(
+      runAdminAction(async () => ({ status: 'success' }), { ...options, submitted }),
+    ).resolves.toEqual({ status: 'success' });
+  });
 });
 
 describe('readFormText', () => {

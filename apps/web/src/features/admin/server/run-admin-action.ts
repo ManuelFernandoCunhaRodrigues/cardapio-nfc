@@ -1,5 +1,6 @@
 import type { FieldErrors } from '@salgae/core/contracts/admin-api';
 
+import { readSubmittedValues, type SubmittedValues } from '@/features/admin/rules/submitted-values';
 import { ApiRequestError } from '@/lib/api/api-request-error';
 import { reportServerError } from '@/lib/observability';
 
@@ -10,6 +11,7 @@ export type AdminActionError = {
   status: 'error';
   message: string;
   fieldErrors?: FieldErrors;
+  values?: SubmittedValues;
 };
 
 type AdminActionOptions = {
@@ -17,6 +19,8 @@ type AdminActionOptions = {
   event: string;
   /** Texto mostrado ao admin nesse caso. */
   failureMessage: string;
+  /** Formulário enviado: em qualquer erro, os textos voltam no estado para não se perderem. */
+  submitted?: FormData;
 };
 
 /** Lê um campo de texto do formulário; ausente vira texto vazio, que o schema da API recusa. */
@@ -25,7 +29,10 @@ export function readFormText(formData: FormData, name: string): string {
   return typeof value === 'string' ? value : '';
 }
 
-function toAdminActionError(error: unknown, options: AdminActionOptions): AdminActionError {
+function describeAdminActionError(
+  error: unknown,
+  options: AdminActionOptions,
+): Omit<AdminActionError, 'values'> {
   if (error instanceof ApiRequestError && SESSION_REJECTED_STATUSES.has(error.status)) {
     return { status: 'error', message: SESSION_REJECTED_MESSAGE };
   }
@@ -51,6 +58,9 @@ export async function runAdminAction<TSuccess>(
   try {
     return await perform();
   } catch (error) {
-    return toAdminActionError(error, options);
+    const failure = describeAdminActionError(error, options);
+    return options.submitted
+      ? { ...failure, values: readSubmittedValues(options.submitted) }
+      : failure;
   }
 }

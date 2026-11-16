@@ -8,6 +8,7 @@ import {
   filterAdminProducts,
   productsNeedingAttention,
   productsOnMenu,
+  reorderBoundsByProduct,
   runProductCreationFlow,
   singleFlight,
 } from './panel';
@@ -82,6 +83,22 @@ describe('regras do painel', () => {
     expect(filterAdminProducts(products, { filter: 'hidden' }).map((item) => item.id)).toEqual([
       '3',
     ]);
+  });
+
+  it('acha o primeiro e o último de cada categoria na lista completa', () => {
+    const products = [
+      { id: 'a', category_id: 'c1' },
+      { id: 'x', category_id: 'c2' },
+      { id: 'b', category_id: 'c1' },
+      { id: 'c', category_id: 'c1' },
+    ];
+    const bounds = reorderBoundsByProduct(products);
+
+    expect(bounds.get('a')).toEqual({ isFirst: true, isLast: false });
+    expect(bounds.get('b')).toEqual({ isFirst: false, isLast: false });
+    expect(bounds.get('c')).toEqual({ isFirst: false, isLast: true });
+    // Sozinho na categoria: não sobe nem desce.
+    expect(bounds.get('x')).toEqual({ isFirst: true, isLast: true });
   });
 
   it('monta os quatro destinos do destaque no formato já aceito', () => {

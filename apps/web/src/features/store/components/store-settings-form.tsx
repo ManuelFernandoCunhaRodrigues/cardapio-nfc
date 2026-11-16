@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useActionState, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { initialStoreSettingsActionState } from '@/features/store/server/action-state';
@@ -8,8 +8,10 @@ import { updateStoreSettings } from '@/features/store/server/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { copyOpeningHourToEveryDay, type OpeningHourInput } from '@/features/admin/rules/panel';
+import { fieldDefaults } from '@/features/admin/rules/submitted-values';
 import type { StoreSettings } from '@salgae/core/schemas/store-settings';
 
+import { useFocusFirstInvalid } from '@/features/admin/client/use-focus-first-invalid';
 import { useLeaveGuard } from '@/features/admin/client/use-leave-guard';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 
@@ -30,10 +32,8 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
   const [dirty, setDirty] = useState(false);
   useLeaveGuard(dirty || state.status === 'error');
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
-  useEffect(() => {
-    if (state.status === 'error')
-      formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
-  }, [state]);
+  const defaults = fieldDefaults(state.values);
+  useFocusFirstInvalid(formRef, state);
   const updateHour = (day: number, values: Partial<OpeningHourInput>) =>
     setHours((current) =>
       current.map((hour) => (hour.day === day ? { ...hour, ...values } : hour)),
@@ -52,14 +52,14 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
         <h2 className="disp text-lg font-semibold text-ink">Informações da loja</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Input
-            defaultValue={settings.name}
+            defaultValue={defaults.text('name', settings.name)}
             error={errorFor('name')}
             label="Nome da loja"
             name="name"
             required
           />
           <Input
-            defaultValue={settings.tagline ?? ''}
+            defaultValue={defaults.text('tagline', settings.tagline ?? '')}
             error={errorFor('tagline')}
             label="Frase curta"
             name="tagline"
@@ -67,14 +67,14 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
           />
           <Input
             className="sm:col-span-2"
-            defaultValue={settings.address ?? ''}
+            defaultValue={defaults.text('address', settings.address ?? '')}
             error={errorFor('address')}
             label="Endereço"
             name="address"
           />
           <Input
             className="sm:col-span-2"
-            defaultValue={settings.maps_url ?? ''}
+            defaultValue={defaults.text('maps_url', settings.maps_url ?? '')}
             error={errorFor('maps_url')}
             label="Link do mapa"
             name="maps_url"
@@ -82,21 +82,21 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
             type="url"
           />
           <Input
-            defaultValue={settings.phone ?? ''}
+            defaultValue={defaults.text('phone', settings.phone ?? '')}
             error={errorFor('phone')}
             inputMode="tel"
             label="Telefone"
             name="phone"
           />
           <Input
-            defaultValue={settings.whatsapp ?? ''}
+            defaultValue={defaults.text('whatsapp', settings.whatsapp ?? '')}
             error={errorFor('whatsapp')}
             inputMode="tel"
             label="WhatsApp"
             name="whatsapp"
           />
           <Input
-            defaultValue={settings.instagram ?? ''}
+            defaultValue={defaults.text('instagram', settings.instagram ?? '')}
             error={errorFor('instagram')}
             label="Instagram (sem @)"
             name="instagram"
@@ -109,7 +109,7 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
               aria-describedby={errorFor('notice') ? 'notice-error' : undefined}
               aria-invalid={Boolean(errorFor('notice'))}
               className="min-h-24 w-full rounded-xl border border-border bg-surface-inner px-3.5 py-3 text-sm text-ink focus:outline-hidden focus:ring-4 focus:ring-brand/20"
-              defaultValue={settings.notice ?? ''}
+              defaultValue={defaults.text('notice', settings.notice ?? '')}
               id="notice"
               maxLength={140}
               name="notice"
@@ -129,13 +129,14 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
         <p className="mt-1 text-sm text-muted">Horários de Fortaleza e São Paulo.</p>
         <label className="mt-4 block text-sm font-bold text-ink" htmlFor="status_override">
           Funcionamento agora
-          {/* A key recria o select com o valor salvo: o React reinicia o formulário depois da action
-              e, sem ela, o select voltaria à opção antiga e a gravaria de novo no próximo envio. */}
+          {/* O <select> só aplica o defaultValue ao montar: a key o recria com o valor salvo, ou com o
+              enviado quando a action recusa. Sem ela, o reinício do formulário depois da action
+              voltaria à opção antiga e a gravaria de novo no próximo envio. */}
           <select
             className="mt-1.5 min-h-11 w-full rounded-xl border border-border bg-surface-inner px-3.5 text-sm font-normal text-ink sm:max-w-md"
-            defaultValue={settings.status_override}
+            defaultValue={defaults.text('status_override', settings.status_override)}
             id="status_override"
-            key={settings.status_override}
+            key={defaults.text('status_override', settings.status_override)}
             name="status_override"
           >
             <option value="auto">Seguir os horários abaixo</option>

@@ -10,6 +10,12 @@ import {
   type ProductActionState,
 } from '@/features/products/server/action-state';
 import { createProduct, updateProduct } from '@/features/products/server/actions';
+import {
+  isProductFormDirty,
+  productDraftFrom,
+  validateProductDraft,
+  type ProductDraft,
+} from '@/features/products/rules/product-draft';
 import { uploadProductImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { ProductCard } from '@/features/menu/components/product-card';
@@ -20,11 +26,11 @@ import type { AdminCategory } from '@salgae/core/contracts/admin-api';
 import {
   creationProgressSteps,
   runProductCreationFlow,
+  type CreationFlowResult,
   type CreationStage,
 } from '@/features/admin/rules/panel';
 import {
   fieldsFromProductSituation,
-  productSituationFromFields,
   type ProductSituation,
 } from '@salgae/core/rules/product-situation';
 import {
@@ -33,16 +39,57 @@ import {
 } from '@/features/media/client/product-media-client';
 import { parsePriceBRL } from '@salgae/core/rules/parse-price';
 
+import { useFocusFirstInvalid } from '@/features/admin/client/use-focus-first-invalid';
 import { useLeaveGuard } from '@/features/admin/client/use-leave-guard';
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { ProductMediaManager } from '@/features/media/components/product-media-manager';
+
+const REVIEW_FIELDS_MESSAGE = 'Revise os campos destacados antes de salvar.';
 
 const situationOptions: Array<{ value: ProductSituation; label: string; help: string }> = [
   { value: 'menu', label: 'No cardápio', help: 'Visível e disponível' },
   { value: 'unavailable', label: 'Em falta hoje', help: 'Visível com aviso' },
   { value: 'hidden', label: 'Escondido', help: 'Não aparece' },
 ];
+
+const badgeOptions = [
+  ['', 'Sem selo'],
+  ['mais_pedido', 'Mais pedido'],
+  ['novo', 'Novo'],
+  ['quentinho', 'Quentinho'],
+] as const;
+
+type FailedCreationStep = Exclude<CreationStage, 'done'>;
+
+/** A API recusou o produto: o estado traz a mensagem e, se houver, os erros de cada campo. */
+class ProductRejectedError extends Error {
+  constructor(readonly state: ProductActionState) {
+    super('product_rejected');
+  }
+}
+
+async function createProductOrThrow(formData: FormData) {
+  const response = await createProduct(initialProductActionState, formData);
+  if (response.status !== 'success' || !response.entityId) throw new ProductRejectedError(response);
+  return { productId: response.entityId };
+}
+
+async function uploadPreparedImage(productId: string, image: File) {
+  const media = new FormData();
+  media.set('product_id', productId);
+  media.set('image', image);
+  const response = await uploadProductImage(initialMediaActionState, media);
+  if (response.status === 'error') throw new Error(response.message);
+}
+
+function createdProductUrl(result: CreationFlowResult, hadVideo: boolean): string {
+  const query = new URLSearchParams({ criado: '1' });
+  if (result.image === 'error') query.set('foto', 'erro');
+  if (result.video === 'error' || (hadVideo && result.video === 'skipped'))
+    query.set('video', 'erro');
+  return `/admin/produtos/${result.productId}?${query}`;
+}
 
 function SaveButton({ editing, busy = false }: Readonly<{ editing: boolean; busy?: boolean }>) {
   const { pending } = useFormStatus();
@@ -69,7 +116,7 @@ function CreationProgress({
   stage: CreationStage | null;
   hasImage: boolean;
   hasVideo: boolean;
-  failedStep: Exclude<CreationStage, 'done'> | null;
+  failedStep: FailedCreationStep | null;
 }>) {
   if (!stage) return null;
   const labels = { product: 'Salvar produto', image: 'Enviar foto', video: 'Enviar vídeo' };
@@ -102,6 +149,54 @@ function CreationProgress({
   );
 }
 
+function CategoryPicker({
+  categories,
+  selectedId,
+  error,
+  onSelect,
+}: Readonly<{
+  categories: AdminCategory[];
+  selectedId: string;
+  error?: string;
+  onSelect: (categoryId: string) => void;
+}>) {
+  return (
+    <div className="space-y-2">
+      <span className="block text-sm font-bold text-ink" id="product-category-label">
+        Categoria
+      </span>
+      <input name="category_id" type="hidden" value={selectedId} />
+      {/* Botões não aceitam aria-invalid: com erro, o grupo é marcado com data-invalid e recebe o
+          foco (tabIndex -1), para quem envia ser levado até ele. */}
+      <div
+        aria-describedby={error ? 'product-category-error' : undefined}
+        data-invalid={error ? true : undefined}
+        aria-labelledby="product-category-label"
+        className="flex flex-wrap gap-2 rounded-xl focus:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
+        role="group"
+        tabIndex={error ? -1 : undefined}
+      >
+        {categories.map((category) => (
+          <button
+            aria-pressed={selectedId === category.id}
+            className={`min-h-11 rounded-full border px-4 text-sm font-bold ${selectedId === category.id ? 'border-ink bg-ink text-white' : 'border-border bg-white text-ink'}`}
+            key={category.id}
+            onClick={() => onSelect(category.id)}
+            type="button"
+          >
+            {category.name}
+          </button>
+        ))}
+      </div>
+      {error ? (
+        <p className="text-sm text-danger" id="product-category-error">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function ProductForm({
   categories,
   product,
@@ -115,45 +210,94 @@ export function ProductForm({
 }>) {
   const router = useRouter();
   const editing = Boolean(product);
+  const formRef = useRef<HTMLFormElement>(null);
   const [updateState, updateAction] = useActionState(updateProduct, initialProductActionState);
   const [createState, setCreateState] = useState<ProductActionState>(initialProductActionState);
-  const state = editing ? updateState : createState;
-  const [name, setName] = useState(product?.name ?? '');
-  const [description, setDescription] = useState(product?.description ?? '');
-  const [price, setPrice] = useState(
-    product ? (product.price_cents / 100).toFixed(2).replace('.', ',') : '',
+  // Erros achados antes do envio: valem até o próximo envio, na edição e na criação.
+  const [validationState, setValidationState] = useState<ProductActionState | null>(null);
+  const serverState = editing ? updateState : createState;
+  // Cada tentativa de envio aposenta o resultado anterior do servidor: sem isto, o erro antigo
+  // voltaria a aparecer enquanto o envio novo, já aprovado na validação local, está em andamento.
+  const [supersededState, setSupersededState] = useState<ProductActionState | null>(null);
+  const state =
+    validationState ?? (serverState === supersededState ? initialProductActionState : serverState);
+  const defaultCategoryId = categories[0]?.id ?? '';
+  // O produto salvo volta do servidor depois de cada gravação: comparar com ele faz o formulário
+  // deixar de estar alterado assim que salva.
+  const savedDraft = useMemo(
+    () => productDraftFrom(product, defaultCategoryId),
+    [defaultCategoryId, product],
   );
-  const [categoryId, setCategoryId] = useState(product?.category_id ?? categories[0]?.id ?? '');
-  const [badge, setBadge] = useState<AdminProduct['badge']>(product?.badge ?? null);
-  const [situation, setSituation] = useState<ProductSituation>(
-    product ? productSituationFromFields(product) : 'menu',
-  );
+  const [draft, setDraft] = useState<ProductDraft>(savedDraft);
   const [preparedImage, setPreparedImage] = useState<File | null>(null);
   const [preparedPreview, setPreparedPreview] = useState<string | null>(null);
   const [preparedVideo, setPreparedVideo] = useState<File | null>(null);
   const [preparedVideoPreview, setPreparedVideoPreview] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [creationStage, setCreationStage] = useState<CreationStage | null>(null);
-  const [failedCreationStep, setFailedCreationStep] = useState<Exclude<
-    CreationStage,
-    'done'
-  > | null>(null);
-  const [dirty, setDirty] = useState(false);
+  const [failedCreationStep, setFailedCreationStep] = useState<FailedCreationStep | null>(null);
   const submittingRef = useRef(false);
   const creationStageRef = useRef<CreationStage | null>(null);
-  const situationFields = fieldsFromProductSituation(situation);
+  const situationFields = fieldsFromProductSituation(draft.situation);
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
+  const updateDraft = (changes: Partial<ProductDraft>) =>
+    setDraft((current) => ({ ...current, ...changes }));
 
-  const hasUnsavedChanges = dirty || (editing && updateState.status === 'error');
+  const hasUnsavedChanges = isProductFormDirty({
+    saved: savedDraft,
+    current: draft,
+    hasPreparedMedia: Boolean(preparedImage || preparedVideo),
+  });
   useLeaveGuard(hasUnsavedChanges && !creating);
+  useFocusFirstInvalid(formRef, state);
   function leave() {
     if (!hasUnsavedChanges || window.confirm('Sair sem salvar as alterações?'))
       router.push('/admin/produtos');
   }
 
+  /** Confere o rascunho com o schema da API e mostra os erros de campo; diz se pode enviar. */
+  function acceptDraft(): boolean {
+    const fieldErrors = validateProductDraft(draft);
+    setSupersededState(serverState);
+    setValidationState(
+      fieldErrors ? { status: 'error', message: REVIEW_FIELDS_MESSAGE, fieldErrors } : null,
+    );
+    return !fieldErrors;
+  }
+
+  function handleUpdate(event: FormEvent<HTMLFormElement>) {
+    // Sem o envio, o React não chama a action do formulário.
+    if (!acceptDraft()) event.preventDefault();
+  }
+
+  function showCreationFailure(caught: unknown) {
+    if (caught instanceof ProductRejectedError && caught.state.fieldErrors) {
+      // Erro de campo não é falha de etapa: a mensagem fica junto do campo, sem o quadro de etapas.
+      setCreateState(caught.state);
+      setCreationStage(null);
+      setFailedCreationStep(null);
+      return;
+    }
+    setCreateState(
+      caught instanceof ProductRejectedError
+        ? caught.state
+        : {
+            status: 'error',
+            message:
+              caught instanceof Error
+                ? friendlyVideoError(caught)
+                : 'Não foi possível criar o produto agora.',
+          },
+    );
+    const failedStage = creationStageRef.current;
+    setFailedCreationStep(
+      failedStage === 'image' || failedStage === 'video' ? failedStage : 'product',
+    );
+  }
+
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submittingRef.current) return;
+    if (submittingRef.current || !acceptDraft()) return;
     submittingRef.current = true;
     creationStageRef.current = 'product';
     setCreating(true);
@@ -161,25 +305,11 @@ export function ProductForm({
     setFailedCreationStep(null);
     setCreateState(initialProductActionState);
     const formData = new FormData(event.currentTarget);
-    let validationError: ProductActionState | null = null;
     try {
       const result = await runProductCreationFlow({
-        createProduct: async () => {
-          const response = await createProduct(initialProductActionState, formData);
-          if (response.status !== 'success' || !response.entityId) {
-            validationError = response;
-            throw new Error('product_failed');
-          }
-          return { productId: response.entityId };
-        },
+        createProduct: () => createProductOrThrow(formData),
         uploadImage: preparedImage
-          ? async (productId) => {
-              const media = new FormData();
-              media.set('product_id', productId);
-              media.set('image', preparedImage);
-              const response = await uploadProductImage(initialMediaActionState, media);
-              if (response.status === 'error') throw new Error(response.message);
-            }
+          ? (productId) => uploadPreparedImage(productId, preparedImage)
           : undefined,
         uploadVideo: preparedVideo
           ? async (productId) => {
@@ -199,26 +329,9 @@ export function ProductForm({
         setFailedCreationStep(mediaFailure);
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       }
-      setDirty(false);
-      const query = new URLSearchParams({ criado: '1' });
-      if (result.image === 'error') query.set('foto', 'erro');
-      if (result.video === 'error' || (preparedVideo && result.video === 'skipped'))
-        query.set('video', 'erro');
-      router.replace(`/admin/produtos/${result.productId}?${query}`);
+      router.replace(createdProductUrl(result, Boolean(preparedVideo)));
     } catch (caught) {
-      if (validationError) setCreateState(validationError);
-      else
-        setCreateState({
-          status: 'error',
-          message:
-            caught instanceof Error
-              ? friendlyVideoError(caught)
-              : 'Não foi possível criar o produto agora.',
-        });
-      const failedStage = creationStageRef.current as CreationStage | null;
-      setFailedCreationStep(
-        failedStage === 'image' || failedStage === 'video' ? failedStage : 'product',
-      );
+      showCreationFailure(caught);
       submittingRef.current = false;
       setCreating(false);
     }
@@ -227,18 +340,18 @@ export function ProductForm({
   const preview = useMemo(
     () => ({
       id: product?.id ?? '00000000-0000-4000-8000-000000000000',
-      category_id: categoryId || '00000000-0000-4000-8000-000000000001',
-      name: name || 'Nome do produto',
+      category_id: draft.categoryId || '00000000-0000-4000-8000-000000000001',
+      name: draft.name || 'Nome do produto',
       slug: product?.slug ?? 'produto',
-      description: description || null,
-      price_cents: parsePriceBRL(price) ?? 0,
+      description: draft.description || null,
+      price_cents: parsePriceBRL(draft.price) ?? 0,
       image_path: product?.image_path ?? null,
       video_path: product?.video_path ?? null,
-      badge,
+      badge: draft.badge,
       sort_order: product?.sort_order ?? 0,
-      ...situationFields,
+      ...fieldsFromProductSituation(draft.situation),
     }),
-    [badge, categoryId, description, name, price, product, situationFields],
+    [draft, product],
   );
 
   return (
@@ -246,8 +359,8 @@ export function ProductForm({
       action={editing ? updateAction : undefined}
       className="pb-28 lg:pb-0"
       noValidate
-      onChange={() => setDirty(true)}
-      onSubmit={editing ? () => setDirty(false) : handleCreate}
+      onSubmit={editing ? handleUpdate : handleCreate}
+      ref={formRef}
     >
       <header className="mb-4 grid grid-cols-[44px_1fr_44px] items-center gap-2 lg:flex lg:justify-between">
         <button
@@ -319,9 +432,9 @@ export function ProductForm({
               error={errorFor('name')}
               label="Nome do produto"
               name="name"
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => updateDraft({ name: event.target.value })}
               required
-              value={name}
+              value={draft.name}
             />
             <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
               <div className="space-y-1.5">
@@ -335,10 +448,10 @@ export function ProductForm({
                   id="product-price"
                   inputMode="decimal"
                   name="price"
-                  onChange={(event) => setPrice(event.target.value)}
+                  onChange={(event) => updateDraft({ price: event.target.value })}
                   placeholder="R$ 8,90"
                   required
-                  value={price}
+                  value={draft.price}
                 />
                 {errorFor('price') ? (
                   <p className="text-sm text-danger" id="product-price-error">
@@ -346,25 +459,12 @@ export function ProductForm({
                   </p>
                 ) : null}
               </div>
-              <div className="space-y-2">
-                <span className="block text-sm font-bold text-ink">Categoria</span>
-                <input name="category_id" type="hidden" value={categoryId} />
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((category) => (
-                    <button
-                      className={`min-h-11 rounded-full border px-4 text-sm font-bold ${categoryId === category.id ? 'border-ink bg-ink text-white' : 'border-border bg-white text-ink'}`}
-                      key={category.id}
-                      onClick={() => setCategoryId(category.id)}
-                      type="button"
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-                {errorFor('category_id') ? (
-                  <p className="text-sm text-danger">{errorFor('category_id')}</p>
-                ) : null}
-              </div>
+              <CategoryPicker
+                categories={categories}
+                error={errorFor('category_id')}
+                onSelect={(categoryId) => updateDraft({ categoryId })}
+                selectedId={draft.categoryId}
+              />
             </div>
             <div className="space-y-1.5">
               <label className="block text-sm font-bold text-ink" htmlFor="product-description">
@@ -375,27 +475,21 @@ export function ProductForm({
                 id="product-description"
                 maxLength={600}
                 name="description"
-                onChange={(event) => setDescription(event.target.value)}
-                value={description}
+                onChange={(event) => updateDraft({ description: event.target.value })}
+                value={draft.description}
               />
               <p className="text-xs text-muted">Até 40 letras aparecem no cartão do cardápio.</p>
             </div>
             <div className="space-y-2">
               <span className="block text-sm font-bold text-ink">Selo</span>
-              <input name="badge" type="hidden" value={badge ?? ''} />
+              <input name="badge" type="hidden" value={draft.badge ?? ''} />
               <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    ['', 'Sem selo'],
-                    ['mais_pedido', 'Mais pedido'],
-                    ['novo', 'Novo'],
-                    ['quentinho', 'Quentinho'],
-                  ] as const
-                ).map(([value, label]) => (
+                {badgeOptions.map(([value, label]) => (
                   <button
-                    className={`min-h-11 rounded-full border px-4 text-sm font-bold ${badge === (value || null) ? 'border-ink bg-ink text-white' : 'border-border bg-white text-ink'}`}
+                    aria-pressed={draft.badge === (value || null)}
+                    className={`min-h-11 rounded-full border px-4 text-sm font-bold ${draft.badge === (value || null) ? 'border-ink bg-ink text-white' : 'border-border bg-white text-ink'}`}
                     key={value || 'none'}
-                    onClick={() => setBadge((value || null) as AdminProduct['badge'])}
+                    onClick={() => updateDraft({ badge: value || null })}
                     type="button"
                   >
                     {label}
@@ -408,10 +502,10 @@ export function ProductForm({
               <div className="mt-2 grid gap-2 sm:grid-cols-3">
                 {situationOptions.map((option) => (
                   <button
-                    aria-pressed={situation === option.value}
-                    className={`min-h-14 rounded-xl border px-3 py-2 text-left ${situation === option.value ? 'border-green bg-green-soft text-green' : 'border-border bg-white text-ink'}`}
+                    aria-pressed={draft.situation === option.value}
+                    className={`min-h-14 rounded-xl border px-3 py-2 text-left ${draft.situation === option.value ? 'border-green bg-green-soft text-green' : 'border-border bg-white text-ink'}`}
                     key={option.value}
-                    onClick={() => setSituation(option.value)}
+                    onClick={() => updateDraft({ situation: option.value })}
                     type="button"
                   >
                     <strong className="block text-sm">{option.label}</strong>
@@ -430,14 +524,13 @@ export function ProductForm({
         <aside className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-6">
           <ProductMediaManager
             imagePath={product?.image_path ?? null}
-            name={name || 'Produto'}
+            name={draft.name || 'Produto'}
             onImagePrepared={
               editing
                 ? undefined
                 : (file, localPreview) => {
                     setPreparedImage(file);
                     setPreparedPreview(localPreview);
-                    setDirty(true);
                   }
             }
             onVideoPrepared={
@@ -446,7 +539,6 @@ export function ProductForm({
                 : (file, localPreview) => {
                     setPreparedVideo(file);
                     setPreparedVideoPreview(localPreview);
-                    setDirty(true);
                   }
             }
             preparedPreview={preparedPreview}

@@ -60,6 +60,33 @@ export function filterAdminProducts<T extends AdminProduct>(
   });
 }
 
+export type ReorderBounds = { isFirst: boolean; isLast: boolean };
+
+/**
+ * Primeiro e último produto de cada categoria. Recebe a lista completa, na ordem do servidor: a
+ * API troca o produto com o vizinho da categoria inteira, não com o vizinho visível no filtro.
+ */
+export function reorderBoundsByProduct(
+  products: ReadonlyArray<Pick<AdminProduct, 'id' | 'category_id'>>,
+): Map<string, ReorderBounds> {
+  const firstByCategory = new Map<string, string>();
+  const lastByCategory = new Map<string, string>();
+  for (const product of products) {
+    if (!firstByCategory.has(product.category_id))
+      firstByCategory.set(product.category_id, product.id);
+    lastByCategory.set(product.category_id, product.id);
+  }
+  return new Map(
+    products.map((product) => [
+      product.id,
+      {
+        isFirst: firstByCategory.get(product.category_id) === product.id,
+        isLast: lastByCategory.get(product.category_id) === product.id,
+      },
+    ]),
+  );
+}
+
 export function buildHighlightTarget(kind: HighlightTargetKind, value = ''): string | null {
   const trimmed = value.trim();
   if (kind === 'menu') return '/cardapio';

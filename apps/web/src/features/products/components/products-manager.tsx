@@ -28,7 +28,12 @@ import { MediaImage } from '@/features/media/components/media-image';
 import { listReorder } from '@/components/motion/motion-primitives';
 import type { AdminProduct } from '@/features/admin/server/catalog';
 import type { AdminCategory } from '@salgae/core/contracts/admin-api';
-import { filterAdminProducts, type ProductFilter } from '@/features/admin/rules/panel';
+import {
+  filterAdminProducts,
+  reorderBoundsByProduct,
+  type ProductFilter,
+  type ReorderBounds,
+} from '@/features/admin/rules/panel';
 import {
   productSituationFromFields,
   type ProductSituation,
@@ -39,6 +44,7 @@ import { formatPriceBRL } from '@salgae/core/rules/price';
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
+import { FloatingNotice } from '@/features/admin/components/floating-notice';
 import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
 
 const filterParams: Record<string, ProductFilter> = {
@@ -105,13 +111,42 @@ function SituationControl({
   );
 }
 
+function ReorderButtons({
+  product,
+  bounds,
+  onResult,
+}: Readonly<{ product: AdminProduct; bounds?: ReorderBounds; onResult: ResultHandler }>) {
+  return (
+    <>
+      <QuickAction
+        action={reorderProduct}
+        disabled={bounds?.isFirst}
+        icon="up"
+        label={`Subir ${product.name}`}
+        onResult={onResult}
+        values={{ id: product.id, category_id: product.category_id, direction: 'up' }}
+      />
+      <QuickAction
+        action={reorderProduct}
+        disabled={bounds?.isLast}
+        icon="down"
+        label={`Descer ${product.name}`}
+        onResult={onResult}
+        values={{ id: product.id, category_id: product.category_id, direction: 'down' }}
+      />
+    </>
+  );
+}
+
 function MoreActions({
   product,
+  bounds,
   onResult,
   fallbackFocusRef,
   onToggle,
 }: Readonly<{
   product: AdminProduct;
+  bounds?: ReorderBounds;
   onResult: ResultHandler;
   fallbackFocusRef?: React.RefObject<HTMLElement | null>;
   onToggle?: (open: boolean) => void;
@@ -127,20 +162,7 @@ function MoreActions({
       <div className="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-border bg-white p-2 shadow-xl">
         <p className="px-2 py-1 text-xs font-bold text-muted">Organizar na categoria</p>
         <div className="flex gap-2">
-          <QuickAction
-            action={reorderProduct}
-            icon="up"
-            label={`Subir ${product.name}`}
-            onResult={onResult}
-            values={{ id: product.id, category_id: product.category_id, direction: 'up' }}
-          />
-          <QuickAction
-            action={reorderProduct}
-            icon="down"
-            label={`Descer ${product.name}`}
-            onResult={onResult}
-            values={{ id: product.id, category_id: product.category_id, direction: 'down' }}
-          />
+          <ReorderButtons bounds={bounds} onResult={onResult} product={product} />
         </div>
         <div className="mt-2 border-t border-border pt-2">
           <ConfirmDialog
@@ -159,10 +181,12 @@ function MoreActions({
 
 function ProductMobileCard({
   product,
+  bounds,
   onResult,
   fallbackFocusRef,
 }: Readonly<{
   product: AdminProduct;
+  bounds?: ReorderBounds;
   onResult: ResultHandler;
   fallbackFocusRef: React.RefObject<HTMLElement | null>;
 }>) {
@@ -196,6 +220,7 @@ function ProductMobileCard({
       <div className="pointer-events-auto relative z-10 mt-3 flex items-start justify-between gap-2">
         <SituationControl onResult={onResult} product={product} />
         <MoreActions
+          bounds={bounds}
           onResult={onResult}
           onToggle={setMenuOpen}
           product={product}
@@ -233,6 +258,8 @@ export function ProductsManager({
     if (!state.message) return;
     setFeedback({ message: state.message, kind: state.status === 'error' ? 'error' : 'success' });
   }, []);
+  const dismissFeedback = useCallback(() => setFeedback(null), []);
+  const reorderBounds = useMemo(() => reorderBoundsByProduct(products), [products]);
   const filtered = useMemo(
     () => filterAdminProducts(products, { term, categoryId, filter }),
     [categoryId, filter, products, term],
@@ -271,7 +298,7 @@ export function ProductsManager({
           Novo
         </Link>
       </header>
-      <AdminNotice className="mt-4" kind={feedback?.kind ?? 'info'} message={feedback?.message} />
+      <FloatingNotice feedback={feedback} onDismiss={dismissFeedback} />
       <div className="mt-4 flex flex-col gap-3 lg:flex-row">
         <label className="relative block flex-1 lg:max-w-sm">
           <span className="sr-only">Buscar por nome</span>
@@ -348,6 +375,7 @@ export function ProductsManager({
             <div className="space-y-2">
               {group.products.map((product) => (
                 <ProductMobileCard
+                  bounds={reorderBounds.get(product.id)}
                   key={product.id}
                   onResult={onResult}
                   product={product}
@@ -419,29 +447,13 @@ export function ProductsManager({
                       >
                         <AdminIcon name="edit" />
                       </Link>
-                      <QuickAction
-                        action={reorderProduct}
-                        icon="up"
-                        label={`Subir ${product.name}`}
+                      <ReorderButtons
+                        bounds={reorderBounds.get(product.id)}
                         onResult={onResult}
-                        values={{
-                          id: product.id,
-                          category_id: product.category_id,
-                          direction: 'up',
-                        }}
-                      />
-                      <QuickAction
-                        action={reorderProduct}
-                        icon="down"
-                        label={`Descer ${product.name}`}
-                        onResult={onResult}
-                        values={{
-                          id: product.id,
-                          category_id: product.category_id,
-                          direction: 'down',
-                        }}
+                        product={product}
                       />
                       <MoreActions
+                        bounds={reorderBounds.get(product.id)}
                         onResult={onResult}
                         product={product}
                         fallbackFocusRef={titleRef}

@@ -111,6 +111,10 @@ export function QuickAction({
     <form
       action={formAction}
       onSubmit={(event) => {
+        if (disabled) {
+          event.preventDefault();
+          return;
+        }
         const acquired = acquire();
         if (acquired === null) {
           event.preventDefault();
@@ -124,13 +128,13 @@ export function QuickAction({
       {Object.entries(values).map(([name, value]) => (
         <input key={name} name={name} type="hidden" value={value} />
       ))}
-      {/* aria-disabled, e não disabled: quem usa o teclado não perde o foco a cada clique. */}
+      {/* aria-disabled, e não disabled: quem usa o teclado não perde o foco a cada clique, nem quando
+          o item chega ao limite da lista e a seta que o levou até lá deixa de valer. */}
       <button
         aria-busy={pending}
-        aria-disabled={busy}
+        aria-disabled={busy || disabled}
         aria-label={label}
-        className={`grid min-h-11 min-w-11 place-items-center rounded-xl border border-border bg-white text-xs font-bold text-ink disabled:opacity-40 aria-disabled:cursor-progress aria-disabled:opacity-60 ${icon ? '' : 'px-3'}`}
-        disabled={disabled}
+        className={`grid min-h-11 min-w-11 place-items-center rounded-xl border border-border bg-white text-xs font-bold text-ink ${disabled ? 'cursor-not-allowed opacity-40' : 'aria-disabled:cursor-progress aria-disabled:opacity-60'} ${icon ? '' : 'px-3'}`}
         title={icon ? label : undefined}
         type="submit"
       >

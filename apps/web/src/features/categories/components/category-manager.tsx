@@ -13,6 +13,8 @@ import {
   toggleCategory,
   updateCategory,
 } from '@/features/categories/server/actions';
+import { useFocusFirstInvalid } from '@/features/admin/client/use-focus-first-invalid';
+import { fieldDefaults } from '@/features/admin/rules/submitted-values';
 import { usePhotoAfterSave } from '@/features/media/client/use-photo-after-save';
 import { EditorPhotoField, useEditorPhoto } from '@/features/media/components/editor-photo-field';
 import { MediaImage } from '@/features/media/components/media-image';
@@ -69,10 +71,18 @@ function CategoryEditor({
     getPublicImageVariantUrl('product-images', category?.image_path, 'card'),
     'Foto pronta para salvar junto com a categoria.',
   );
+  const formRef = useRef<HTMLFormElement>(null);
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
+  const defaults = fieldDefaults(state.values);
+  useFocusFirstInvalid(formRef, state);
   usePhotoAfterSave({ saveState: state, file: photo.file, upload: uploadPhoto, onSaved });
   return (
-    <form action={editing ? updateAction : createAction} className="space-y-4" noValidate>
+    <form
+      action={editing ? updateAction : createAction}
+      className="space-y-4"
+      noValidate
+      ref={formRef}
+    >
       {category ? <input name="id" type="hidden" value={category.id} /> : null}
       <Input
         error={errorFor('name')}
@@ -103,7 +113,7 @@ function CategoryEditor({
         </label>
         <textarea
           className="min-h-24 w-full rounded-xl border border-border bg-surface-inner px-3.5 py-3 text-sm text-ink focus:outline-hidden focus:ring-4 focus:ring-brand/20"
-          defaultValue={category?.description ?? ''}
+          defaultValue={defaults.text('description', category?.description ?? '')}
           id="category-description"
           maxLength={500}
           name="description"
@@ -113,7 +123,7 @@ function CategoryEditor({
         Categoria visível
         <input
           className="size-5 accent-green"
-          defaultChecked={category?.is_active ?? true}
+          defaultChecked={defaults.checked('is_active', category?.is_active ?? true)}
           name="is_active"
           role="switch"
           type="checkbox"
