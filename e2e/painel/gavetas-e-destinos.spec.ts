@@ -52,6 +52,18 @@ test.describe('gaveta com alterações', () => {
   });
 });
 
+test(
+  'o Resumo tem atalho para o cardápio e mostra a loja hoje',
+  { tag: '@leitura' },
+  async ({ page }) => {
+    await page.goto('/admin');
+    const menuLink = page.getByRole('link', { name: 'Ver cardápio' }).filter({ visible: true });
+    await expect(menuLink.first()).toHaveAttribute('href', '/cardapio');
+    await expect(page.getByRole('heading', { level: 2, name: 'Loja hoje' })).toBeVisible();
+    await expect(page.getByText('Em falta hoje', { exact: true })).toBeVisible();
+  },
+);
+
 test.describe('destino do destaque', () => {
   test('um produto grava o endereço pelo slug e o cartão mostra o destino', async ({
     page,
