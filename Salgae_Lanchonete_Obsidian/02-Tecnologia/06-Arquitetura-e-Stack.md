@@ -4,7 +4,7 @@ area: Tecnologia
 tags:
   - tecnologia
   - arquitetura
-atualizado: 2026-10-31
+atualizado: 2026-11-15
 ---
 # Arquitetura e stack
 
@@ -12,13 +12,18 @@ Voltar: [[00-Comece-Aqui]] · Deploy: [[09-Ambientes-e-Deploy]]
 
 ## Arquitetura em alto nível
 
-> **Atualizado em 2026-10-31 (plano v3, [[25-Mudanca-Separar-Backend-e-Frontend]]):** o backend saiu do Next. O site (`apps/web`) só desenha a tela; a API própria (`apps/api`, Hono) é a única peça que lê e grava no Supabase; o que os dois compartilham fica em `packages/core`. **Exceção temporária:** o vídeo continua numa rota do Next, com acesso ao banco e ao Storage, até a prova de conceito da API na Vercel (E1); a API ainda não tem projeto na Vercel (hoje roda local e tem `Dockerfile` para VPS). Detalhes, camadas e convenção de nomes no `README.md` do repositório.
+> **Atualizado em 2026-11-15:** o site (`apps/web`) só desenha a tela; a API própria (`apps/api`, Hono) é a única peça que lê e grava no banco e no Storage; o que os dois compartilham fica em `packages/core`. Desde 2026-11-03, a API roda **dentro do site**, no mesmo processo, em um projeto Vercel por ambiente, e também responde em `/api`. Desde 2026-11-15 (PR #94), o **vídeo também passa pela API**: a rota `/admin/midia/video` do Next só repassa o pedido, porque a compactação precisa de uma função de até 180 s com o binário do `ffmpeg`. Decisões em [[03-Decisoes-do-Projeto]]; detalhes, camadas e convenção de nomes no `README.md` do repositório.
 
 ```mermaid
 flowchart TD
-  Cliente[Cliente com NFC ou QR] --> Publico[Cardápio público — apps/web]
+  Cliente[Cliente com QR] --> Publico[Cardápio público — apps/web]
   Equipe[Equipe autorizada] --> Painel[Painel administrativo — apps/web]
-  Publico -- leitura pública, sem token --> Api[API — apps/api]
+  subgraph Projeto[Um projeto Vercel por ambiente]
+    Publico
+    Painel
+    Api[API — apps/api, no mesmo processo]
+  end
+  Publico -- leitura pública, sem token --> Api
   Painel -- token do admin --> Api
   Painel -- login --> Auth[Supabase Auth]
   Api --> Banco[(PostgreSQL + RLS)]
@@ -27,7 +32,9 @@ flowchart TD
 
 O cardápio público lê apenas dados permitidos, pela API e sem token. O painel escreve pela API com o token do administrador, e a API cria um cliente Supabase por requisição com esse token: as políticas de autorização (RLS) continuam sendo a última barreira. O Supabase é a fonte de verdade de dados e imagens.
 
-Dentro da API, cada domínio (`menu`, `products`, `categories`, `highlights`, `store`, `media`) tem quatro camadas: `routes → controller → service → repository`. O service guarda a regra e define a interface do repositório; o repository é o único que conhece o Supabase.
+Dentro da API, cada domínio (`menu`, `products`, `categories`, `highlights`, `store`, `media`, `session`, `health`) tem quatro camadas: `routes → controller → service → repository`. O service guarda a regra e define a interface do repositório; o repository é o único que conhece o Supabase. Foto e vídeo ficam em `modules/media/`, com uma regra única para apagar a mídia que nenhum registro usa.
+
+O `/api/health` consulta o banco. É ele que o workflow **Ambientes no ar** chama a cada 2 dias ([[09-Ambientes-e-Deploy]]).
 
 ## Tecnologias definidas
 
@@ -36,17 +43,16 @@ Dentro da API, cada domínio (`menu`, `products`, `categories`, `highlights`, `s
 | Banco de dados | Supabase PostgreSQL | Produtos, categorias, destaques, usuários e auditoria. |
 | Autenticação | Supabase Auth | Sessões e identidade dos usuários administrativos. |
 | Arquivos | Supabase Storage | Fotos e vídeos curtos de produtos e artes de destaque. |
-| API | Hono (Node.js 22) | Leituras públicas e escritas do painel; Docker pronto para VPS, projeto na Vercel pendente da E1/E9. |
-| Hospedagem | Vercel | Site, com projetos independentes por ambiente; a API entra na E9. |
+| API | Hono (Node.js 22) | Leituras públicas, escritas do painel, foto e vídeo; roda dentro do site e tem `Dockerfile` para servidor separado. |
+| Hospedagem | Vercel (Hobby) | Um projeto por ambiente, com site e API juntos e funções em São Paulo (`gru1`). |
+| Mídia | `sharp` e `ffmpeg` | Foto em WebP e vídeo em MP4 H.264, processados pela API ([[08-Imagens-e-Storage]]). |
 | Movimento | Motion (`motion/react-m`) | Carrossel, cardápio, barra inferior, busca e camadas do painel, respeitando "menos movimento". |
 | Testes | Vitest, Playwright e axe | Unidade (API, site e core) e ponta a ponta com acessibilidade. |
 | Controle de versão | Git/GitHub | Histórico, revisão e fluxo entre `develop` e `main`. |
 
 ## Base de aplicação recomendada
 
-Para uma aplicação única com área pública e painel, a base recomendada é **Next.js com TypeScript**, estilização com **Tailwind CSS** e validação com **Zod**. Isso ainda deve ser confirmado como decisão final antes de iniciar a implementação; se outra stack for escolhida, atualize [[03-Decisoes-do-Projeto]].
-
-O motivo da recomendação é manter interface, rotas protegidas, validação e deploy no mesmo projeto, sem introduzir servidor próprio onde ele não é necessário no MVP.
+A base é **Next.js com TypeScript**, estilização com **Tailwind CSS** e validação com **Zod**, confirmada em 2026-10-08 ([[03-Decisoes-do-Projeto]]). A ideia de manter interface, rotas protegidas e deploy no mesmo projeto continua: mesmo com a API separada em `apps/api`, cada ambiente publica um projeto só.
 
 ## Princípios técnicos
 
