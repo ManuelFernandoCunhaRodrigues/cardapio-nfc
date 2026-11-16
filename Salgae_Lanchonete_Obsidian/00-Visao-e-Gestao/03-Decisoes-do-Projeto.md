@@ -164,6 +164,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Impacto:** tela inicial do cardápio e `/admin/destaques`; sem migration e sem biblioteca nova.
 - **Revisão:** depois do uso em stage; rever o tempo de 6 segundos se o responsável quiser mudar.
 - **Revisão de 2026-10-13:** depois de ver o stage, o responsável pediu o banner maior (240 px), os pontinhos embaixo no centro e **sem o botão de pausar**. Ficam as pausas por toque, mouse e teclado. Em produção desde 2026-10-13.
+- **Revisão de 2026-11-16 (PR #101, onda 4):** o botão **Pausar destaques / Continuar destaques** voltou, ao lado dos pontinhos, para atender à regra de acessibilidade de conteúdo que se move sozinho (WCAG 2.2.2). Ele some quando o aparelho pede menos movimento, porque aí nada troca sozinho. Está na `develop`; chega à produção na próxima promoção.
 
 ### Separar backend e frontend, Motion e Playwright
 
