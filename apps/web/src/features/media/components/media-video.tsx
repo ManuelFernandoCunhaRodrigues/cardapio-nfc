@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { Icon } from '@/features/menu/components/icons';
+import { useMediaQuery } from '@/hooks/use-client-snapshot';
 import { MediaImage } from './media-image';
 
 type MediaVideoProps = {
@@ -13,24 +14,23 @@ type MediaVideoProps = {
 };
 
 export function MediaVideo({ poster, posterSrcSet, video, name }: Readonly<MediaVideoProps>) {
-  const [showVideo, setShowVideo] = useState(false);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  // Guarda qual vídeo foi aberto: com outro `video`, volta para a foto com o botão.
+  const [openedVideo, setOpenedVideo] = useState<string | null>(null);
+  const showVideo = video !== null && openedVideo === video;
+  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // O botão some ao trocar: o foco vai para o vídeo, e não para o começo da página. O toque em
+  // "Assistir vídeo" é um pedido explícito, então toca também com movimento reduzido; nesse caso só
+  // não repete (`loop`).
   useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduceMotion(media.matches);
-    update();
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, []);
-
-  useEffect(() => {
-    if (!showVideo || reduceMotion) return;
-    void videoRef.current?.play().catch(() => {
+    const element = videoRef.current;
+    if (!showVideo || !element) return;
+    element.focus();
+    void element.play().catch(() => {
       // O controle nativo continua disponível se o navegador recusar a reprodução.
     });
-  }, [reduceMotion, showVideo]);
+  }, [showVideo]);
 
   if (!video || !showVideo)
     return (
@@ -40,7 +40,7 @@ export function MediaVideo({ poster, posterSrcSet, video, name }: Readonly<Media
           className="h-full w-full"
           name={name}
           priority
-          sizes="100vw"
+          sizes="(max-width: 480px) 100vw, 480px"
           src={poster}
           srcSet={posterSrcSet}
         />
@@ -48,7 +48,7 @@ export function MediaVideo({ poster, posterSrcSet, video, name }: Readonly<Media
           <button
             aria-label={`Assistir vídeo de ${name}`}
             className="absolute inset-0 m-auto grid size-14 place-items-center rounded-full bg-white text-ink shadow-card focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/40"
-            onClick={() => setShowVideo(true)}
+            onClick={() => setOpenedVideo(video)}
             type="button"
           >
             <Icon name="play" />
@@ -60,7 +60,6 @@ export function MediaVideo({ poster, posterSrcSet, video, name }: Readonly<Media
     <div className="h-[calc(100%_-_1.75rem)] w-full">
       <video
         aria-label={`Vídeo de ${name}`}
-        autoPlay={!reduceMotion}
         className="h-full w-full object-cover"
         controls
         loop={!reduceMotion}

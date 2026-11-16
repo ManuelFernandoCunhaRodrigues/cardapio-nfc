@@ -16,7 +16,8 @@ export type IconName =
   | 'back'
   | 'check'
   | 'alert'
-  | 'pause';
+  | 'pause'
+  | 'share';
 
 const paths: Record<IconName, React.ReactNode> = {
   home: (
@@ -80,6 +81,12 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   back: <path d="m15 18-6-6 6-6" />,
+  share: (
+    <>
+      <path d="M12 3v12M8 7l4-4 4 4" />
+      <path d="M6 11H5v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8h-1" />
+    </>
+  ),
   check: <path d="m5 12 4 4L19 6" />,
   alert: (
     <>

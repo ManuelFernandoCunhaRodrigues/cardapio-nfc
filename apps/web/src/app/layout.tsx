@@ -36,6 +36,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#E65F2A',
+  // A barra inferior já usa env(safe-area-inset-bottom); sem `cover` o recuo vale sempre zero.
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

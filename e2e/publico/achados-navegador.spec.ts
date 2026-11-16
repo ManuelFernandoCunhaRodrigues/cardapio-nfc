@@ -59,6 +59,8 @@ test.describe('achados dos testes no navegador', () => {
     await page.goto('/cardapio');
     const navigation = page.getByRole('navigation', { name: 'Categorias do cardápio' });
     const links = navigation.getByRole('link');
+    // O esqueleto do loading.tsx pode ficar na tela logo depois do goto: espera os chips chegarem.
+    await expect(links.first()).toBeVisible();
     const categoryCount = await links.count();
     expect(categoryCount).toBeGreaterThan(1);
 
@@ -119,7 +121,7 @@ test.describe('achados dos testes no navegador', () => {
 
     await expect(page).toHaveURL(/\/busca$/);
     await expect(page.getByText('Escolha uma categoria ou digite o que procura')).toBeVisible();
-    await expect(page.getByRole('navigation', { name: 'Atalhos de categoria' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Categorias', exact: true })).toBeVisible();
     await expect(productLinks).toHaveCount(initialProducts);
   });
 

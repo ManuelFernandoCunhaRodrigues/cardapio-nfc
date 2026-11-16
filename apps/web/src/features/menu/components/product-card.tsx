@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link, { useLinkStatus } from 'next/link';
 
 import { getBadgeLabel } from '@salgae/core/rules/badges';
 import { rememberProductOrigin } from '@/features/menu/rules/product-origin';
@@ -51,21 +51,21 @@ export function ProductCard({ product, compact = false, preview = false }: Produ
         >
           {product.name}
         </h3>
-        <p className={`mt-0.5 line-clamp-2 text-xs leading-4 text-muted`}>
-          {product.description || 'Feito na Salgaê'}
-        </p>
+        {/* Sem descrição, o card fica sem a linha: um texto fixo se repetiria em toda a faixa. */}
+        {product.description ? (
+          <p className="mt-0.5 line-clamp-2 text-xs leading-4 text-muted">{product.description}</p>
+        ) : null}
         <div className="mt-auto flex items-center justify-between gap-1 pt-2">
           <p
             className={`disp whitespace-nowrap text-base font-bold leading-5 ${product.is_available ? 'text-brand-strong' : 'text-muted'}`}
           >
             {formatPriceBRL(product.price_cents)}
           </p>
-          <span
-            aria-hidden="true"
-            className={`grid size-8 shrink-0 place-items-center rounded-full transition-transform group-hover:translate-x-0.5 ${product.is_available ? 'bg-brand-strong text-white shadow-brand' : 'bg-sand text-muted'}`}
-          >
-            <Icon height={16} name="arrow" width={16} />
-          </span>
+          {preview ? (
+            <CardArrow isAvailable={product.is_available} pending={false} />
+          ) : (
+            <LinkedCardArrow isAvailable={product.is_available} />
+          )}
         </div>
       </div>
       {/* Depois do texto no DOM para o leitor de tela ouvir primeiro o nome; a posição na tela é absoluta. */}
@@ -97,4 +97,26 @@ export function ProductCard({ product, compact = false, preview = false }: Produ
   ) : (
     card
   );
+}
+
+function CardArrow({ isAvailable, pending }: Readonly<{ isAvailable: boolean; pending: boolean }>) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`grid size-8 shrink-0 place-items-center rounded-full transition-[transform,opacity] group-hover:translate-x-0.5 ${isAvailable ? 'bg-brand-strong text-white shadow-brand' : 'bg-sand text-muted'} ${pending ? 'opacity-60 motion-safe:animate-pulse' : ''}`}
+    >
+      <Icon height={16} name="arrow" width={16} />
+    </span>
+  );
+}
+
+/**
+ * Resposta ao toque enquanto o produto carrega (página ainda não gerada ou internet lenta): a seta
+ * esmaece e pulsa, sem pulsar com movimento reduzido. Sem `loading.tsx` no produto, a 404 de um
+ * produto que saiu do cardápio continua saindo pronta do servidor. `useLinkStatus` só vale dentro
+ * de um `Link`, por isso a prévia do painel usa a seta parada.
+ */
+function LinkedCardArrow({ isAvailable }: Readonly<{ isAvailable: boolean }>) {
+  const { pending } = useLinkStatus();
+  return <CardArrow isAvailable={isAvailable} pending={pending} />;
 }
