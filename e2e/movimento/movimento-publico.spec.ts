@@ -146,9 +146,12 @@ test.describe('movimento público sem redução', () => {
     await createHighlights(browser, adminDb, [uniqueName('botao-a'), uniqueName('botao-b')]);
     await page.clock.install();
     await page.goto('/');
+    // O botão só existe depois da hidratação; antes dela todos os slides ficam visíveis.
+    const pauseButton = carousel(page).getByRole('button', { name: 'Pausar destaques' });
+    await expect(pauseButton).toBeVisible();
     await expect(activeSlide(page)).toHaveAttribute('aria-label', /^1 de/);
 
-    await carousel(page).getByRole('button', { name: 'Pausar destaques' }).click();
+    await pauseButton.click();
     // Tira o ponteiro de cima: a pausa que fica é só a do botão.
     await page.mouse.move(0, 0);
     await page.clock.fastForward(6_100);
