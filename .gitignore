@@ -6,8 +6,6 @@ coverage/
 *.tsbuildinfo
 next-env.d.ts
 .vercel
-
-.vercel
 docs/testes/lighthouse/*-[0-9].json
 
 # Layout pessoal do Obsidian (muda a cada abertura)
