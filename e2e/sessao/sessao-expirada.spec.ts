@@ -49,6 +49,10 @@ test.describe('sessão expirada durante uma gravação', () => {
     const logoutPage = await context.newPage();
     await logoutPage.goto('/admin');
     await logoutPage.getByRole('button', { name: /^Sair/ }).filter({ visible: true }).click();
+    await logoutPage
+      .getByRole('alertdialog', { name: 'Sair do painel?' })
+      .getByRole('button', { name: 'Sair', exact: true })
+      .click();
     await expect(logoutPage).toHaveURL(/\/admin\/login$/);
 
     const card = page.getByRole('article').filter({ hasText: categoryName });
