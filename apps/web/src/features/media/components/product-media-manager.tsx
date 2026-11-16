@@ -165,6 +165,11 @@ export function ProductMediaManager({
           Vídeo (opcional): MP4, MOV ou WebM, até 50 MB e 15 segundos. Grave em Full HD, não em 4K.
         </li>
       </ul>
+      <p className="mt-2 rounded-xl bg-surface-inner px-3 py-2 text-xs leading-5 text-ink">
+        {productId
+          ? 'A foto e o vídeo vão para o cardápio assim que você escolhe, sem precisar salvar.'
+          : 'A foto e o vídeo serão enviados quando você tocar em Criar produto.'}
+      </p>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div>
           <div className="aspect-square overflow-hidden rounded-product bg-surface-inner">

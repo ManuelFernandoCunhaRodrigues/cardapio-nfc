@@ -108,7 +108,9 @@ export function EditorPhotoField({
           Escolher foto
         </label>
       </div>
-      <p className="mt-2 text-xs text-muted">Foto: JPG, PNG ou HEIC, até 15 MB.</p>
+      <p className="mt-2 text-xs text-muted">
+        Foto: JPG, PNG ou HEIC, até 15 MB. A foto nova só vai para o cardápio quando você salvar.
+      </p>
       {removal && photo.hasStoredPhoto ? (
         <div className="mt-2">
           <ConfirmDialog
