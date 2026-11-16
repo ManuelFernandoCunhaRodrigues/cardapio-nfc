@@ -9,6 +9,14 @@ function slugFromName(name: string) {
     .replace(/^-|-$/g, '');
 }
 
+// Esconder uma categoria com produtos pergunta antes, dizendo quantos somem do cardápio.
+async function confirmHide(page: Page, categoryName: string) {
+  await page
+    .getByRole('alertdialog', { name: `Esconder ${categoryName}?` })
+    .getByRole('button', { name: 'Esconder', exact: true })
+    .click();
+}
+
 async function createCategory(adminDb: AdminDb, name: string) {
   const slug = slugFromName(name);
   const { data, error } = await adminDb.client
@@ -191,6 +199,7 @@ test.describe('situações públicas e rajadas do painel', () => {
     await page.goto('/admin/categorias');
     let card = page.getByRole('article').filter({ hasText: categoryName });
     await card.getByRole('button', { name: 'Esconder', exact: true }).click();
+    await confirmHide(page, categoryName);
     await expect(page.getByText('Categoria escondida.')).toBeVisible();
     card = page.getByRole('article').filter({ hasText: categoryName });
     await card.getByRole('button', { name: 'Mostrar', exact: true }).click();
@@ -205,6 +214,7 @@ test.describe('situações públicas e rajadas do painel', () => {
     await page.goto('/admin/categorias');
     card = page.getByRole('article').filter({ hasText: categoryName });
     await card.getByRole('button', { name: 'Esconder', exact: true }).click();
+    await confirmHide(page, categoryName);
     await expect(page.getByText('Categoria escondida.')).toBeVisible();
     await expectProductOffPublicPages(page, productName, category.slug);
     await page.goto('/');
