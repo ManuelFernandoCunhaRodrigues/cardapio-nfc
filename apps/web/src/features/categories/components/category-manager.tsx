@@ -24,7 +24,11 @@ import { listReorder } from '@/components/motion/motion-primitives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { AdminCategory } from '@salgae/core/contracts/admin-api';
-import { slugifyPtBr } from '@salgae/core/rules/slug';
+import {
+  categoryFormMessage,
+  categoryNameError,
+  categorySlugFor,
+} from '@/features/categories/rules/category-form';
 import {
   deleteCategoryBlockReason,
   hideCategoryWarning,
@@ -60,14 +64,11 @@ function CategoryEditor({
   const [updateState, updateAction] = useActionState(updateCategory, INITIAL);
   const state = editing ? updateState : createState;
   const [name, setName] = useState(category?.name ?? '');
-  const [slug, setSlug] = useState(category?.slug ?? '');
-  const [addressEdited, setAddressEdited] = useState(Boolean(category));
   const photo = useEditorPhoto(
     getPublicImageVariantUrl('product-images', category?.image_path, 'card'),
     'Foto pronta para salvar junto com a categoria.',
   );
   const formRef = useRef<HTMLFormElement>(null);
-  const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
   const defaults = fieldDefaults(state.values);
   useFocusFirstInvalid(formRef, state);
   const { uploadingPhoto } = usePhotoAfterSave({
@@ -85,28 +86,14 @@ function CategoryEditor({
     >
       {category ? <input name="id" type="hidden" value={category.id} /> : null}
       <Input
-        error={errorFor('name')}
+        error={categoryNameError(state.fieldErrors)}
         label="Nome"
         name="name"
-        onChange={(event) => {
-          setName(event.target.value);
-          if (!addressEdited) setSlug(slugifyPtBr(event.target.value));
-        }}
+        onChange={(event) => setName(event.target.value)}
         required
         value={name}
       />
-      <Input
-        error={errorFor('slug')}
-        label="Endereço curto no cardápio"
-        name="slug"
-        onChange={(event) => {
-          setAddressEdited(true);
-          setSlug(slugifyPtBr(event.target.value));
-        }}
-        required
-        value={slug}
-      />
-      <p className="-mt-2 text-xs text-muted">Usado no link direto para esta categoria.</p>
+      <input name="slug" type="hidden" value={categorySlugFor(name, category?.slug ?? null)} />
       <div className="space-y-1.5">
         <label className="block text-sm font-bold text-ink" htmlFor="category-description">
           Descrição
@@ -148,7 +135,7 @@ function CategoryEditor({
         title="Foto da categoria"
       />
       {/* O sucesso fecha a gaveta e aparece no aviso da lista; aqui fica só o erro. */}
-      <AdminNotice kind="error" message={state.status === 'error' ? state.message : undefined} />
+      <AdminNotice kind="error" message={categoryFormMessage(state)} />
       <EditorSubmitButton
         label={editing ? 'Salvar categoria' : 'Criar categoria'}
         uploadingPhoto={uploadingPhoto}
