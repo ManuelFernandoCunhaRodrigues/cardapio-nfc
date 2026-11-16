@@ -12,7 +12,7 @@ Voltar: [[00-Comece-Aqui]] · Deploy: [[09-Ambientes-e-Deploy]]
 
 ## Arquitetura em alto nível
 
-> **Atualizado em 2026-11-15:** o site (`apps/web`) só desenha a tela; a API própria (`apps/api`, Hono) é a única peça que lê e grava no banco e no Storage; o que os dois compartilham fica em `packages/core`. Desde 2026-11-03, a API roda **dentro do site**, no mesmo processo, em um projeto Vercel por ambiente, e também responde em `/api`. Desde 2026-11-15 (PR #94), o **vídeo também passa pela API**: a rota `/admin/midia/video` do Next só repassa o pedido, porque a compactação precisa de uma função de até 180 s com o binário do `ffmpeg`. Decisões em [[03-Decisoes-do-Projeto]]; detalhes, camadas e convenção de nomes no `README.md` do repositório.
+> **Atualizado em 2026-11-15:** o site (`apps/web`) só desenha a tela; a API própria (`apps/api`, Hono) é a única peça que lê e grava no banco e quem processa e publica a mídia no Storage (só o vídeo bruto sobe do navegador direto ao Storage, por URL assinada criada pela API); o que os dois compartilham fica em `packages/core`. Desde 2026-11-03, a API roda **dentro do site**, no mesmo processo, em um projeto Vercel por ambiente, e também responde em `/api`. Desde 2026-11-15 (PR #94), o **vídeo também passa pela API**: a rota `/admin/midia/video` do Next só repassa o pedido, porque a compactação precisa de uma função de até 180 s com o binário do `ffmpeg`. Decisões em [[03-Decisoes-do-Projeto]]; detalhes, camadas e convenção de nomes no `README.md` do repositório.
 
 ```mermaid
 flowchart TD

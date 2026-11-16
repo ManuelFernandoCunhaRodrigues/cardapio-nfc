@@ -17,7 +17,7 @@ Fotos e vídeos tornam o cardápio mais atrativo, mas podem deixar a página len
 ## Regras de envio
 
 - Aceitar JPEG, PNG, WebP (e HEIC quando o navegador converter); **armazenar sempre em WebP**, conforme a seção de compressão abaixo.
-- Quem processa foto e vídeo é a **API** (`apps/api/src/modules/media/`), com o administrador conferido. O site não fala com o Storage.
+- Quem processa foto e vídeo é a **API** (`apps/api/src/modules/media/`), com o administrador conferido. A única conversa do site com o Storage é o envio do vídeo bruto: o navegador faz `PUT` numa URL assinada que a API cria, e a API confere, compacta e publica depois.
 - Validar tipo real do arquivo, tamanho máximo e dimensões antes de disponibilizar.
 - Gerar ou solicitar imagens otimizadas para exibição em celular.
 - Usar nomes de arquivo não previsíveis, organizados por ambiente e tipo de recurso.

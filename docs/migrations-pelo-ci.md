@@ -14,7 +14,7 @@ A migration `20261115120000_product_sort_order_on_category_change` está aplicad
 | --- | --- |
 | Push na `develop` que mexe em `supabase/migrations/` | Aplica no **stage** o que ainda não foi aplicado. |
 | Pull request para a `main` | Só confere a **produção**. Se houver migration que a produção ainda não tem, a verificação falha e o merge fica marcado como reprovado. |
-| Actions > Migrations > **Run workflow**, ambiente `producao` | Aplica na **produção**. É o passo manual, feito antes do merge da promoção. Só aceita as branches `develop` e `main`. |
+| Actions > Migrations > **Run workflow**, ambiente `producao` | Aplica na **produção**. É o passo manual, feito antes do merge da promoção. Para a produção, só aceita as branches `develop` e `main` (no ambiente `stage`, qualquer branch). |
 | Push na `main` | Confere de novo e aplica o que faltar. Em uso normal não sobra nada. |
 
 A ordem que isso garante é a mesma de `docs/publicacao-producao.md`: **o banco de produção recebe a migration antes do código que depende dela**. O passo de produção continua sendo um clique de uma pessoa, de propósito.

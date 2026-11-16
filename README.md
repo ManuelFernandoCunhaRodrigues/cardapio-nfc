@@ -43,9 +43,9 @@ Cardápio digital de **consulta no local** para uma lanchonete: o cliente aponta
 
 ## Arquitetura
 
-O site só desenha a tela. Tudo o que lê ou grava dados passa pela API, a única peça que fala com o banco e com o Storage; o site usa o Supabase apenas para o login.
+O site só desenha a tela. Tudo o que lê ou grava dados passa pela API, a única peça que fala com o banco. O site usa o Supabase só para o login e para um caso de Storage: o vídeo bruto vai do navegador direto para o Storage, por uma URL assinada que a API cria; depois a API confere, compacta e publica o vídeo.
 
-Em cada ambiente, os dois são publicados juntos em um único projeto: o site chama a API dentro do mesmo processo, sem passar pela rede, e ela também responde em `/api`. Só `apps/web/src/lib/api/` importa a API, e o ESLint barra esse import no restante do site. A decisão e as alternativas estão em `docs/planejamento/dois-projetos-por-ambiente.md`.
+Em cada ambiente, os dois são publicados juntos em um único projeto: o site chama a API dentro do mesmo processo, sem passar pela rede, e ela também responde em `/api`. Só `apps/web/src/lib/api/` importa a API, e o ESLint barra esse import no restante do site. A exceção é a rota de vídeo (`app/admin/(painel)/midia/video/route.ts`), que importa da API o caminho do binário do `ffmpeg` para a função da Vercel. A decisão e as alternativas estão em `docs/planejamento/dois-projetos-por-ambiente.md`.
 
 O vídeo segue a mesma regra: quem confere, compacta e publica é a API (`apps/api/src/modules/media/video/`). A rota do painel `apps/web/src/app/admin/(painel)/midia/video/route.ts` só repassa o pedido para ela, porque a compactação precisa de uma função de até 180 s com o binário do `ffmpeg`. Por isso essa rota é o único outro ponto do site que referencia a API, e pelo endereço `/api` o processamento de vídeo responde 501.
 
