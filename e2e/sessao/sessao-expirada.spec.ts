@@ -50,10 +50,15 @@ test.describe('sessão expirada durante uma gravação', () => {
     await publicPage.goto('/cardapio');
     await expect(publicPage.getByRole('heading', { level: 2, name: categoryName })).toBeVisible();
 
+    // Encerra a sessão no servidor e devolve o cookie antigo: é o caso real de sessão vencida,
+    // em que o navegador ainda guarda o cookie, mas o Auth já não aceita o token.
+    const staleCookies = await context.cookies();
     const logoutPage = await context.newPage();
     await logoutPage.goto('/admin');
     await logoutPage.getByRole('button', { name: /^Sair/ }).filter({ visible: true }).click();
     await expect(logoutPage).toHaveURL(/\/admin\/login$/);
+    await logoutPage.close();
+    await context.addCookies(staleCookies);
 
     const card = page.getByRole('article').filter({ hasText: categoryName });
     await card.getByRole('button', { name: 'Esconder', exact: true }).click();
