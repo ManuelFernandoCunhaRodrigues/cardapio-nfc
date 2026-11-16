@@ -4,11 +4,23 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-10-09
+atualizado: 2026-11-16
 ---
 # Épicos de desenvolvimento
 
 Voltar: [[13-Roadmap]] · Segurança: [[12-Seguranca-e-Qualidade]]
+
+## Status em 2026-11-16
+
+| Épico | Status | Onde ver |
+| --- | --- | --- |
+| 0 — Descoberta e preparação | **Feito** | [[09-Ambientes-e-Deploy]], [[03-Decisoes-do-Projeto]] |
+| 1 — Fundação da aplicação | **Feito** | Reestruturado em 2026-11 (PRs #74 e #80) |
+| 2 — Cardápio público | **Feito** | Redesenho de outubro; PRs #85, #90 e #101 |
+| 3 — Gestão de categorias e produtos | **Feito** | PRs #81, #84, #85, #89 e #91 |
+| 4 — Imagens, vídeos e destaques | **Feito** | `docs/testes/epico-4-*.md`, `video-compactacao-*.md`; PRs #92 e #94 |
+| 5 — Qualidade e homologação | **Parcial** | Falta o teste em celular real; NFC não se aplica |
+| 6 — Pronto para demonstrar (antes "Produção e estabilização") | **Parcial** | Ver o Épico 6 abaixo e `docs/publicacao-producao.md` |
 
 ## Épico 0 — Descoberta e preparação
 
@@ -86,14 +98,23 @@ Voltar: [[13-Roadmap]] · Segurança: [[12-Seguranca-e-Qualidade]]
 
 **Pronto quando:** os itens críticos de [[12-Seguranca-e-Qualidade]] estiverem aprovados em homologação.
 
-## Épico 6 — Produção e estabilização
+**Status:** parcial. Testes de regras, RLS, lint, typecheck e build rodam no CI em todo PR, com E2E contra o banco local. O checklist foi aprovado no stage em 2026-10-09, e o QR do stage e o da produção foram verificados. Falta o teste em celular real e rede móvel (roteiro em `docs/testes/epico-5-roteiro-celular.md`). O teste de NFC não se aplica à demonstração.
 
-**Objetivo:** publicar com segurança e acompanhar o primeiro uso.
+## Épico 6 — Pronto para demonstrar (antes "Produção e estabilização")
 
-- promoção de `develop` para `main`;
-- conferência de variáveis e domínio/URL pública;
-- configuração física das tags NFC e QR Codes;
-- orientação curta para a equipe;
-- monitoramento de erros e correção de regressões.
+> Reinterpretado em 2026-11-15: o sistema é uma demonstração para clientes, sem lançamento no estabelecimento ([[03-Decisoes-do-Projeto]]).
 
-**Pronto quando:** o cardápio é acessado no estabelecimento e a equipe consegue atualizá-lo de forma independente.
+**Objetivo:** ter a produção estável e convincente para mostrar a clientes.
+
+| Item | Status |
+| --- | --- |
+| Promoção de `develop` para `main` | A primeira foi o PR #11 (primeiro deploy de produção em 2026-10-10); a última, o PR #83, em 2026-11-04. O que entrou depois (#84 a #101) espera a próxima promoção, com o "sim" do responsável. |
+| Variáveis e URL pública | Feito: `https://salgae-producao.vercel.app`, com variáveis só da produção e build só de produção. Domínio próprio não se aplica. |
+| QR Code | Feito: `docs/qr/salgae-producao-vercel-app.png`, verificado. |
+| Tags NFC no estabelecimento | Não se aplica. |
+| Orientação da equipe | Não se aplica a uma loja real; `docs/guia-da-equipe.md` serve como material para o cliente. |
+| Monitoramento | Parcial: workflow **Ambientes no ar** (ping a cada 2 dias e cópia semanal), que começa a rodar sozinho depois de chegar à `main`; erros em uma linha JSON nos logs da Vercel. |
+| Conteúdo de exemplo convincente | Pendente (onda 6). |
+| Roteiro de demonstração | Feito em `docs/publicacao-producao.md`. |
+
+**Pronto quando:** a produção abre ativa, com conteúdo de exemplo, e a demonstração pode ser feita do começo ao fim pelo roteiro, sem deixar sujeira depois.
