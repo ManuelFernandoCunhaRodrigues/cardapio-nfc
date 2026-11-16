@@ -68,6 +68,34 @@ test.describe('alterações não salvas', () => {
     await expect(page).toHaveURL(/\/admin\/categorias$/);
   });
 
+  test('voltar pelo navegador também pergunta antes de descartar', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    const categoryId = await createCategory(adminDb, uniqueName('voltar-categoria'));
+    const name = uniqueName('voltar-produto');
+    const productId = await createProduct(adminDb, name, categoryId);
+    const editUrl = `/admin/produtos/${productId}`;
+    // Entra pela lista, como a pessoa faz: o voltar é uma navegação dentro do próprio painel.
+    await page.goto('/admin/produtos');
+    await panelLink(page, name).click();
+    await expect(page).toHaveURL(new RegExp(`${editUrl}$`));
+    const field = page.getByLabel('Nome do produto');
+    await field.fill('Nome que não foi salvo');
+
+    const refused = await answerNextDialog(page, false);
+    await page.evaluate(() => history.back());
+    await expect.poll(() => refused).toEqual(['Sair sem salvar as alterações?']);
+    await expect(page).toHaveURL(new RegExp(`${editUrl}$`));
+    await expect(field).toHaveValue('Nome que não foi salvo');
+
+    const accepted = await answerNextDialog(page, true);
+    await page.evaluate(() => history.back());
+    await expect.poll(() => accepted).toHaveLength(1);
+    await expect(page).toHaveURL(/\/admin\/produtos$/);
+  });
+
   test('sem alteração, o menu troca de tela sem perguntar', async ({
     page,
     adminDb,
