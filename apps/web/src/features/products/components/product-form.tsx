@@ -266,11 +266,14 @@ export function ProductForm({
             {editing ? 'Editar produto' : 'Novo produto'}
           </h1>
         </div>
+        {/* Sem prefetch: abre em aba nova, e o prefetch renderizaria a página pública com os dados
+            de antes do salvar, gravando-a no cache depois da invalidação. */}
         {product ? (
           <Link
             aria-label="Ver no cardápio"
             className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-border bg-white text-ink lg:hidden"
             href={`/produto/${product.slug}`}
+            prefetch={false}
             target="_blank"
           >
             <AdminIcon name="eye" />
@@ -283,6 +286,7 @@ export function ProductForm({
             <Link
               className="inline-flex min-h-11 items-center rounded-full border border-border bg-white px-5 text-sm font-bold text-ink"
               href={`/produto/${product.slug}`}
+              prefetch={false}
               target="_blank"
             >
               Ver no cardápio
@@ -453,7 +457,7 @@ export function ProductForm({
           <div className="hidden rounded-card bg-white p-4 shadow-card lg:block">
             <h2 className="disp text-lg font-semibold text-ink">Prévia no cardápio</h2>
             <div className="mt-3 max-w-[160px]">
-              <ProductCard product={preview} />
+              <ProductCard preview product={preview} />
             </div>
             <p className="mt-3 text-xs leading-5 text-muted">
               O cardápio mostra apenas produtos e categorias visíveis.
