@@ -1,7 +1,6 @@
 'use client';
 
 import { useActionState, useCallback, useRef, useState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import * as m from 'motion/react-m';
 import {
@@ -33,18 +32,11 @@ import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import { highlightSummary } from '@/features/menu/rules/highlight-carousel';
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
+import { EditorSubmitButton } from '@/features/admin/components/editor-submit-button';
 import { AdminSheet } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
 import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
 
-function SaveButton({ editing }: Readonly<{ editing: boolean }>) {
-  const { pending } = useFormStatus();
-  return (
-    <Button className="w-full" disabled={pending} type="submit">
-      {pending ? 'Salvando…' : editing ? 'Salvar destaque' : 'Criar destaque'}
-    </Button>
-  );
-}
 function currentTargetValue(target: string | null, kind: HighlightTargetKind) {
   if (!target) return '';
   if (kind === 'category') return target.slice('/cardapio#'.length);
@@ -89,7 +81,12 @@ function HighlightEditor({
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
   const defaults = fieldDefaults(state.values);
   useFocusFirstInvalid(formRef, state);
-  usePhotoAfterSave({ saveState: state, file: photo.file, upload: uploadPhoto, onSaved });
+  const { uploadingPhoto } = usePhotoAfterSave({
+    saveState: state,
+    file: photo.file,
+    upload: uploadPhoto,
+    onSaved,
+  });
   const target = buildHighlightTarget(targetKind, targetValue) ?? '';
   return (
     <form
@@ -219,7 +216,10 @@ function HighlightEditor({
       />
       {/* O sucesso fecha a gaveta e aparece no aviso da lista; aqui fica só o erro. */}
       <AdminNotice kind="error" message={state.status === 'error' ? state.message : undefined} />
-      <SaveButton editing={editing} />
+      <EditorSubmitButton
+        label={editing ? 'Salvar destaque' : 'Criar destaque'}
+        uploadingPhoto={uploadingPhoto}
+      />
       {editing ? (
         <Button className="w-full" onClick={onClose} variant="neutral">
           Cancelar

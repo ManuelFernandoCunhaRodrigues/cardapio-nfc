@@ -1,7 +1,6 @@
 'use client';
 
 import { useActionState, useCallback, useRef, useState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import * as m from 'motion/react-m';
 
@@ -29,6 +28,7 @@ import { slugifyPtBr } from '@salgae/core/rules/slug';
 
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
+import { EditorSubmitButton } from '@/features/admin/components/editor-submit-button';
 import { AdminSheet } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
 import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
@@ -40,15 +40,6 @@ function uploadPhoto(categoryId: string, image: File) {
   formData.set('category_id', categoryId);
   formData.set('image', image);
   return uploadCategoryImage(initialMediaActionState, formData);
-}
-
-function SubmitButton({ editing }: Readonly<{ editing: boolean }>) {
-  const { pending } = useFormStatus();
-  return (
-    <Button className="w-full" disabled={pending} type="submit">
-      {pending ? 'Salvando…' : editing ? 'Salvar categoria' : 'Criar categoria'}
-    </Button>
-  );
 }
 
 function CategoryEditor({
@@ -75,7 +66,12 @@ function CategoryEditor({
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
   const defaults = fieldDefaults(state.values);
   useFocusFirstInvalid(formRef, state);
-  usePhotoAfterSave({ saveState: state, file: photo.file, upload: uploadPhoto, onSaved });
+  const { uploadingPhoto } = usePhotoAfterSave({
+    saveState: state,
+    file: photo.file,
+    upload: uploadPhoto,
+    onSaved,
+  });
   return (
     <form
       action={editing ? updateAction : createAction}
@@ -149,7 +145,10 @@ function CategoryEditor({
       />
       {/* O sucesso fecha a gaveta e aparece no aviso da lista; aqui fica só o erro. */}
       <AdminNotice kind="error" message={state.status === 'error' ? state.message : undefined} />
-      <SubmitButton editing={editing} />
+      <EditorSubmitButton
+        label={editing ? 'Salvar categoria' : 'Criar categoria'}
+        uploadingPhoto={uploadingPhoto}
+      />
       {editing ? (
         <Button className="w-full" onClick={onClose} type="button" variant="neutral">
           Cancelar
