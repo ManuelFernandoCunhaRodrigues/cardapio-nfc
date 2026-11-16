@@ -4,7 +4,7 @@ area: Operacao
 tags:
   - operacao
   - entrega
-atualizado: 2026-10-10
+atualizado: 2026-11-16
 ---
 # Segurança e qualidade
 
@@ -31,7 +31,7 @@ Voltar: [[00-Comece-Aqui]] · Dados: [[07-Modelo-de-Dados-Supabase]]
 - Estados de carregamento, vazio e erro em telas públicas e administrativas.
 - Proteção contra clique duplicado em operações de gravação.
 - Não apagar imagem ou dado antes de confirmar a troca/transação.
-- Leituras públicas do banco têm tempo limite de 10 segundos: se o Supabase demorar, a página mostra o aviso de cardápio indisponível em vez de travar a publicação (em 2026-10-13 uma lentidão derrubou um deploy do stage por falta desse limite).
+- Toda requisição à API tem tempo limite de 15 segundos (o processamento de vídeo tem um orçamento próprio, maior). Se a leitura pública falhar ou estourar o tempo, o site lança o erro em vez de publicar uma tela de erro: no build a publicação falha, e na revalidação o Next mantém a última versão boa. O CI derruba o banco de propósito no fim para conferir isso. (Em 2026-10-13, uma lentidão derrubou um deploy do stage por falta de tempo limite.)
 
 ## Verificações antes de merge
 
@@ -40,13 +40,27 @@ Voltar: [[00-Comece-Aqui]] · Dados: [[07-Modelo-de-Dados-Supabase]]
 | Formatação (Prettier, `npm run format:check`) | Sim |
 | Lint | Sim |
 | Typecheck | Sim, se a aplicação usar TypeScript |
-| Testes automatizados | Para regras de negócio, acesso e regressões críticas |
-| Migrations do zero, testes de RLS e ponta a ponta (job "banco local e ponta a ponta" do CI) | Sim, roda sozinho em todo PR |
+| Arquivos, exports e dependências sem uso (`npm run knip`) | Sim, roda no CI |
+| Falhas conhecidas nas dependências de produção (`npm audit --omit=dev --audit-level=moderate`) | Sim, roda no CI desde o PR #88 |
+| Testes automatizados com piso de cobertura (`npm run test:coverage`) | Para regras de negócio, acesso e regressões críticas |
+| Migrations do zero, testes SQL e ponta a ponta (job "banco local e ponta a ponta" do CI) | Sim, roda sozinho em todo PR |
 | Build de produção | Sim |
 | Teste manual em celular | Sim, para alteração de interface pública |
 | Revisão de permissões/RLS | Para tabelas, Storage, Auth ou painel |
 
+## CI, audit, cobertura e E2E (2026-11-16)
+
+- **CI** (`.github/workflows/ci.yml`), em todo PR e push na `develop` e na `main`, em dois jobs:
+  - `verify`: formatação, lint, typecheck, `knip`, `npm audit` das dependências de produção, testes com cobertura (com resumo no job) e build da API.
+  - `banco local e ponta a ponta`: sobe o Supabase local, aplica todas as migrations num banco vazio, confere os tipos versionados, roda os testes SQL (RLS, Storage, reordenação, auditoria, slug e troca de categoria), faz o build do site, roda o Playwright, sobe a imagem Docker da API e confere o `/health`, e por último derruba o banco para provar que o cardápio continua no ar.
+- **Pisos de cobertura** (instruções/ramos/funções/linhas): API 70/65/75/70, site 51/49/65/52, core 52/51/68/53. Na revisão de 2026-11-15 o valor real estava de 12 a 19 pontos acima. Subir os pisos para perto do real é da onda 5 e continua pendente.
+- **E2E** (`e2e/`): cardápio no celular e no computador, painel (produtos, situações, categorias, destaques, loja), foto e vídeo, cache, cliques repetidos, sessão expirada, acessibilidade com axe e movimento reduzido, mais as rotas da API. A CSP é conferida em todo teste. Fora do CI, o Playwright se recusa a rodar contra um Supabase que não seja local, salvo com `E2E_ALLOW_REMOTE_SUPABASE=1` (PR #93). Passo a passo no `README.md`.
+- **Pendências de teste conhecidas** (onda 5): um `test.skip` esconde a gaveta do destaque encoberta no Pixel 7 (`e2e/movimento/movimento-painel.spec.ts`); ainda há esperas fixas (`waitForTimeout`) e um `networkidle` em testes do painel; não há testes de componente no `apps/web`.
+- **Imagem Docker da API** roda com o usuário `node` e ignora arquivos `.env` (PR #88).
+
 ## Checklist de lançamento
+
+> Para a demonstração, o checklist que vale é o de `docs/publicacao-producao.md` (antes, durante e depois de demonstrar). Os itens de NFC e de rede móvel continuam úteis; plano pago e domínio não se aplicam.
 
 - [ ] URL NFC e QR Code apontam para produção, não homologação.
 - [ ] Ambiente de produção usa somente credenciais de produção.
@@ -100,3 +114,9 @@ Publicado em `https://salgae-producao.vercel.app` com o banco `SALGAE-PRODUCTION
 - Erros do servidor saem como uma linha JSON com o nome do evento e o código do erro, o que permite filtrar nos logs da Vercel em vez de ler texto solto.
 - O Dependabot propõe atualizações de dependências toda segunda-feira, como PR para a `develop`, e cada uma passa pelo CI completo antes do merge.
 - A renovação de sessão roda só no painel. As páginas do cardápio não usam sessão e deixaram de chamar o Auth do Supabase a cada visita.
+
+### Operação (2026-11-15)
+
+- O workflow **Ambientes no ar** faz ping no `/api/health` dos dois ambientes a cada 2 dias e uma cópia semanal do banco da produção. Ele só roda sozinho depois de chegar à `main`, e a cópia depende de segredos ainda não cadastrados ([[09-Ambientes-e-Deploy]]).
+- O workflow **Migrations** falha sem os segredos, em vez de terminar verde sem conferir nada.
+- O painel confere a sessão sem ir ao Auth a cada leitura (assinatura do token conferida com a chave pública), e a API continua conferindo o token e o perfil em cada escrita (PR #89).
