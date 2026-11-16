@@ -31,8 +31,8 @@
     "qr:verificar": "npm run qr:verificar -w @salgae/web --"
   },
   "devDependencies": {
-    "knip": "6.44.1",
-    "prettier": "3.9.10",
+    "knip": "6.45.1",
+    "prettier": "3.10.1",
     "typescript": "5.9.3"
   }
 }
