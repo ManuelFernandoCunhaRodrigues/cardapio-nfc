@@ -14,7 +14,16 @@ export default async function AdminPanelLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   // As duas leituras não dependem uma da outra; em série, cada clique esperava as duas idas à API.
-  const [admin, store] = await Promise.all([requireAdmin(), getAdminStoreSettings()]);
+  // `allSettled` dá prioridade ao login: com a sessão vencida, quem redireciona é `requireAdmin`,
+  // que guarda a tela de origem.
+  const [adminResult, storeResult] = await Promise.allSettled([
+    requireAdmin(),
+    getAdminStoreSettings(),
+  ]);
+  if (adminResult.status === 'rejected') throw adminResult.reason;
+  if (storeResult.status === 'rejected') throw storeResult.reason;
+  const admin = adminResult.value;
+  const store = storeResult.value;
   if (!admin) return <UnauthorizedAccess />;
   const loaded = store.status === 'loaded';
   return (

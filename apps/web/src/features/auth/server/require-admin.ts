@@ -2,6 +2,7 @@ import { adminApiPaths, adminSessionResponseSchema } from '@salgae/core/contract
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 
+import { loginPathForCurrentScreen } from '@/features/admin/server/session-redirect';
 import { adminApi } from '@/lib/api/admin-api-client';
 import { ApiRequestError } from '@/lib/api/api-request-error';
 
@@ -38,7 +39,7 @@ export async function requireAdmin(
 ): Promise<AdminSession | null> {
   const authorization = await getAdminAuthorization();
   if (authorization.status === 'unauthenticated') {
-    if (options.redirectUnauthenticated ?? true) redirect('/admin/login');
+    if (options.redirectUnauthenticated ?? true) redirect(await loginPathForCurrentScreen());
     return null;
   }
   return authorization.status === 'authorized' ? authorization.admin : null;

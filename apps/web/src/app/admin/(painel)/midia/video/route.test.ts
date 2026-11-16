@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiRequestError } from '@/lib/api/api-request-error';
+import { ApiRequestError, SESSION_EXPIRED_MESSAGE } from '@/lib/api/api-request-error';
 
 const mocks = vi.hoisted(() => ({
   processVideo: vi.fn(),
@@ -67,12 +67,21 @@ describe('proxy do processamento de vídeo', () => {
     });
   });
 
-  it.each([401, 403])('preserva erro de autorização %i da API', async (status) => {
-    mocks.processVideo.mockRejectedValue(new ApiRequestError(status, 'Acesso negado.'));
+  it('usa o texto único de sessão expirada no 401 da API', async () => {
+    mocks.processVideo.mockRejectedValue(new ApiRequestError(401, 'Texto da API.'));
 
     const response = await POST(request({ productId, path: rawPath }));
 
-    expect(response.status).toBe(status);
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ status: 'error', message: SESSION_EXPIRED_MESSAGE });
+  });
+
+  it('preserva o erro de permissão 403 da API', async () => {
+    mocks.processVideo.mockRejectedValue(new ApiRequestError(403, 'Acesso negado.'));
+
+    const response = await POST(request({ productId, path: rawPath }));
+
+    expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ status: 'error', message: 'Acesso negado.' });
   });
 

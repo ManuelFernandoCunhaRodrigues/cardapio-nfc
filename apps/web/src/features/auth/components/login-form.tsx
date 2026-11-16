@@ -33,7 +33,7 @@ function SubmitLabel({ phase }: Readonly<{ phase: LoginPhase }>) {
   );
 }
 
-export function LoginForm() {
+export function LoginForm({ returnTo = '/admin' }: Readonly<{ returnTo?: string }>) {
   const router = useRouter();
   // A transição segue pendente até o painel aparecer, então o botão não volta ao estado inicial.
   const [isOpeningPanel, startOpeningPanel] = useTransition();
@@ -68,7 +68,7 @@ export function LoginForm() {
         return;
       }
       startOpeningPanel(() => {
-        router.replace('/admin');
+        router.replace(returnTo);
         router.refresh();
       });
     } catch {

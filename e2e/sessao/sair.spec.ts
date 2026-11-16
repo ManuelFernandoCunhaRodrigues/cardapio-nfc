@@ -25,6 +25,6 @@ test.describe('sessão do painel', () => {
     await expect(page).toHaveURL(/\/admin\/login$/);
 
     await page.goto('/admin/produtos');
-    await expect(page).toHaveURL(/\/admin\/login$/);
+    await expect(page).toHaveURL(/\/admin\/login\?motivo=sessao&voltar=%2Fadmin%2Fprodutos$/);
   });
 });
