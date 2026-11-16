@@ -14,7 +14,8 @@ import { formatPriceBRL } from '@salgae/core/rules/price';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const reasonLabel = { unavailable: 'INDISPONÍVEL', 'without-image': 'SEM FOTO' } as const;
+// Mesmos nomes da Situação do produto: "Em falta hoje" e "Escondido".
+const reasonLabel = { unavailable: 'EM FALTA HOJE', 'without-image': 'SEM FOTO' } as const;
 
 export default async function AdminDashboardPage() {
   const [products, categories, store] = await Promise.all([
@@ -26,6 +27,7 @@ export default async function AdminDashboardPage() {
   const unavailable = onMenu.filter((product) => !product.is_available).length;
   const hiddenCategories = categories.filter((category) => !category.is_active);
   const withoutImage = products.filter((product) => !product.image_path).length;
+  const hiddenProducts = products.filter((product) => !product.is_active).length;
   // Só o que o cliente vê: produto de categoria escondida não precisa de atenção agora.
   const attention = productsNeedingAttention(onMenu);
   const now = new Date();
@@ -36,11 +38,13 @@ export default async function AdminDashboardPage() {
     {
       label: 'No cardápio',
       value: onMenu.length,
-      detail: 'Produtos que o cliente vê',
+      detail: hiddenProducts
+        ? `Produtos que o cliente vê · ${hiddenProducts} ${hiddenProducts === 1 ? 'escondido' : 'escondidos'}`
+        : 'Produtos que o cliente vê',
       href: '/admin/produtos',
     },
     {
-      label: 'Indisponíveis',
+      label: 'Em falta hoje',
       value: unavailable,
       detail: 'Seguem visíveis com aviso',
       href: '/admin/produtos?filtro=indisponiveis',
