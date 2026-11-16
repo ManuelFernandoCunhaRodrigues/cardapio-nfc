@@ -49,12 +49,14 @@ export function safeAdminReturnPath(value: string | null | undefined): string {
 }
 
 /**
- * Login para quem abriu uma tela do painel sem sessão válida: o motivo faz o login explicar que a
- * sessão expirou, e `voltar` leva de novo à tela depois de entrar (omitido quando é o início).
+ * Login para quem abriu uma tela do painel sem sessão válida: com `expired`, o motivo faz o login
+ * explicar que a sessão expirou (quem nunca entrou vê o login simples); `voltar` leva de novo à
+ * tela depois de entrar (omitido quando é o início).
  */
-export function sessionExpiredLoginPath(returnTo?: string | null): string {
-  const query = new URLSearchParams({ motivo: 'sessao' });
+export function sessionExpiredLoginPath(returnTo?: string | null, expired = true): string {
+  const query = new URLSearchParams(expired ? { motivo: 'sessao' } : {});
   const safeReturn = safeAdminReturnPath(returnTo);
   if (safeReturn !== PANEL_HOME) query.set('voltar', safeReturn);
-  return `${LOGIN_PATH}?${query}`;
+  const search = query.toString();
+  return search ? `${LOGIN_PATH}?${search}` : LOGIN_PATH;
 }

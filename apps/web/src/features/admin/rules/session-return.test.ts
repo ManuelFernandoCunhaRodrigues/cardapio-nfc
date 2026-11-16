@@ -48,4 +48,11 @@ describe('sessionExpiredLoginPath', () => {
     expect(sessionExpiredLoginPath('//site.example')).toBe('/admin/login?motivo=sessao');
     expect(sessionExpiredLoginPath(null)).toBe('/admin/login?motivo=sessao');
   });
+
+  it('sem sessão anterior, leva ao login simples, mantendo a volta', () => {
+    expect(sessionExpiredLoginPath('/admin', false)).toBe('/admin/login');
+    expect(sessionExpiredLoginPath('/admin/loja', false)).toBe(
+      '/admin/login?voltar=%2Fadmin%2Floja',
+    );
+  });
 });

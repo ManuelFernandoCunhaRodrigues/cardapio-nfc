@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 
 import { sessionExpiredLoginPath } from '@/features/admin/rules/session-return';
 import { ApiRequestError } from '@/lib/api/api-request-error';
-import { CURRENT_PATH_HEADER } from '@/lib/request/current-path-header';
+import { CURRENT_PATH_HEADER, HAD_SESSION_HEADER } from '@/lib/request/current-path-header';
 
 /**
  * Login com o motivo e a volta para a tela atual, gravada pelo `proxy` num cabeçalho interno (a
@@ -13,7 +13,11 @@ import { CURRENT_PATH_HEADER } from '@/lib/request/current-path-header';
  * paralelo, um texto diferente para cada um deixaria o destino depender de quem respondeu antes.
  */
 export async function loginPathForCurrentScreen(): Promise<string> {
-  return sessionExpiredLoginPath((await headers()).get(CURRENT_PATH_HEADER));
+  const requestHeaders = await headers();
+  return sessionExpiredLoginPath(
+    requestHeaders.get(CURRENT_PATH_HEADER),
+    requestHeaders.get(HAD_SESSION_HEADER) !== '0',
+  );
 }
 
 function isSessionExpired(error: unknown): boolean {
