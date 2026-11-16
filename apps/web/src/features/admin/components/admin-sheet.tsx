@@ -2,7 +2,15 @@
 
 import { AnimatePresence, useIsPresent } from 'motion/react';
 import * as m from 'motion/react-m';
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import {
+  createContext,
+  use,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 import { layerAttributes, overlayFade } from '@/components/motion/exit-presence';
@@ -21,6 +29,18 @@ type AdminSheetProps = {
   labelledBy?: string;
   returnFocusRef?: RefObject<HTMLElement | null>;
 };
+
+const SheetCloseContext = createContext<(() => void) | null>(null);
+
+/**
+ * Fechamento pedido pela pessoa dentro da gaveta (o botão Cancelar): pergunta antes de descartar,
+ * como Esc, fundo e ×. Depois de salvar, quem abriu a gaveta fecha direto pelo próprio estado.
+ */
+export function useAdminSheetClose(): () => void {
+  const close = use(SheetCloseContext);
+  if (!close) throw new Error('useAdminSheetClose precisa estar dentro de um AdminSheet.');
+  return close;
+}
 
 const sheetTransition = { type: 'tween', ease: [0.32, 0.72, 0, 1], duration: 0.24 } as const;
 
@@ -92,7 +112,7 @@ function SheetFrame({
             <AdminIcon name="close" />
           </button>
         </div>
-        {children}
+        <SheetCloseContext value={requestClose}>{children}</SheetCloseContext>
         <ChoiceDialog
           cancelLabel="Continuar editando"
           confirmLabel="Descartar"

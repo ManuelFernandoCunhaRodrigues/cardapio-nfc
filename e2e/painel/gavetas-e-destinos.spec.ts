@@ -42,6 +42,42 @@ test.describe('gaveta com alterações', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
+  test('Cancelar com o formulário alterado também pergunta', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    const name = uniqueName('cancelar-categoria');
+    await createCategory(adminDb, name);
+    await page.goto('/admin/categorias');
+    await page
+      .getByRole('article')
+      .filter({ hasText: name })
+      .getByRole('button', { name: 'Editar', exact: true })
+      .click();
+    const sheet = page.getByRole('dialog', { name: 'Editar categoria' });
+    await sheet.getByLabel('Nome').fill(`${name} mudado`);
+
+    await sheet.getByRole('button', { name: 'Cancelar' }).click();
+    const question = page.getByRole('alertdialog', { name: 'Descartar alterações?' });
+    await expect(question).toHaveAccessibleDescription(
+      'O que você mudou aqui ainda não foi salvo e será perdido.',
+    );
+    await question.getByRole('button', { name: 'Continuar editando' }).click();
+    await expect(sheet.getByLabel('Nome')).toHaveValue(`${name} mudado`);
+
+    await sheet.getByRole('button', { name: 'Cancelar' }).click();
+    await question.getByRole('button', { name: 'Descartar' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const { data, error } = await adminDb.client
+      .from('categories')
+      .select('name')
+      .eq('name', name)
+      .single();
+    expect(error).toBeNull();
+    expect(data!.name).toBe(name);
+  });
+
   test('sem alteração, fecha sem perguntar', { tag: '@leitura' }, async ({ page }) => {
     await page.goto('/admin/destaques');
     await page.getByRole('button', { name: 'Novo', exact: true }).click();

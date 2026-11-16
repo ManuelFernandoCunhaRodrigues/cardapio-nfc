@@ -39,7 +39,7 @@ import { ChoiceChips } from '@/components/ui/choice-chips';
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { EditorSubmitButton } from '@/features/admin/components/editor-submit-button';
-import { AdminSheet } from '@/features/admin/components/admin-sheet';
+import { AdminSheet, useAdminSheetClose } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
 import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
 
@@ -81,15 +81,14 @@ function HighlightEditor({
   highlight,
   categories,
   products,
-  onClose,
   onSaved,
 }: Readonly<{
   highlight: AdminHighlight | null;
   categories: AdminCategory[];
   products: AdminProduct[];
-  onClose: () => void;
   onSaved: (message: string, kind: 'success' | 'error') => void;
 }>) {
+  const requestClose = useAdminSheetClose();
   const editing = Boolean(highlight);
   const [createState, createAction] = useActionState(createHighlight, initialHighlightActionState);
   const [updateState, updateAction] = useActionState(updateHighlight, initialHighlightActionState);
@@ -242,7 +241,7 @@ function HighlightEditor({
         uploadingPhoto={uploadingPhoto}
       />
       {editing ? (
-        <Button className="w-full" onClick={onClose} variant="neutral">
+        <Button className="w-full" onClick={requestClose} type="button" variant="neutral">
           Cancelar
         </Button>
       ) : null}
@@ -393,7 +392,6 @@ export function HighlightsManager({
           categories={categories}
           highlight={selected}
           key={selected?.id ?? 'new'}
-          onClose={() => setOpen(false)}
           onSaved={onSaved}
           products={products}
         />

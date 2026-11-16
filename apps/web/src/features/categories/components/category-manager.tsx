@@ -37,7 +37,7 @@ import {
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { EditorSubmitButton } from '@/features/admin/components/editor-submit-button';
-import { AdminSheet } from '@/features/admin/components/admin-sheet';
+import { AdminSheet, useAdminSheetClose } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
 import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
 
@@ -52,13 +52,12 @@ function uploadPhoto(categoryId: string, image: File) {
 
 function CategoryEditor({
   category,
-  onClose,
   onSaved,
 }: Readonly<{
   category: AdminCategory | null;
-  onClose: () => void;
   onSaved: (message: string, kind: 'success' | 'error') => void;
 }>) {
+  const requestClose = useAdminSheetClose();
   const editing = Boolean(category);
   const [createState, createAction] = useActionState(createCategory, INITIAL);
   const [updateState, updateAction] = useActionState(updateCategory, INITIAL);
@@ -141,7 +140,7 @@ function CategoryEditor({
         uploadingPhoto={uploadingPhoto}
       />
       {editing ? (
-        <Button className="w-full" onClick={onClose} type="button" variant="neutral">
+        <Button className="w-full" onClick={requestClose} type="button" variant="neutral">
           Cancelar
         </Button>
       ) : null}
@@ -299,12 +298,7 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
         open={open}
         title={selected ? 'Editar categoria' : 'Nova categoria'}
       >
-        <CategoryEditor
-          category={selected}
-          key={selected?.id ?? 'new'}
-          onClose={() => setOpen(false)}
-          onSaved={onSaved}
-        />
+        <CategoryEditor category={selected} key={selected?.id ?? 'new'} onSaved={onSaved} />
       </AdminSheet>
     </QuickActionGroup>
   );
