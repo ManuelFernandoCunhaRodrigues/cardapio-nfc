@@ -13,9 +13,13 @@ async function saveStatusOverride(page: Page, value: 'auto' | 'open' | 'closed')
 
 async function expectPublicStatus(page: Page, label: 'Aberta' | 'Fechada', suffix: string) {
   await page.goto(`/cardapio?estado=${suffix}`);
-  await expect(page.getByRole('link', { name: label, exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: `Loja ${label.toLowerCase()}: ver horários`, exact: true }),
+  ).toBeVisible();
   await page.goto(`/info?estado=${suffix}`);
-  await expect(page.getByRole('heading', { level: 2, name: label, exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Status da loja' }).getByText(label, { exact: true }),
+  ).toBeVisible();
 }
 
 test.describe('estado da loja', () => {
