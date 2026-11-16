@@ -31,9 +31,12 @@ import type { AdminCategory } from '@salgae/core/contracts/admin-api';
 import {
   filterAdminProducts,
   reorderBoundsByProduct,
-  type ProductFilter,
   type ReorderBounds,
 } from '@/features/admin/rules/panel';
+import {
+  productFilterFromParam,
+  productFilterOptions,
+} from '@/features/products/rules/product-list-filters';
 import {
   productSituationFromFields,
   type ProductSituation,
@@ -47,16 +50,6 @@ import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
 import { FloatingNotice } from '@/features/admin/components/floating-notice';
 import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
 
-const filterParams: Record<string, ProductFilter> = {
-  indisponiveis: 'unavailable',
-  'sem-foto': 'without-image',
-  desativados: 'hidden',
-};
-const filterLabels = [
-  { param: 'indisponiveis', label: 'Indisponíveis' },
-  { param: 'sem-foto', label: 'Sem foto' },
-  { param: 'desativados', label: 'Escondidos' },
-];
 const situationLabels: Record<ProductSituation, string> = {
   menu: 'No cardápio',
   unavailable: 'Em falta hoje',
@@ -65,22 +58,30 @@ const situationLabels: Record<ProductSituation, string> = {
 type Feedback = { message: string; kind: 'success' | 'error' };
 type ResultHandler = (state: ProductActionState) => void;
 
+// Num select fechado, as setas trocam a opção e disparam `change` a cada tecla (Chrome no Windows).
+const KEYBOARD_BROWSE_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
+
 function SituationControl({
   product,
   onResult,
 }: Readonly<{ product: AdminProduct; onResult: ResultHandler }>) {
-  const [state, action] = useActionState(setProductSituation, initialProductActionState);
+  const [state, action, saving] = useActionState(setProductSituation, initialProductActionState);
   // O controle aparece duas vezes na página (cartões do celular e tabela do desktop): o id não
   // pode vir do produto, senão o rótulo da tabela aponta para o campo escondido dos cartões.
   const selectId = useId();
   const [situation, showSituation] = useOptimistic(productSituationFromFields(product));
+  // Escolha feita pelo teclado e ainda não gravada: grava no Enter ou ao sair do campo.
+  const [keyboardChoice, setKeyboardChoice] = useState<ProductSituation | null>(null);
+  const browsingWithKeyboard = useRef(false);
   useEffect(() => {
     if (state.status !== 'idle' && state.message) onResult(state);
   }, [onResult, state]);
 
   // Sem <form action>: o React reinicia o formulário depois da action e o select voltaria à opção
   // do primeiro carregamento. Assim ele mostra a escolha e, ao terminar, o que está salvo.
-  function changeSituation(nextSituation: ProductSituation) {
+  function saveSituation(nextSituation: ProductSituation) {
+    setKeyboardChoice(null);
+    if (nextSituation === situation) return;
     const formData = new FormData();
     formData.set('id', product.id);
     formData.set('situation', nextSituation);
@@ -90,16 +91,42 @@ function SituationControl({
     });
   }
 
+  function changeSituation(nextSituation: ProductSituation) {
+    // Durante a gravação o campo fica travado (aria-disabled, sem perder o foco).
+    if (saving) return;
+    if (browsingWithKeyboard.current) setKeyboardChoice(nextSituation);
+    else saveSituation(nextSituation);
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLSelectElement>) {
+    if (KEYBOARD_BROWSE_KEYS.has(event.key)) browsingWithKeyboard.current = true;
+    if (event.key === 'Enter' && keyboardChoice) {
+      event.preventDefault();
+      saveSituation(keyboardChoice);
+    }
+  }
+
+  const shown = keyboardChoice ?? situation;
   return (
-    <div className="relative z-10">
+    <div className="relative z-10 flex items-center gap-2">
       <label className="sr-only" htmlFor={selectId}>
         Situação de {product.name}
       </label>
       <select
-        className={`min-h-11 rounded-full border px-3 font-[family-name:var(--font-poppins)] text-xs font-semibold focus:outline-hidden focus:ring-4 focus:ring-brand/20 ${situation === 'menu' ? 'border-green/20 bg-green-soft text-green' : situation === 'unavailable' ? 'border-amber/30 bg-amber-soft text-body' : 'border-danger/20 bg-danger-soft text-danger'}`}
+        aria-busy={saving}
+        aria-disabled={saving}
+        className={`min-h-11 rounded-full border px-3 font-[family-name:var(--font-poppins)] text-xs font-semibold focus:outline-hidden focus:ring-4 focus:ring-brand/20 aria-disabled:cursor-progress aria-disabled:opacity-60 ${shown === 'menu' ? 'border-green/20 bg-green-soft text-green' : shown === 'unavailable' ? 'border-amber/30 bg-amber-soft text-body' : 'border-danger/20 bg-danger-soft text-danger'}`}
         id={selectId}
+        onBlur={() => {
+          browsingWithKeyboard.current = false;
+          if (keyboardChoice) saveSituation(keyboardChoice);
+        }}
         onChange={(event) => changeSituation(event.target.value as ProductSituation)}
-        value={situation}
+        onKeyDown={handleKeyDown}
+        onPointerDown={() => {
+          browsingWithKeyboard.current = false;
+        }}
+        value={shown}
       >
         {Object.entries(situationLabels).map(([value, label]) => (
           <option key={value} value={value}>
@@ -107,6 +134,11 @@ function SituationControl({
           </option>
         ))}
       </select>
+      {saving ? (
+        <span className="text-xs font-bold text-muted" role="status">
+          Salvando…
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -240,8 +272,7 @@ export function ProductsManager({
   const [term, setTerm] = useState('');
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const categoryId = searchParams.get('categoria') ?? '';
-  const filterParam = searchParams.get('filtro') ?? '';
-  const filter = filterParams[filterParam] ?? 'all';
+  const filter = productFilterFromParam(searchParams.get('filtro'));
   const setParam = (name: string, value: string) => {
     const next = new URLSearchParams(searchParams.toString());
     if (value) next.set(name, value);
@@ -346,19 +377,19 @@ export function ProductsManager({
       </div>
       <div aria-label="Filtros de atenção" className="mt-3 flex flex-wrap gap-2">
         <button
-          aria-pressed={!filterParam}
-          className={`min-h-11 rounded-full border px-4 text-xs font-bold ${!filterParam ? 'border-brand-strong bg-peach text-ink' : 'border-border bg-white text-body'}`}
+          aria-pressed={filter === 'all'}
+          className={`min-h-11 rounded-full border px-4 text-xs font-bold ${filter === 'all' ? 'border-brand-strong bg-peach text-ink' : 'border-border bg-white text-body'}`}
           onClick={() => setParam('filtro', '')}
           type="button"
         >
           Todos
         </button>
-        {filterLabels.map((item) => (
+        {productFilterOptions.map((item) => (
           <button
-            aria-pressed={filterParam === item.param}
-            className={`min-h-11 rounded-full border px-4 text-xs font-bold ${filterParam === item.param ? 'border-brand-strong bg-peach text-ink' : 'border-border bg-white text-body'}`}
+            aria-pressed={filter === item.filter}
+            className={`min-h-11 rounded-full border px-4 text-xs font-bold ${filter === item.filter ? 'border-brand-strong bg-peach text-ink' : 'border-border bg-white text-body'}`}
             key={item.param}
-            onClick={() => setParam('filtro', filterParam === item.param ? '' : item.param)}
+            onClick={() => setParam('filtro', filter === item.filter ? '' : item.param)}
             type="button"
           >
             {item.label}

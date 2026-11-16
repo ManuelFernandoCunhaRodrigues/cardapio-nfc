@@ -240,7 +240,7 @@ test.describe('listas do painel', () => {
         .getByRole('button', { name: 'Escondidos', exact: true })
         .filter({ visible: true })
         .click();
-      await expect(page).toHaveURL(/filtro=desativados/);
+      await expect(page).toHaveURL(/filtro=escondidos/);
       await expect(search).toHaveValue('coxinha');
       expect(serverRequests).toEqual([]);
     },
