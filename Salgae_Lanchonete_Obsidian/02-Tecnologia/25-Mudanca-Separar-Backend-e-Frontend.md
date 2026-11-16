@@ -6,11 +6,13 @@ tags:
   - arquitetura
   - ideia
   - aprovado
-atualizado: 2026-11-03
+atualizado: 2026-11-16
 ---
 # Mudança planejada — separar backend e frontend, Motion e Playwright
 
 Voltar: [[00-Comece-Aqui]] · Relacionado: [[06-Arquitetura-e-Stack]] · [[12-Seguranca-e-Qualidade]] · [[03-Decisoes-do-Projeto]]
+
+> **Status final (2026-11-16): concluída.** Fase 1 (Playwright) nos PRs #67 e #69; separação e Motion no #74 (estrutura completa, E0 a E8) e no #80 (API dentro do site, um projeto Vercel por ambiente); animação do botão de login no #82. Tudo isso chegou à produção na promoção de 2026-11-04 (PR #83, com o Next 16.4.3). Depois, o vídeo também passou para a API (PR #94, 2026-11-15), o que revê a frase "o envio de vídeo fica no Next" abaixo. Ficaram pendentes: excluir o projeto `salgae-api-stage` na Vercel e remover os arquivos que só servem a ele, e a gaveta do destaque encoberta no Pixel 7 emulado (o teste continua com `test.skip`).
 
 > **Status: plano aprovado para desenvolvimento em 2026-10-23.** O responsável pediu para executar os três pontos junto com o Codex, na ordem Playwright → separação → Motion. Plano completo em `docs/planejamento/separacao-backend-frontend-plano.md`.
 
@@ -62,9 +64,9 @@ Depende do responsável: trocar o Root Directory dos projetos do site na Vercel 
 - **Total:** 56 execuções em 15 arquivos, todas verdes; o job de ponta a ponta leva cerca de 5 minutos.
 - **Defeitos reais encontrados e corrigidos (PR #69):** lista de definições mal formada no Resumo do painel; contraste baixo no filtro ativo de Produtos (3,93:1, mínimo 4,5:1) e nos horários de dia fechado na Loja.
 - **Comportamento observado (possível melhoria, não alterado):** no formulário de produto, com nome e preço errados ao mesmo tempo, o painel mostra só o erro do nome; o do preço aparece na tentativa seguinte.
-- **Segurança (PR #64, na develop e no stage):** Next 16.4.0 → 16.4.2 e Zod 4.6.5 → 4.6.7, corrigindo falhas críticas apontadas pelo `npm audit`. Falta promover para a produção.
+- **Segurança (PR #64, na develop e no stage):** Next 16.4.0 → 16.4.2 e Zod 4.6.5 → 4.6.7, corrigindo falhas críticas apontadas pelo `npm audit`. Falta promover para a produção. **Promovido:** a produção recebeu o Next 16.4.3 no PR #83, em 2026-11-04.
 
-### Fase 2 — Separação: em andamento
+### Fase 2 — Separação: concluída (PRs #74 e #80)
 
 - **2026-10-28 — PR 2.1 (monorepo) antes da prova de conceito.** O responsável pediu para estruturar as pastas separando o front do back. O PR 2.1 veio primeiro porque não depende do resultado da prova de conceito: tanto o plano A (API com vídeo) quanto o plano B (vídeo fica no Next) usam o monorepo.
   - O site foi movido com `git mv` para `apps/web` (pacote `@salgae/web`); a raiz virou npm workspaces e os comandos de sempre (`npm run dev`, `build`, `test`, `test:e2e`…) continuam na raiz, repassando para o pacote.
@@ -92,9 +94,10 @@ Depende do responsável: trocar o Root Directory dos projetos do site na Vercel 
 
 - **2026-11-03 — Um projeto Vercel por ambiente.** O responsável escolheu 2 projetos, um de teste e um de produção, em vez de site e API separados em cada ambiente. O plano teve consenso entre Claude e Codex depois de 3 revisões (`docs/planejamento/dois-projetos-por-ambiente.md`).
   - **Como ficou:** a API segue em `apps/api`, com as mesmas camadas, e roda dentro do site, no mesmo processo; ela também responde em `/api`. Só `apps/web/src/lib/api/embedded-api.ts` a importa. O `Dockerfile` continua para quem quiser a API em servidor separado.
-  - **Vídeo:** fica definitivamente no Next, e a E1 saiu do escopo. Com os dois no mesmo projeto, levar o vídeo para a API não traria ganho.
+  - **Vídeo:** fica definitivamente no Next, e a E1 saiu do escopo. Com os dois no mesmo projeto, levar o vídeo para a API não traria ganho. **Revisto em 2026-11-15:** a revisão geral mostrou que a rota do vídeo repetia regras e autorização da API, e o vídeo passou para a API no PR #94; a rota do Next só repassa o pedido.
   - **Descartado:** Vercel Services (beta, e seus bindings não existem no build) e o site chamando a si mesmo por HTTP (o build não tem servidor para responder).
-  - **Para conferir na E9:** no Pixel 7 emulado do Playwright, o botão "Criar destaque" do fim do formulário da gaveta fica encoberto; conferir num celular de verdade.
+  - **Para conferir na E9:** no Pixel 7 emulado do Playwright, o botão "Criar destaque" do fim do formulário da gaveta fica encoberto; conferir num celular de verdade. **Ainda pendente em 2026-11-16** (QA-03 da revisão, onda 5).
+- **2026-11-03 e 2026-11-04 — Fechamento.** O PR #80 entrou na `develop` em 2026-11-03 e a promoção para a produção (PR #83) em 2026-11-04.
 
 ## Perguntas em aberto (respondidas em 2026-10-23, ver acima)
 
