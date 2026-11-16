@@ -4,7 +4,7 @@ area: Produto
 tags:
   - produto
   - experiencia
-atualizado: 2026-10-13
+atualizado: 2026-11-16
 ---
 # Painel administrativo
 
@@ -19,7 +19,7 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 ### Autenticação
 
 - Login para usuários autorizados.
-- Encerramento de sessão e recuperação segura de acesso.
+- Encerramento de sessão e recuperação segura de acesso. Em 2026-11-16, a recuperação de senha pelo painel ainda não existe: é uma sugestão da revisão de 2026-11-15, não uma entrega.
 - Mensagens neutras em falha de login, sem revelar se um e-mail existe.
 
 ### Dashboard simples
@@ -38,18 +38,18 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 - valem para Subir, Descer, Esconder e Mostrar nas listas do painel;
 - a resposta pode levar alguns segundos: enquanto isso, o botão de seta mostra um indicador girando, o de texto fica mais claro, e os botões da mesma lista ficam em espera, com cliques ignorados, para não formar fila e seguir mexendo na lista depois;
 - com "menos animação" ligado no aparelho, a seta não gira, só fica mais clara;
-- em categorias e destaques, a seta fica apagada quando o item já está no início ou no fim da lista.
+- a seta fica apagada quando o item já está no início ou no fim da lista (em produtos, no início ou no fim da categoria, desde o PR #91).
 
 ### Categorias
 
-- criar, editar, ordenar, ativar e desativar;
+- criar, editar, ordenar, esconder e mostrar (categoria escondida esconde também os produtos dela, e o Resumo e Produtos sinalizam isso);
 - impedir exclusão perigosa de categoria que ainda possui produtos, oferecendo migração ou confirmação explícita;
 - foto da categoria, com prévia redonda, troca e remoção; ela aparece no círculo da tela inicial;
 - manter um identificador estável para URLs e integrações internas.
 
 ### Produtos
 
-- nome, preço, descrição, categoria, imagem, vídeo curto opcional, ordem, ativo e disponibilidade;
+- nome, preço, descrição, categoria, selo, imagem, vídeo curto opcional, ordem e **situação** (No cardápio · Em falta hoje · Escondido), que substitui os antigos "ativo" e "disponibilidade" separados;
 - validação antes de salvar;
 - prévia do que será mostrado no cardápio;
 - confirmação antes de ações irreversíveis;
@@ -59,7 +59,7 @@ O painel é o local seguro onde a equipe administra o conteúdo que aparece no c
 ### Destaques
 
 - cadastrar arte, título, texto opcional, destino e ordem de exibição;
-- ativar/desativar sem apagar o histórico;
+- esconder e mostrar sem apagar o histórico;
 - validar tamanho e formato da imagem para não prejudicar a página pública;
 - sem limite de quantidade; contador de destaques ativos e aviso acima de 8 ativos ([[22-Carrossel-de-Destaques]]);
 - destino do destaque como escolha: cardápio inteiro, uma categoria, um produto ou um endereço próprio.
@@ -75,6 +75,15 @@ Resumo de [[23-Refatoracao-de-Design-2026-10]], para quem opera:
 - **Horários** em uma linha por dia, com "Copiar para todos os dias".
 - **Editar categoria ou destaque** abre uma folha na frente, sem sair da lista.
 - **Avisos** de "salvou" e "deu erro" visíveis em cada ação.
+
+### Ajustes de novembro de 2026
+
+- **Esconder** e **Escondido** em todo lugar, no botão, na confirmação e no filtro (PR #85).
+- Sair por um link do menu com alteração não salva no produto ou na Loja **pede confirmação**. O botão Voltar do navegador não pergunta (limite conhecido) (PR #85).
+- Quando o servidor recusa, os formulários da Loja, dos Destaques e das Categorias **mantêm o que foi digitado** e o foco vai ao primeiro campo com erro (PR #91).
+- No editor de produto, trocar só categoria, selo ou situação também conta como alteração; o vídeo é conferido na hora da escolha; a prévia do cartão não é mais um link (PR #91).
+- Painel mais rápido (funções em São Paulo e sessão conferida uma vez por tela) e tela de erro própria, com "Tentar de novo" e volta ao Resumo (PR #89).
+- A página pública do produto atualiza logo depois de salvar (PR #100).
 
 ### Dados da loja
 
@@ -100,4 +109,8 @@ Começar com o menor número de papéis possível: **administrador**. Se outra p
 
 ## Critério de pronto
 
-Uma pessoa autorizada consegue alterar um preço ou marcar um item indisponível, confirmar a alteração e vê-la refletida no cardápio público sem expor funções administrativas ao visitante.
+Uma pessoa autorizada consegue alterar um preço ou marcar um item como **Em falta hoje**, confirmar a alteração e vê-la refletida no cardápio público sem expor funções administrativas ao visitante.
+
+## Na demonstração
+
+O que mostrar do painel e como desfazer depois está em [[15-Operacao-e-Manutencao]] e em `docs/publicacao-producao.md`. O guia para quem usa o painel é o `docs/guia-da-equipe.md`.
