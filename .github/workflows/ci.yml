@@ -101,7 +101,7 @@ jobs:
           cat "$RUNNER_TEMP/web.log"
           exit 1
       - name: Repetição do CRUD de produtos (temporário)
-        run: npm run test:e2e -- --project=painel-desktop painel/produtos-crud.spec.ts --repeat-each=12
+        run: npm run test:e2e -- --project=painel-desktop painel/produtos-crud.spec.ts --repeat-each=40
       - name: Testes de ponta a ponta
         run: npm run test:e2e
       # A imagem serve a quem levar a API para um servidor separado. O /health lê o banco, então ela
