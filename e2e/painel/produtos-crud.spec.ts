@@ -23,10 +23,35 @@ async function createProduct(page: Page, adminDb: AdminDb, name: string) {
 
 async function saveProduct(page: Page) {
   await page.getByRole('button', { name: 'Salvar alterações' }).filter({ visible: true }).click();
+  // O aviso de salvo aparece no próprio botão, que é onde a pessoa está olhando.
+  await expect(
+    page.getByRole('button', { name: 'Salvo ✓' }).filter({ visible: true }),
+  ).toBeVisible();
   await expect(page.getByText('Produto atualizado com sucesso.')).toBeVisible();
 }
 
 test.describe('CRUD de produtos', () => {
+  test('no computador, o Salvar fica à vista ao rolar e "Produtos" volta para a lista', async ({
+    page,
+    adminDb,
+    uniqueName,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'O cabeçalho fixo e o caminho "Produtos ›" são do computador.');
+    await createProduct(page, adminDb, uniqueName('produto-cabecalho'));
+
+    await page.getByRole('group', { name: 'Situação do produto' }).scrollIntoViewIfNeeded();
+    await expect(
+      page.getByRole('button', { name: 'Salvar alterações' }).filter({ visible: true }),
+    ).toBeInViewport();
+
+    await page
+      .getByRole('navigation', { name: 'Caminho' })
+      .getByRole('link', { name: 'Produtos', exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/admin\/produtos$/);
+  });
+
   test('edita preço e descrição e mostra os dois no detalhe público', async ({
     page,
     adminDb,
