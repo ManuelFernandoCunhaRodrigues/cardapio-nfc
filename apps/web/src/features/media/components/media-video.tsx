@@ -20,17 +20,17 @@ export function MediaVideo({ poster, posterSrcSet, video, name }: Readonly<Media
   const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // O botão some ao trocar: o foco vai para o vídeo, e não para o começo da página. Com movimento
-  // reduzido o vídeo não toca sozinho; os controles ficam à mão, já com o foco.
+  // O botão some ao trocar: o foco vai para o vídeo, e não para o começo da página. O toque em
+  // "Assistir vídeo" é um pedido explícito, então toca também com movimento reduzido; nesse caso só
+  // não repete (`loop`).
   useEffect(() => {
     const element = videoRef.current;
     if (!showVideo || !element) return;
     element.focus();
-    if (reduceMotion) return;
     void element.play().catch(() => {
       // O controle nativo continua disponível se o navegador recusar a reprodução.
     });
-  }, [reduceMotion, showVideo]);
+  }, [showVideo]);
 
   if (!video || !showVideo)
     return (
