@@ -50,7 +50,26 @@ execute function private.follow_product_slug_in_highlights();
 
 -- Destaques antigos apontavam para /produto/<id>. A página pública ainda aceita o id e redireciona,
 -- mas o redirecionamento extra atrapalha o botão Voltar: passam a apontar direto para o slug.
-update public.highlights
-set target = '/produto/' || products.slug
-from public.products
-where highlights.target = '/produto/' || products.id::text;
+-- Função à parte para o teste conferir que rodar de novo não muda nada. Devolve quantos mudaram.
+create or replace function private.highlight_targets_use_product_slug()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  changed integer;
+begin
+  update public.highlights
+  set target = '/produto/' || products.slug
+  from public.products
+  where highlights.target = '/produto/' || products.id::text;
+  get diagnostics changed = row_count;
+  return changed;
+end;
+$$;
+
+alter function private.highlight_targets_use_product_slug() owner to postgres;
+revoke all on function private.highlight_targets_use_product_slug() from public;
+
+select private.highlight_targets_use_product_slug();
