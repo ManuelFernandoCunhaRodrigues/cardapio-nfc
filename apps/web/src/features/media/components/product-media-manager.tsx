@@ -7,6 +7,7 @@ import { removeProductVideo } from '@/features/media/server/actions';
 import { removeProductImage, uploadProductImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { resizeImageForUpload } from '@/features/media/client/client-resize';
+import { friendlyMediaError, MediaUserError } from '@/features/media/client/friendly-media-error';
 import { validateVideoForUpload } from '@/features/media/client/client-video';
 import { getPublicImageVariantUrl, getPublicMediaUrl } from '@/features/media/rules/media-urls';
 import {
@@ -92,7 +93,7 @@ export function ProductMediaManager({
         setProgress(55);
         setMessage('Enviando a foto…');
         const result = await uploadProductImage(initialMediaActionState, formData);
-        if (result.status === 'error') throw new Error(result.message);
+        if (result.status === 'error') throw new MediaUserError(result.message ?? '');
         setHasStoredImage(true);
         setMessage(result.message);
       } else setMessage('Foto pronta para ser enviada ao criar o produto.');
@@ -100,13 +101,7 @@ export function ProductMediaManager({
     } catch (caught) {
       setError(true);
       setProgress(undefined);
-      setMessage(
-        caught instanceof Error && caught.message === 'image_too_large'
-          ? 'A foto deve ter no máximo 15 MB.'
-          : caught instanceof Error && caught.message
-            ? caught.message
-            : 'Não foi possível preparar esta foto. Escolha outra.',
-      );
+      setMessage(friendlyMediaError(caught));
     } finally {
       setBusy(false);
     }
@@ -164,9 +159,12 @@ export function ProductMediaManager({
       <h2 className="disp text-lg font-semibold text-ink" ref={titleRef} tabIndex={-1}>
         Foto e vídeo
       </h2>
-      <p className="mt-1 text-xs leading-5 text-muted">
-        Foto pela câmera ou galeria. Vídeo opcional, até 15 segundos.
-      </p>
+      <ul className="mt-1 text-xs leading-5 text-muted">
+        <li>Foto: JPG, PNG ou HEIC, até 15 MB.</li>
+        <li>
+          Vídeo (opcional): MP4, MOV ou WebM, até 50 MB e 15 segundos. Grave em Full HD, não em 4K.
+        </li>
+      </ul>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div>
           <div className="aspect-square overflow-hidden rounded-product bg-surface-inner">
@@ -179,7 +177,7 @@ export function ProductMediaManager({
               </div>
             )}
           </div>
-          <label className="mt-2 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-b-xl bg-white px-2 text-center text-xs font-bold text-ink">
+          <label className="mt-2 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-b-xl bg-white px-2 text-center text-xs font-bold text-ink focus-within:outline-hidden focus-within:ring-4 focus-within:ring-brand/30">
             <input
               accept="image/*"
               className="sr-only"
@@ -231,7 +229,7 @@ export function ProductMediaManager({
             )}
           </div>
           <label
-            className={`mt-2 flex min-h-11 items-center justify-center gap-2 rounded-b-xl px-2 text-center text-xs font-bold ${hasImage ? 'cursor-pointer bg-white text-ink' : 'cursor-not-allowed bg-surface-inner text-muted'}`}
+            className={`mt-2 flex min-h-11 items-center justify-center gap-2 rounded-b-xl px-2 text-center text-xs font-bold focus-within:outline-hidden focus-within:ring-4 focus-within:ring-brand/30 ${hasImage ? 'cursor-pointer bg-white text-ink' : 'cursor-not-allowed bg-surface-inner text-muted'}`}
           >
             <input
               accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm"
