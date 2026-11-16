@@ -9,6 +9,23 @@ try {
   // No CI, as variáveis são definidas pelo próprio job.
 }
 
+// O painel grava e apaga dados de teste. O `.env.local` de quem desenvolve costuma apontar para o
+// stage, então rodar a suíte localmente encheria o stage de produtos de teste. Só segue com um
+// Supabase que não seja local se isso for pedido de propósito.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+const usesLocalSupabase = /^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/.test(supabaseUrl);
+if (
+  !process.env.CI &&
+  supabaseUrl &&
+  !usesLocalSupabase &&
+  process.env.E2E_ALLOW_REMOTE_SUPABASE !== '1'
+) {
+  throw new Error(
+    `Os testes de ponta a ponta gravam no banco, e NEXT_PUBLIC_SUPABASE_URL aponta para ${supabaseUrl}. ` +
+      'Rode com o Supabase local (`supabase start`) ou defina E2E_ALLOW_REMOTE_SUPABASE=1 se for mesmo essa a intenção.',
+  );
+}
+
 // Os testes de ponta a ponta rodam contra o build de produção do site, com a API dentro dele,
 // ligado ao Supabase local (`supabase start`), com os dados de `supabase/seed.sql`. Com
 // E2E_BASE_URL definido, usam o servidor que já está no ar.
