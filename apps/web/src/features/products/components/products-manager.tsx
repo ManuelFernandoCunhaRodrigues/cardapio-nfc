@@ -45,7 +45,6 @@ import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import { formatPriceBRL } from '@salgae/core/rules/price';
 
 import { AdminIcon } from '@/features/admin/components/admin-icon';
-import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
 import { FloatingNotice } from '@/features/admin/components/floating-notice';
 import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
@@ -170,32 +169,101 @@ function ReorderButtons({
   );
 }
 
+const REORDER_LOCKED_MESSAGE = 'Para mudar a ordem, limpe a busca e os filtros.';
+// Altura do menu mais a barra de baixo do celular: com menos espaço que isto, o menu abre para cima.
+const MENU_SPACE_BELOW = 320;
+
+function isInsideDialog(target: EventTarget | null): boolean {
+  return target instanceof Element && Boolean(target.closest('[role="dialog"]'));
+}
+
+type MenuControl = { open: boolean; onOpenChange: (open: boolean) => void };
+
+/**
+ * Fecha o menu com Esc (devolvendo o foco ao "⋯") e com toque fora dele. A confirmação de excluir
+ * abre numa camada própria: tocar nela ou apertar Esc lá não fecha o menu por baixo.
+ */
+function useDismissableMenu(
+  { open, onOpenChange }: MenuControl,
+  menuRef: React.RefObject<HTMLElement | null>,
+  triggerRef: React.RefObject<HTMLElement | null>,
+) {
+  useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented || isInsideDialog(event.target)) return;
+      onOpenChange(false);
+      triggerRef.current?.focus();
+    };
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node) || menuRef.current?.contains(target)) return;
+      if (isInsideDialog(target)) return;
+      onOpenChange(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+    };
+  }, [menuRef, onOpenChange, open, triggerRef]);
+}
+
 function MoreActions({
   product,
   bounds,
+  reorderLocked,
   onResult,
   fallbackFocusRef,
-  onToggle,
+  menu,
 }: Readonly<{
   product: AdminProduct;
   bounds?: ReorderBounds;
+  reorderLocked: boolean;
   onResult: ResultHandler;
   fallbackFocusRef?: React.RefObject<HTMLElement | null>;
-  onToggle?: (open: boolean) => void;
+  menu: MenuControl;
 }>) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const summaryRef = useRef<HTMLElement>(null);
+  const [opensUpward, setOpensUpward] = useState(false);
+  useDismissableMenu(menu, detailsRef, summaryRef);
+
   return (
-    <details className="relative z-50" onToggle={(event) => onToggle?.(event.currentTarget.open)}>
+    <details
+      className="relative z-50"
+      onToggle={(event) => {
+        const isOpen = event.currentTarget.open;
+        if (isOpen !== menu.open) menu.onOpenChange(isOpen);
+      }}
+      open={menu.open}
+      ref={detailsRef}
+    >
       <summary
         aria-label={`Mais ações para ${product.name}`}
         className="grid min-h-11 min-w-11 cursor-pointer list-none place-items-center rounded-xl border border-border bg-white text-ink"
+        onClick={(event) => {
+          // Mede antes de abrir: perto do rodapé o menu ficaria atrás da barra de baixo.
+          const spaceBelow =
+            window.innerHeight - event.currentTarget.getBoundingClientRect().bottom;
+          setOpensUpward(spaceBelow < MENU_SPACE_BELOW);
+        }}
+        ref={summaryRef}
       >
         <AdminIcon name="more" />
       </summary>
-      <div className="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-border bg-white p-2 shadow-xl">
+      <div
+        className={`absolute right-0 z-50 w-56 rounded-xl border border-border bg-white p-2 shadow-xl ${opensUpward ? 'bottom-full mb-2' : 'mt-2'}`}
+      >
         <p className="px-2 py-1 text-xs font-bold text-muted">Organizar na categoria</p>
-        <div className="flex gap-2">
-          <ReorderButtons bounds={bounds} onResult={onResult} product={product} />
-        </div>
+        {reorderLocked ? (
+          <p className="px-2 pb-1 text-xs text-muted">{REORDER_LOCKED_MESSAGE}</p>
+        ) : (
+          <div className="flex gap-2">
+            <ReorderButtons bounds={bounds} onResult={onResult} product={product} />
+          </div>
+        )}
         <div className="mt-2 border-t border-border pt-2">
           <ConfirmDialog
             action={deleteProduct}
@@ -214,19 +282,22 @@ function MoreActions({
 function ProductMobileCard({
   product,
   bounds,
+  reorderLocked,
   onResult,
   fallbackFocusRef,
+  menu,
 }: Readonly<{
   product: AdminProduct;
   bounds?: ReorderBounds;
+  reorderLocked: boolean;
   onResult: ResultHandler;
   fallbackFocusRef: React.RefObject<HTMLElement | null>;
+  menu: MenuControl;
 }>) {
-  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <m.article
       {...listReorder}
-      className={`relative rounded-product bg-white p-3 shadow-card ${menuOpen ? 'z-40' : 'z-0'}`}
+      className={`relative rounded-product bg-white p-3 shadow-card ${menu.open ? 'z-40' : 'z-0'}`}
     >
       <Link
         aria-label={`Editar ${product.name}`}
@@ -253,13 +324,49 @@ function ProductMobileCard({
         <SituationControl onResult={onResult} product={product} />
         <MoreActions
           bounds={bounds}
-          onResult={onResult}
-          onToggle={setMenuOpen}
-          product={product}
           fallbackFocusRef={fallbackFocusRef}
+          menu={menu}
+          onResult={onResult}
+          product={product}
+          reorderLocked={reorderLocked}
         />
       </div>
     </m.article>
+  );
+}
+
+function EmptyProducts({
+  hasProducts,
+  onClearFilters,
+}: Readonly<{ hasProducts: boolean; onClearFilters: () => void }>) {
+  if (!hasProducts) {
+    return (
+      <div className="mt-5 rounded-card bg-white p-6 text-center shadow-card">
+        <p className="font-bold text-ink">Nenhum produto cadastrado ainda.</p>
+        <p className="mt-1 text-sm text-muted">
+          Cadastre o primeiro produto para ele aparecer no cardápio.
+        </p>
+        <Link
+          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-brand-strong px-5 text-sm font-bold text-white shadow-brand"
+          href="/admin/produtos/novo"
+        >
+          <AdminIcon name="plus" />
+          Criar produto
+        </Link>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-5 rounded-card bg-white p-6 text-center shadow-card">
+      <p className="text-sm text-muted">Nenhum produto encontrado com estes filtros.</p>
+      <button
+        className="mt-3 inline-flex min-h-11 items-center rounded-full border border-border bg-white px-5 text-sm font-bold text-ink"
+        onClick={onClearFilters}
+        type="button"
+      >
+        Limpar filtros
+      </button>
+    </div>
   );
 }
 
@@ -273,6 +380,15 @@ export function ProductsManager({
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const categoryId = searchParams.get('categoria') ?? '';
   const filter = productFilterFromParam(searchParams.get('filtro'));
+  // Subir e Descer trocam com o vizinho da categoria inteira, que pode não estar à vista.
+  const reorderLocked = Boolean(term.trim()) || filter !== 'all';
+  // Um menu "⋯" aberto por vez; a chave separa os cartões do celular da tabela do computador.
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const menuFor = (key: string): MenuControl => ({
+    open: openMenu === key,
+    onOpenChange: (open) =>
+      setOpenMenu((current) => (open ? key : current === key ? null : current)),
+  });
   const setParam = (name: string, value: string) => {
     const next = new URLSearchParams(searchParams.toString());
     if (value) next.set(name, value);
@@ -280,6 +396,10 @@ export function ProductsManager({
     const suffix = next.toString();
     // Os filtros rodam no navegador: sem ida ao servidor, a resposta é imediata e a tela não recarrega.
     window.history.replaceState(null, '', `/admin/produtos${suffix ? `?${suffix}` : ''}`);
+  };
+  const clearFilters = () => {
+    setTerm('');
+    window.history.replaceState(null, '', '/admin/produtos');
   };
   const onResult = useCallback((state: ProductActionState) => {
     if (state.status === 'idle') {
@@ -396,6 +516,12 @@ export function ProductsManager({
           </button>
         ))}
       </div>
+      {reorderLocked && filtered.length ? (
+        <p className="mt-3 text-xs text-muted">{REORDER_LOCKED_MESSAGE}</p>
+      ) : null}
+      {filtered.length ? null : (
+        <EmptyProducts hasProducts={products.length > 0} onClearFilters={clearFilters} />
+      )}
       <div className="mt-4 space-y-5 lg:hidden">
         {groups.map((group) => (
           <section key={group.category.id}>
@@ -407,20 +533,21 @@ export function ProductsManager({
               {group.products.map((product) => (
                 <ProductMobileCard
                   bounds={reorderBounds.get(product.id)}
+                  fallbackFocusRef={titleRef}
                   key={product.id}
+                  menu={menuFor(`card:${product.id}`)}
                   onResult={onResult}
                   product={product}
-                  fallbackFocusRef={titleRef}
+                  reorderLocked={reorderLocked}
                 />
               ))}
             </div>
           </section>
         ))}
-        {!filtered.length ? (
-          <AdminNotice kind="info" message="Nenhum produto encontrado com estes filtros." />
-        ) : null}
       </div>
-      <div className="mt-5 hidden overflow-visible rounded-card bg-white shadow-card lg:block">
+      <div
+        className={`mt-5 hidden overflow-visible rounded-card bg-white shadow-card ${filtered.length ? 'lg:block' : ''}`}
+      >
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border bg-surface-inner/70 text-muted">
             <tr>
@@ -478,16 +605,20 @@ export function ProductsManager({
                       >
                         <AdminIcon name="edit" />
                       </Link>
-                      <ReorderButtons
-                        bounds={reorderBounds.get(product.id)}
-                        onResult={onResult}
-                        product={product}
-                      />
+                      {reorderLocked ? null : (
+                        <ReorderButtons
+                          bounds={reorderBounds.get(product.id)}
+                          onResult={onResult}
+                          product={product}
+                        />
+                      )}
                       <MoreActions
                         bounds={reorderBounds.get(product.id)}
+                        fallbackFocusRef={titleRef}
+                        menu={menuFor(`row:${product.id}`)}
                         onResult={onResult}
                         product={product}
-                        fallbackFocusRef={titleRef}
+                        reorderLocked={reorderLocked}
                       />
                     </div>
                   </td>
@@ -496,9 +627,6 @@ export function ProductsManager({
             )}
           </tbody>
         </table>
-        {!filtered.length ? (
-          <p className="p-6 text-sm text-muted">Nenhum produto encontrado com estes filtros.</p>
-        ) : null}
       </div>
     </QuickActionGroup>
   );

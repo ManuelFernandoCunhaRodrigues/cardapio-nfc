@@ -194,8 +194,8 @@ test.describe('listas do painel', () => {
     await expect(moveButton(`Descer ${lastName}`)).toBeDisabled();
     await expect(moveButton(`Subir ${secondName}`)).toBeEnabled();
 
-    // Com foto, o primeiro some do filtro "Sem foto". O segundo vira o primeiro visível, mas a API
-    // troca com o vizinho da categoria inteira: a subida dele continua valendo.
+    // Com foto, o primeiro some do filtro "Sem foto". A API troca com o vizinho da categoria
+    // inteira, que não estaria à vista: com filtro, as setas somem e a tela explica o motivo.
     const { error: imageError } = await adminDb.client
       .from('products')
       .update({ image_path: `e2e/${ids[0]}` })
@@ -204,6 +204,11 @@ test.describe('listas do painel', () => {
     await page.goto(`/admin/produtos?categoria=${categoryId}&filtro=sem-foto`);
     await expect(panelLink(page, secondName)).toBeVisible();
     await expect(page.getByRole('link', { name: firstName, exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: `Subir ${secondName}` })).toHaveCount(0);
+    await expect(
+      page.getByText('Para mudar a ordem, limpe a busca e os filtros.').filter({ visible: true }),
+    ).toBeVisible();
+    await page.goto(`/admin/produtos?categoria=${categoryId}`);
     await expect(moveButton(`Subir ${secondName}`)).toBeEnabled();
 
     // Outra aba põe o segundo no topo: a tela ainda não sabe, e a API recusa a subida.
@@ -245,6 +250,43 @@ test.describe('listas do painel', () => {
       expect(serverRequests).toEqual([]);
     },
   );
+
+  test(
+    'o menu ⋯ fecha com Esc e com toque fora, e só um fica aberto',
+    { tag: '@leitura' },
+    async ({ page }) => {
+      await page.goto('/admin/produtos');
+      const menus = page.getByLabel(/^Mais ações para /).filter({ visible: true });
+      const openMenus = page.getByText('Organizar na categoria').filter({ visible: true });
+
+      await menus.nth(0).click();
+      await expect(openMenus).toHaveCount(1);
+      // O último fica longe do primeiro: o menu aberto não cobre o "⋯" que vai ser tocado.
+      await menus.last().click();
+      await expect(openMenus).toHaveCount(1);
+
+      await page.keyboard.press('Escape');
+      await expect(openMenus).toHaveCount(0);
+      await expect(menus.last()).toBeFocused();
+
+      await menus.nth(0).click();
+      await expect(openMenus).toHaveCount(1);
+      await page.getByRole('heading', { level: 1, name: 'Produtos' }).click();
+      await expect(openMenus).toHaveCount(0);
+    },
+  );
+
+  test('busca sem resultado explica e limpa os filtros', { tag: '@leitura' }, async ({ page }) => {
+    await page.goto('/admin/produtos?filtro=sem-foto');
+    const search = page.getByPlaceholder('Buscar por nome').filter({ visible: true });
+    await search.fill('nenhum produto tem este nome');
+    await expect(page.getByText('Nenhum produto encontrado com estes filtros.')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Limpar filtros' }).click();
+    await expect(search).toHaveValue('');
+    await expect(page).toHaveURL(/\/admin\/produtos$/);
+    await expect(page.getByText('Nenhum produto encontrado com estes filtros.')).toHaveCount(0);
+  });
 
   test('trocar de tela mostra que está carregando', { tag: '@leitura' }, async ({ page }) => {
     await page.goto('/admin');
