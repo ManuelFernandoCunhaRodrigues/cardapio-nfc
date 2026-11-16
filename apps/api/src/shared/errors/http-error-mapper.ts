@@ -7,8 +7,10 @@ import {
   ForbiddenError,
   NotFoundError,
   PayloadTooLargeError,
+  ServiceError,
   UnauthorizedError,
   UnsupportedMediaTypeError,
+  TimeoutError,
   ValidationError,
 } from './domain-errors';
 import { RequestCancelledError } from './request-cancelled-error';
@@ -27,6 +29,7 @@ type HttpError = {
 const domainErrorMappings: Array<{
   type: abstract new (...args: never[]) => DomainError;
   status: ErrorStatus;
+  report?: boolean;
 }> = [
   { type: ValidationError, status: 400 },
   { type: UnauthorizedError, status: 401 },
@@ -35,6 +38,8 @@ const domainErrorMappings: Array<{
   { type: ConflictError, status: 409 },
   { type: PayloadTooLargeError, status: 413 },
   { type: UnsupportedMediaTypeError, status: 415 },
+  { type: TimeoutError, status: 504 },
+  { type: ServiceError, status: 500, report: true },
 ];
 
 function findDomainMapping(error: Error) {
@@ -49,7 +54,7 @@ export function mapErrorToHttp(error: Error): HttpError {
       status: domainMapping.status,
       message: error.message,
       ...(fieldErrors ? { fieldErrors } : {}),
-      report: false,
+      report: domainMapping.report ?? false,
     };
   }
 

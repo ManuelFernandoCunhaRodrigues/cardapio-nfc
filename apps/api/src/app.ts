@@ -7,6 +7,7 @@ import { createHighlightsModule } from './modules/highlights/highlights.module';
 import { createMenuModule } from './modules/menu/menu.module';
 import { createSessionModule } from './modules/session/session.module';
 import { createProductsModule } from './modules/products/products.module';
+import { VIDEO_ROUTE_BUDGET_MS } from './modules/media/video/constants';
 import { createAdminStoreModule, createPublicStoreModule } from './modules/store/store.module';
 import {
   corsMiddleware,
@@ -14,6 +15,7 @@ import {
   requestIdMiddleware,
   requestTimeoutMiddleware,
 } from './shared/http/index';
+import { DEFAULT_REQUEST_TIMEOUT_MS } from './shared/http/request-timeout';
 import {
   createSupabaseClientFactory,
   type SupabaseClientFactory,
@@ -30,7 +32,15 @@ export function createApp({ corsOrigin, supabase }: AppDependencies) {
   const publicClient = supabase.createPublicClient();
   app.use('*', requestIdMiddleware());
   if (corsOrigin) app.use('*', corsMiddleware(corsOrigin));
-  app.use('*', requestTimeoutMiddleware());
+  app.use(
+    '*',
+    requestTimeoutMiddleware((context) =>
+      context.req.method === 'POST' &&
+      /^\/v1\/admin\/products\/[^/]+\/video$/.test(context.req.path)
+        ? VIDEO_ROUTE_BUDGET_MS
+        : DEFAULT_REQUEST_TIMEOUT_MS,
+    ),
+  );
   app.onError(errorHandler);
   app.notFound((context) =>
     context.json({ status: 'error' as const, message: 'Recurso não encontrado.' }, 404),

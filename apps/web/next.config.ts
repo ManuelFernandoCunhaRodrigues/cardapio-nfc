@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
   serverExternalPackages: ['ffmpeg-static'],
   outputFileTracingIncludes: {
+    // A API embutida processa o vídeo dentro desta função do Next.
     '/admin/midia/video': ['../../node_modules/ffmpeg-static/ffmpeg*'],
   },
   async headers() {

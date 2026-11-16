@@ -39,3 +39,11 @@ export class PayloadTooLargeError extends DomainError {
 export class UnsupportedMediaTypeError extends DomainError {
   override readonly name = 'UnsupportedMediaTypeError';
 }
+
+export class TimeoutError extends DomainError {
+  override readonly name = 'TimeoutError';
+}
+
+export class ServiceError extends DomainError {
+  override readonly name = 'ServiceError';
+}

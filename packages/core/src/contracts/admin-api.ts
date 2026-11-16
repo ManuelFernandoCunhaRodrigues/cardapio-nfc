@@ -24,6 +24,9 @@ export const adminApiPaths = {
   productSituation: (id: string) => `${adminRoot}/products/${encodeURIComponent(id)}/situation`,
   productOrder: (id: string) => `${adminRoot}/products/${encodeURIComponent(id)}/order`,
   productImage: (id: string) => `${adminRoot}/products/${encodeURIComponent(id)}/image`,
+  productVideoUpload: (id: string) =>
+    `${adminRoot}/products/${encodeURIComponent(id)}/video/upload`,
+  productVideo: (id: string) => `${adminRoot}/products/${encodeURIComponent(id)}/video`,
 } as const;
 
 export const apiErrorResponseSchema = z.object({
@@ -41,6 +44,18 @@ export const adminSessionResponseSchema = z.object({
 
 export const createdResponseSchema = z.object({ id: z.string().uuid() });
 export const imageResponseSchema = z.object({ path: z.string().min(1) });
+export const videoUploadResponseSchema = z.object({
+  path: z.string().min(1),
+  signedUrl: z.string().min(1),
+  token: z.string().min(1),
+});
+export const videoResponseSchema = z.object({
+  status: z.literal('success'),
+  message: z.string(),
+  path: z.string().min(1),
+  originalBytes: z.number().int().positive(),
+  compressedBytes: z.number().int().positive(),
+});
 
 export const activationInputSchema = z.object({ is_active: z.boolean() });
 export const reorderInputSchema = z.object({ direction: z.enum(['up', 'down']) });

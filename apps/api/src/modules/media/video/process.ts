@@ -1,18 +1,25 @@
 import { spawn } from 'node:child_process';
 import { chmod, copyFile, mkdir } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { access } from 'node:fs/promises';
-
-import ffmpegStatic from 'ffmpeg-static';
 
 import { VideoCompressionError } from './errors';
 
 const STDERR_LIMIT = 512 * 1024;
 let executableCopyPath: string | undefined;
+const runtimeRequire = createRequire(import.meta.url);
+
+function packagedFfmpegPath(): string | null {
+  // O nome não literal impede o trace do Next de levar o binário para toda função que embute a API.
+  const packageName = ['ffmpeg', 'static'].join('-');
+  const loaded = runtimeRequire(packageName) as unknown;
+  return typeof loaded === 'string' ? loaded : null;
+}
 
 async function resolveFfmpegPath(): Promise<string> {
-  const binary = process.env.FFMPEG_PATH?.trim() || ffmpegStatic;
+  const binary = process.env.FFMPEG_PATH?.trim() || packagedFfmpegPath();
   if (!binary)
     throw new VideoCompressionError('video_compress_failed', 'Binário do ffmpeg não disponível.');
   try {

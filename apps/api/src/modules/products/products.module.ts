@@ -1,6 +1,8 @@
 import { createImageController } from '../media/image/image.controller';
 import { SupabaseImageRepository } from '../media/image/image.repository';
 import { createImageService } from '../media/image/image.module';
+import { createVideoController } from '../media/video/video.controller';
+import { createVideoService } from '../media/video/video.module';
 import type {
   AppSupabaseClient,
   SupabaseClientFactory,
@@ -18,5 +20,6 @@ export function createProductsModule(clients: SupabaseClientFactory) {
     clients,
     createProductsController(createProductsService),
     createImageController('product', createImageService),
+    createVideoController(createVideoService),
   );
 }
