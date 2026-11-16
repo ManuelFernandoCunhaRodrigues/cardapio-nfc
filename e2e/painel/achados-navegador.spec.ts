@@ -91,7 +91,8 @@ test.describe('alterações não salvas', () => {
     { tag: '@leitura' },
     async ({ page }) => {
       await page.goto('/admin/loja');
-      await expect(page.getByText('Dia fechado?')).toBeVisible();
+      // Pelo `main`: durante o streaming o React mantém uma cópia escondida do conteúdo.
+      await expect(page.getByRole('main').getByText('Dia fechado?')).toBeVisible();
       await page.getByLabel('Frase curta').fill('Frase que não foi salva');
 
       const refused = await answerNextDialog(page, false);

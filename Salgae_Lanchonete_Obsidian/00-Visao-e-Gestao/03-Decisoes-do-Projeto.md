@@ -4,7 +4,7 @@ area: Gestao
 tags:
   - gestao
   - projeto
-atualizado: 2026-10-13
+atualizado: 2026-11-15
 ---
 # Decisões do projeto
 
@@ -28,6 +28,10 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 | Definida | Imagens são comprimidas e convertidas para WebP (variantes `detail` 1600 px e `card` 640 px, qualidade 82→70). | Cardápio leve na rede móvel sem perda visível. Algoritmo em [[08-Imagens-e-Storage]]. |
 | Definida | O painel deve permitir cadastrar produtos, fotos e vídeos pelo celular. | Quem atende cadastra na hora, pelo próprio aparelho. Ver [[05-Painel-Administrativo]]. |
 | Definida | Testes cruzados entre Claude Code e Codex em toda entrega. | Cada um valida a ideia dos testes do outro antes de rodar. Ver [[11-Agentes-de-IA]]. |
+| Definida | O sistema é uma demonstração para clientes, com hospedagem gratuita e sem domínio próprio. | Vercel Hobby e Supabase free; a pausa do banco é tratada pela rotina antes de demonstrar. Ver "Propósito de demonstração e hospedagem gratuita". |
+| Definida | Um projeto Vercel por ambiente, com a API dentro do site (2026-11-03). | Substitui a API como segundo projeto na Vercel. Ver a decisão de mesmo nome. |
+| Definida | O vídeo é processado pela API (2026-11-15, PR #94). | Revê a parte da decisão de 2026-11-03 que deixava o vídeo no Next. |
+| Definida | Plano de ação em 9 ondas, depois da revisão geral (2026-11-15). | Cada onda vira um PR para a `develop`. Ver [[27-Revisao-Geral-e-Plano-de-Acao]]. |
 
 ### Ambientes Supabase em São Paulo
 
@@ -37,6 +41,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** proximidade com os clientes e custo zero durante o desenvolvimento.
 - **Impacto:** variáveis de ambiente de cada projeto Vercel apontam para o Supabase correspondente; o projeto antigo fica fora do fluxo.
 - **Revisão:** antes do lançamento, avaliar plano Pro para produção (evita pausa automática).
+- **Revisão de 2026-11-15:** não se aplica. O sistema é uma demonstração e fica no plano gratuito. A pausa é tratada pelo ping do workflow **Ambientes no ar** e pela rotina antes de demonstrar ([[15-Operacao-e-Manutencao]]).
 
 ### Stack do frontend
 
@@ -62,7 +67,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Contexto:** o painel só validava o vídeo (MP4/WebM, 15 s, 10 MB) e publicava o arquivo como veio. Vídeo comum de celular (25–35 MB) era recusado, e o que passava chegava pesado ao cliente. O responsável pediu: "o vídeo deve ficar sempre leve, para o cliente conseguir ver com facilidade, e com boa qualidade".
 - **Decisão:** todo vídeo é compactado **no servidor**, com `ffmpeg`, antes de ser publicado. Saída única: MP4 H.264, sem áudio, até 720p, até 30 quadros por segundo, início rápido, alvo de até 3 MB para 15 s (teto de 4 MB). O painel passa a aceitar MP4, MOV e WebM de até 50 MB e 15 s. O original fica num bucket privado só durante o processamento e é apagado em seguida.
 - **Por quê:** compactar no celular de quem envia (navegador) daria uma qualidade diferente por aparelho e não funciona bem em todos os iPhones e Androids; no servidor o resultado é sempre igual e pode ser medido. O volume é pequeno (um vídeo por produto), então processar na hora, sem fila, é o mais simples que funciona, cabe nos limites do plano gratuito da Vercel e é o mesmo código quando o projeto for para um servidor próprio.
-- **Impacto:** política em [[08-Imagens-e-Storage]]; bucket privado novo e limite menor no bucket público (migration `20261011003026_video_compression_storage.sql`); dependência `ffmpeg-static`; rota `/admin/midia/video`; testes em `docs/testes/video-compactacao-*.md`.
+- **Impacto:** política em [[08-Imagens-e-Storage]]; bucket privado novo e limite menor no bucket público (migration `20261011003026_video_compression_storage.sql`); dependência `ffmpeg-static`; rota `/admin/midia/video`; testes em `docs/testes/video-compactacao-*.md`. Desde 2026-11-15 (PR #94), a compactação roda na API e a rota só repassa o pedido (ver "Vídeo processado pela API").
 - **Revisão:** depois do primeiro vídeo real enviado por celular em stage (iPhone e Android), e se o tempo de compactação na Vercel passar de um minuto ou o volume de vídeos crescer — nesse caso, avaliar fila/servidor próprio.
 
 ### Layout da home do cardápio
@@ -91,6 +96,8 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** a versão registrada passa a ser sempre a do arquivo, o histórico fica no GitHub e a produção continua dependendo de uma pessoa decidir.
 - **Impacto:** `.github/workflows/migrations.yml` e `docs/migrations-pelo-ci.md`. Depende de três segredos cadastrados pelo responsável e de um acerto único no histórico de migrations da produção; até lá o workflow só avisa. Migration nova precisa funcionar com o código que já está em produção, porque o banco muda antes.
 - **Revisão:** depois da primeira promoção feita por esse caminho.
+- **Atualização de 2026-11-15 (PR #88):** um check verde sem segredos dava a impressão de que a produção estava conferida. Agora, sem os segredos, o workflow **falha** e diz o que falta, e o "Run workflow" na produção só aceita `develop` e `main`. Os segredos continuam sem cadastro.
+
 ### Banco local no CI, testes de RLS automáticos e testes de ponta a ponta
 
 - **Data:** 2026-10-13
@@ -99,6 +106,8 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** migration que só funciona em cima do stage, política de acesso afrouxada por engano e fluxo quebrado na tela passam a barrar o merge em vez de aparecerem depois.
 - **Impacto:** `.github/workflows/ci.yml`, `supabase/config.toml`, `e2e/`, `scripts/testar-banco-local.sh`; resultados em `docs/testes/banco-local-e-ponta-a-ponta-resultados.md`. O CI fica cerca de 3 minutos mais longo. Envio de foto e vídeo e as telas de categorias, destaques e loja ainda não têm teste de ponta a ponta.
 - **Revisão:** ao criar tela nova no painel ou tabela nova no banco.
+- **Atualização de 2026-11-15:** a lacuna de testes acima foi fechada. Categorias, destaques e loja ganharam testes de ponta a ponta no PR #67, foto e vídeo no #69, e situações do produto, sessão expirada e cliques repetidos no #85. Desde o #88, o job também sobe a imagem Docker da API e, no fim, derruba o banco para conferir que o cardápio continua no ar.
+
 ### Endereço do produto pelo nome
 
 - **Data:** 2026-10-14
@@ -134,6 +143,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** menos dados trafegados a cada visita, link que se apresenta bem quando alguém compartilha e produção encontrável sem expor o stage.
 - **Impacto:** `lib/menu/get-public-menu.ts`, `lib/seo/`, `app/sitemap.ts` e `app/robots.ts`. Se o banco estiver lento no build, as páginas de produto passam a ser geradas na primeira visita em vez de derrubar o build. O endereço do produto continua sendo o identificador; trocar por um nome legível exige migration e fica como ideia.
 - **Revisão:** ao definir o domínio público.
+- **Superado em parte em 2026-10-14:** o endereço passou a ser o nome do produto (ver "Endereço do produto pelo nome").
 
 ### Refatoração de design do cardápio e do painel
 
@@ -154,6 +164,7 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Impacto:** tela inicial do cardápio e `/admin/destaques`; sem migration e sem biblioteca nova.
 - **Revisão:** depois do uso em stage; rever o tempo de 6 segundos se o responsável quiser mudar.
 - **Revisão de 2026-10-13:** depois de ver o stage, o responsável pediu o banner maior (240 px), os pontinhos embaixo no centro e **sem o botão de pausar**. Ficam as pausas por toque, mouse e teclado. Em produção desde 2026-10-13.
+- **Revisão de 2026-11-16 (PR #101, onda 4):** o botão **Pausar destaques / Continuar destaques** voltou, ao lado dos pontinhos, para atender à regra de acessibilidade de conteúdo que se move sozinho (WCAG 2.2.2). Ele some quando o aparelho pede menos movimento, porque aí nada troca sozinho. Está na `develop`; chega à produção na próxima promoção.
 
 ### Separar backend e frontend, Motion e Playwright
 
@@ -163,6 +174,43 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 - **Por quê:** os testes ampliados protegem a separação; a API própria deixa o sistema pronto para a VPS de cada cliente sem custo na demonstração.
 - **Impacto:** estrutura de pastas, CI, projetos da Vercel e segurança (CSP, CORS só para o vídeo). Plano em `docs/planejamento/separacao-backend-frontend-plano.md`.
 - **Revisão:** depois da prova de conceito do Hono com ffmpeg na Vercel (primeiro passo da separação).
+- **Revista em 2026-11-03:** a API não virou segundo projeto na Vercel. Ela roda dentro do site, em um projeto por ambiente (ver a decisão abaixo). Separação, Playwright e Motion foram concluídos nos PRs #67, #69, #74 e #80.
+
+### Propósito de demonstração e hospedagem gratuita
+
+- **Data:** 2026-10-11 (registrada nesta nota em 2026-11-15)
+- **Contexto:** o roteiro de publicação foi escrito para um lançamento no estabelecimento, com plano pago, domínio próprio e tags NFC gravadas.
+- **Decisão:** o sistema é uma demonstração para clientes. Fica na Vercel Hobby e no Supabase free, sem domínio próprio, com os endereços `*.vercel.app`.
+- **Por quê:** o objetivo é mostrar o sistema funcionando, sem custo, e não operar uma loja.
+- **Impacto:** o Supabase pausa o banco depois de cerca de 7 dias sem uso. O workflow **Ambientes no ar** faz um ping a cada 2 dias, e a rotina antes de demonstrar reativa o banco se for preciso ([[15-Operacao-e-Manutencao]], `docs/publicacao-producao.md`). Fase 6 e Épico 6 passam a significar "pronto para demonstrar" ([[13-Roadmap]], [[14-Epicos-de-Desenvolvimento]]).
+- **Revisão:** se um cliente real for usar o sistema na loja.
+
+### Um projeto Vercel por ambiente, com a API dentro do site
+
+- **Data:** 2026-11-03
+- **Contexto:** a decisão de 2026-10-23 previa a API como segundo projeto na Vercel em cada ambiente. Isso dobrava projetos, variáveis e deploys, e o build do site precisava de uma API no ar.
+- **Decisão:** dois projetos na Vercel, `salgae-homologacao` (stage) e `salgae-producao`. Em cada um, a API (`apps/api`, com as mesmas camadas) roda dentro do site, no mesmo processo, e também responde em `/api`. Só `apps/web/src/lib/api/` importa a API. O `Dockerfile` continua para quem quiser a API em servidor separado. Desde 2026-11-04, a produção só gera build de produção (Ignored Build Step `[ "$VERCEL_ENV" != "production" ]`).
+- **Por quê:** sem chamada de rede entre site e API, sem variável nova e com o build lendo o banco direto. Vercel Services (beta, sem bindings no build) e o site chamando a si mesmo por HTTP foram descartados.
+- **Impacto:** PR #80; `docs/planejamento/dois-projetos-por-ambiente.md`; [[06-Arquitetura-e-Stack]] e [[09-Ambientes-e-Deploy]]. O projeto antigo `salgae-api-stage` sai depois da validação (pendente com o responsável), e só então `apps/api/src/index.ts` e `apps/api/vercel.json` podem ser removidos. Na época, o vídeo ficou no Next; isso foi revisto em 2026-11-15.
+- **Revisão:** se a API precisar rodar fora da Vercel para algum cliente.
+
+### Vídeo processado pela API
+
+- **Data:** 2026-11-15
+- **Contexto:** a decisão de 2026-11-03 deixava o vídeo no Next. A revisão geral encontrou uma rota de 321 linhas acessando o Supabase direto, com outra autorização, e a regra "apagar mídia sem uso" repetida em 6 lugares (API-01, API-13, WEB-06).
+- **Decisão:** o módulo `apps/api/src/modules/media/video/` confere, compacta, publica e limpa o vídeo, no mesmo padrão da foto. A rota `/admin/midia/video` do Next só repassa o pedido para a API, porque a compactação precisa de uma função de até 180 s com o binário do `ffmpeg`. Pelo endereço `/api`, o processamento de vídeo responde 501. Uma regra única (`remove-media-if-unused.ts`) vale para foto, vídeo e exclusões.
+- **Por quê:** uma fronteira só para dados e mídia, uma autorização só e uma regra de limpeza só.
+- **Impacto:** PR #94; [[06-Arquitetura-e-Stack]], [[08-Imagens-e-Storage]] e o `README.md`. Os limites do vídeo ficam no `packages/core` (`rules/video-limits.ts`).
+- **Revisão:** se o tempo de compactação passar do limite da função ou o volume de vídeos pedir fila.
+
+### Revisão geral e plano em 9 ondas
+
+- **Data:** 2026-11-15
+- **Contexto:** o responsável pediu uma revisão estrita de UX e de código, com o que falta fazer e um plano de ação.
+- **Decisão:** relatórios em `docs/revisao/2026-11-15/` e plano em 9 ondas (0 a 8), descrito em [[27-Revisao-Geral-e-Plano-de-Acao]]. Cada onda vira um PR para a `develop`; produção, `main` e exclusões ficam com o "sim" do responsável.
+- **Por quê:** atacar primeiro o que aparece numa demonstração e o que é risco, e deixar o polimento para o fim.
+- **Impacto:** PRs #85 a #94 e #100 na `develop` até 2026-11-15; a nota 27 marca o andamento.
+- **Revisão:** ao fim de cada onda.
 
 ## Modelo de registro para próximas decisões
 
@@ -179,10 +227,10 @@ Este arquivo guarda escolhas já feitas. Para cada nova decisão, acrescente dat
 
 - Forma de contato do cliente com a equipe durante a visita.
 - Onde hospedar os vídeos: Supabase Storage (padrão proposto) ou serviço de vídeo dedicado, conforme o consumo de tráfego no plano Free.
-- Imagem ou vídeo nos destaques: pedido em 2026-10-13 e planejado em [[24-Planejamento-Midia-em-Categorias-e-Destaques]]; faltam as respostas do responsável e a ordem para desenvolver.
+- ~~Imagem ou vídeo nos destaques~~ **Resolvida em 2026-11-04:** o responsável decidiu fazer só a imagem nas categorias; os demais pacotes de [[24-Planejamento-Midia-em-Categorias-e-Destaques]] ficam só no planejamento até ele pedir.
 - Política visual: identidade, cores, fotos, tamanhos e textos.
-- Imagens nos destaques dos alimentos: o responsável mencionou a possibilidade em 2026-10-12; falta ele detalhar o que quer além da foto que cada destaque já aceita ([[22-Carrossel-de-Destaques]]).
-- Fotos das categorias: o responsável pediu a opção de imagem por categoria em 2026-10-13; planejado em [[24-Planejamento-Midia-em-Categorias-e-Destaques]] (o desenho continua aparecendo quando não houver foto).
+- ~~Imagens nos destaques dos alimentos~~ **Resolvida em 2026-11-04**, junto com o item acima: cada destaque continua com a foto que já aceita ([[22-Carrossel-de-Destaques]]).
+- ~~Fotos das categorias~~ **Feita em 2026-11-04 (PR #81):** foto por categoria pelo painel; sem foto, aparece um ícone.
 - Papéis de acesso do painel.
 - Cache no navegador (service worker) para o cardápio abrir mais rápido e sem internet: ideia registrada em 2026-10-24 em [[26-Ideia-Cardapio-Rapido-e-Sem-Internet]]; proposta de entrar na Fase 3 do plano de separação, aguardando o responsável.
 - Controle de estoque e status "Promoção" do protótipo do painel: ficaram fora do Épico 3 (não estão no escopo nem no banco); decidir se entram.

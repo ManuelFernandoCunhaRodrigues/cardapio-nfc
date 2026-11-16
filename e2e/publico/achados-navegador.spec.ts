@@ -113,7 +113,8 @@ test.describe('achados dos testes no navegador', () => {
 
   test('trata espaços como busca vazia na tela e no endereço', async ({ page }) => {
     await page.goto('/busca');
-    const productLinks = page.locator('a[href^="/produto/"]');
+    // Só os visíveis: na hidratação a lista do fallback e a do cliente convivem por um instante.
+    const productLinks = page.locator('a[href^="/produto/"]').filter({ visible: true });
     await expect(productLinks.first()).toBeVisible();
     const initialProducts = await productLinks.count();
 

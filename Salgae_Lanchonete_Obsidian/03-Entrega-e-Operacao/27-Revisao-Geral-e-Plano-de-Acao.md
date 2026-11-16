@@ -5,7 +5,7 @@ tags:
   - operacao
   - qualidade
   - plano
-atualizado: 2026-11-15
+atualizado: 2026-11-16
 ---
 # Revisão geral e plano de ação (2026-11-15)
 
@@ -95,17 +95,33 @@ Verificação: lint, typecheck, knip e 339 testes unitários passam (api 107, we
 
 Cada onda vira um PR para a `develop`. Divisão padrão: **o Codex escreve o código**; **o Claude orquestra**, cuida de CI e Vercel, testa no navegador e revisa. Toda execução é revisada e testada pelo outro antes do merge ([[11-Agentes-de-IA]]). Produção, `main` e exclusões ficam com o "sim" do responsável.
 
+### Andamento (atualizado em 2026-11-16)
+
+Tudo abaixo está na `develop` (e no stage). A produção continua na promoção de 2026-11-04 (PR #83) e recebe estas ondas na próxima promoção, com o "sim" do responsável.
+
+| Onda | Status | PRs |
+| --- | --- | --- |
+| 0 — destravar | **Quase toda feita.** Faltam decidir o #62, excluir `salgae-api-stage` e subir o `next` para 16.4.6 (está em 16.4.5). | #85, #86 |
+| 1 — o que aparece na demonstração | **Feita.** | #89, #90, #91 |
+| 2 — backend firme | **Quase toda feita.** Faltam o destaque gravando o slug (WEB-07) e a sessão vencida levando ao login (WEB-11, UXA-10). | #92, #94 |
+| 3 — segurança e operação | **Em parte.** Feitos: ping, cópia semanal, migrations sem verde falso, `npm audit` no CI e Docker sem root. Faltam: segredos (responsável), aprovação de ambiente no workflow, auditoria de `profiles`, cabeçalhos e a decisão sobre MFA. | #88 |
+| 4 — UX do painel e do público | **Público feito; painel em andamento.** | #101 (público) |
+| 5 — testes e qualidade | **Em parte.** Feitos: Playwright local sem gravar no stage e 401/403 em todas as rotas de escrita. Faltam: testes de componente, pisos de cobertura, esperas fixas e a gaveta no Pixel 7. | #92, #93, #100 |
+| 6 — pronto para demonstrar | **Em parte.** Produção restaurada em 2026-11-15 e roteiro de demonstração em `docs/publicacao-producao.md` (onda 7). Faltam conteúdo de exemplo, teste em celular real e a promoção. | — |
+| 7 — documentação e limpeza | **Neste PR** (branch `docs/onda7-documentacao`). | — |
+| 8 — polimento | Não começou. | — |
+
 ### Onda 0: destravar (já)
 
-| Item | Quem | Depende de |
-| --- | --- | --- |
-| Restaurar `SALGAE-PRODUCTION` e conferir `/api/health` e `/cardapio` | Claude | "sim" do responsável |
-| Revisão final do Codex no #85, conferência do painel no stage e merge na `develop` | Codex revisa, Claude junta | crédito do Codex; login do responsável para o painel |
-| Merge do #86 (hono, next) e subida do `next` para 16.4.6 | Claude | CI verde |
-| Fechar #72 e #73; decidir #62; apagar branches resolvidas | Claude | "ok" para o #62 |
-| Excluir `salgae-api-stage` na Vercel; depois o PR que tira os arquivos legados | Responsável, depois Claude | exclusão feita por ele |
+| Item | Quem | Depende de | Status |
+| --- | --- | --- | --- |
+| Restaurar `SALGAE-PRODUCTION` e conferir `/api/health` e `/cardapio` | Claude | "sim" do responsável | **Feito** em 2026-11-15 |
+| Revisão final do Codex no #85, conferência do painel no stage e merge na `develop` | Codex revisa, Claude junta | crédito do Codex; login do responsável para o painel | **Feito**: #85 na `develop` em 2026-11-15 |
+| Merge do #86 (hono, next) e subida do `next` para 16.4.6 | Claude | CI verde | **Em parte**: #86 na `develop`; o `next` está em 16.4.5 |
+| Fechar #72 e #73; decidir #62; apagar branches resolvidas | Claude | "ok" para o #62 | **Em parte**: #72 e #73 fechados e a maior parte das branches antigas apagada; o #62 segue aberto |
+| Excluir `salgae-api-stage` na Vercel; depois o PR que tira os arquivos legados | Responsável, depois Claude | exclusão feita por ele | Pendente |
 
-### Onda 1: o que aparece na demonstração (P1)
+### Onda 1: o que aparece na demonstração (P1) — feita (#89, #90, #91)
 
 - Formulários que não apagam o que foi digitado (WEB-01, UXA-05).
 - Editor de produto: estado "alterado" com os chips, foco e mensagem no campo com erro, vídeo validado antes de criar, setas apagadas no início e no fim (UXA-06 a UXA-09).
@@ -114,7 +130,7 @@ Cada onda vira um PR para a `develop`. Divisão padrão: **o Codex escreve o có
 
 Quem: Codex escreve; Claude testa no navegador em 375 px e 1280 px e revisa. Esforço: médio, de 2 a 3 PRs.
 
-### Onda 2: backend firme e camadas no lugar
+### Onda 2: backend firme e camadas no lugar — quase toda feita (#92, #94)
 
 - Vídeo para dentro da API, com uma única regra de mídia sem uso (API-01, API-13, WEB-06).
 - Upload: cancelar de verdade no timeout, update condicional contra corrida, conferência do limite do bucket, HEIC recusado com mensagem clara, limite de pixels (API-02 a API-05, API-12).
@@ -125,7 +141,7 @@ Quem: Codex escreve; Claude testa no navegador em 375 px e 1280 px e revisa. Esf
 
 Quem: Codex escreve; Claude revisa e testa no stage. Esforço: grande, de 3 a 4 PRs.
 
-### Onda 3: segurança e operação
+### Onda 3: segurança e operação — em parte (#88)
 
 - Workflow agendado: ping em `/api/health` dos dois ambientes, com aviso quando cair, e `pg_dump` semanal da produção guardado como artefato (QA-08, BD-01).
 - Workflow de migrations: falhar quando faltar segredo, restringir à `main` e exigir aprovação do ambiente (QA-01, SEG-02, SEG-03). Os segredos o responsável cadastra.
@@ -134,36 +150,38 @@ Quem: Codex escreve; Claude revisa e testa no stage. Esforço: grande, de 3 a 4 
 
 Quem: Claude (CI e Supabase); Codex revisa. Esforço: médio.
 
-### Onda 4: UX do painel e do público (P2)
+### Onda 4: UX do painel e do público (P2) — público feito (#101), painel em andamento
 
 Voltar do navegador com aviso ou rascunho (UXA-01), menu "⋯" com `popover` (UXA-02), prévia do produto sem link (UXA-04), mensagens de upload em português e limites visíveis antes de escolher (UXA-11, UXA-12), nomes únicos para a situação (UXA-18), aviso ao esconder categoria com produtos (UXA-21), slug fora da vista do dono (UXA-22), atalho "Ver cardápio" no celular (UXA-28), "Fechado" visível na Loja (UXA-31), botão de pausar o carrossel (UXP-09), carregamento nas rotas públicas (UXP-10), primeira tela com preço em celular baixo (UXP-11). O restante dos P2 está nos relatórios 01 e 02.
 
 Quem: Codex escreve; Claude testa no navegador. Esforço: grande.
 
-### Onda 5: testes e qualidade
+### Onda 5: testes e qualidade — em parte (#92, #93, #100)
 
 Testes de componente no `apps/web`; 401/403 em todas as rotas de escrita; pisos de cobertura perto do real; E2E sem esperas fixas e sem seletor por classe; Playwright local sem gravar no stage; corrigir a gaveta no Pixel 7 e tirar o `test.skip`; dois testes que conferem implementação reescritos (WEB-09, WEB-24, QA-03 a QA-06).
 
 Quem: o Codex propõe os testes dele e o Claude valida; o Claude propõe os de navegador e banco e o Codex valida.
 
-### Onda 6: pronto para demonstrar
+### Onda 6: pronto para demonstrar — em parte
 
 - Conteúdo de exemplo na produção, com backup antes: fotos reais dos produtos e dos destaques, nomes corrigidos, Info com contato de exemplo, ordem das categorias. Precisa do responsável: fotos ou "ok" para usar fotos de banco de imagens.
 - Teste em celular real pelos QR codes (responsável), com o roteiro `docs/testes/epico-5-roteiro-celular.md`.
 - Roteiro de demonstração e checklists de `docs/publicacao-producao.md` marcados.
 - Promoção da `develop` para a `main`, só com o "sim" dele.
 
-### Onda 7: documentação e limpeza
+### Onda 7: documentação e limpeza — branch `docs/onda7-documentacao`
 
 README, guia da equipe, `publicacao-producao.md`, notas 03, 06, 07, 08, 09, 12, 13 e 14; `.prettierignore`, `.vercelignore` e `.gitignore`; aviso do Vite sobre ESM no `apps/web`. Quem: Claude escreve; Codex confere com o código.
 
-### Onda 8: polimento (P3)
+Na branch `docs/onda7-documentacao` (2026-11-16): README, guia da equipe, `publicacao-producao.md` (agora roteiro de publicação e de demonstração), `migrations-pelo-ci.md`, notas 03, 05, 06, 07, 08, 09, 12, 13, 14, 15, 16, 25 e esta; `.gitignore`, `.prettierignore` e `.vercelignore` (LIMP-05, LIMP-06); `vitest.config.mts` no `apps/web` (QA-11); títulos de teste em português (QA-13). A conferência do Codex fica para quando ele revisar o PR.
+
+### Onda 8: polimento (P3) — não começou
 
 Os P3 dos relatórios, agrupados por tela, quando as ondas anteriores estiverem na `develop`.
 
 ## Decisões que dependem do responsável
 
-1. "Sim" para restaurar a produção agora.
+1. ~~"Sim" para restaurar a produção agora.~~ Feito: produção restaurada em 2026-11-15.
 2. Excluir `salgae-api-stage` na Vercel.
 3. Fotos para o conteúdo de exemplo: dele ou de banco de imagens.
 4. Contato do cliente na demonstração: WhatsApp, "chamar atendente" ou nada.

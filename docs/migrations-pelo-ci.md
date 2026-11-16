@@ -2,9 +2,11 @@
 
 O workflow `.github/workflows/migrations.yml` aplica os arquivos de `supabase/migrations/` nos bancos do Supabase com a CLI oficial (`supabase db push`). O objetivo é ninguém mais colar SQL à mão: foi assim que duas migrations ficaram registradas em produção com uma versão diferente da do repositório.
 
-## Estado em 2026-10-13
+## Estado em 2026-11-15
 
-O workflow está no repositório, mas **ainda não rodou contra um banco de verdade**: os três segredos abaixo precisam ser cadastrados pelo responsável, e a produção precisa do acerto de histórico descrito mais adiante. Até lá ele só emite um aviso. O que já foi provado é o caminho sem segredos e, no outro job do CI, que as sete migrations aplicam do zero.
+O workflow está no repositório, mas **ainda não rodou contra um banco de verdade**: os três segredos abaixo precisam ser cadastrados pelo responsável, e a produção precisa do acerto de histórico descrito mais adiante. Desde o PR #88, sem os segredos o job **falha** e diz o que falta, em vez de terminar verde sem conferir nada. O job **banco local e ponta a ponta** do CI prova, a cada PR, que todas as migrations aplicam do zero.
+
+A migration `20261115120000_product_sort_order_on_category_change` está aplicada só no stage. Ela precisa chegar à produção antes do merge da próxima promoção.
 
 ## Como funciona
 
@@ -12,7 +14,7 @@ O workflow está no repositório, mas **ainda não rodou contra um banco de verd
 | --- | --- |
 | Push na `develop` que mexe em `supabase/migrations/` | Aplica no **stage** o que ainda não foi aplicado. |
 | Pull request para a `main` | Só confere a **produção**. Se houver migration que a produção ainda não tem, a verificação falha e o merge fica marcado como reprovado. |
-| Actions > Migrations > **Run workflow**, ambiente `producao` | Aplica na **produção**. É o passo manual, feito antes do merge da promoção. |
+| Actions > Migrations > **Run workflow**, ambiente `producao` | Aplica na **produção**. É o passo manual, feito antes do merge da promoção. Para a produção, só aceita as branches `develop` e `main` (no ambiente `stage`, qualquer branch). |
 | Push na `main` | Confere de novo e aplica o que faltar. Em uso normal não sobra nada. |
 
 A ordem que isso garante é a mesma de `docs/publicacao-producao.md`: **o banco de produção recebe a migration antes do código que depende dela**. O passo de produção continua sendo um clique de uma pessoa, de propósito.
@@ -31,7 +33,7 @@ O workflow precisa de três segredos do repositório, em **GitHub > Settings > S
 | `SUPABASE_DB_PASSWORD_STAGE` | Senha do banco do projeto SALGAE-STAGING (Project Settings > Database). Se não souber, use "Reset database password". |
 | `SUPABASE_DB_PASSWORD_PRODUCAO` | A mesma coisa, no projeto SALGAE-PRODUCTION. |
 
-Enquanto os segredos não existirem, o job termina com um aviso e não faz nada. Nenhum PR fica bloqueado por isso.
+Enquanto os segredos não existirem, o job falha sem aplicar nada. Como ele roda em todo PR para a `main` e em push que mude migrations, essa verificação fica vermelha até o cadastro.
 
 Os identificadores dos dois projetos estão no próprio workflow; não são segredo.
 
@@ -53,7 +55,7 @@ npx supabase migration repair --status reverted 20261013114751 20261013214047 20
 npx supabase migration repair --status applied 20261011003026 20261013151000 20261014120000 20261014150000
 ```
 
-Depois, `npx supabase migration list` tem de mostrar as nove versões iguais nas duas colunas. O stage já está alinhado.
+Depois, `npx supabase migration list` tem de mostrar as mesmas versões nas duas colunas, menos as migrations que a produção ainda não recebeu. O stage estava alinhado em 2026-10-13.
 
 ## Promoção para a produção, passo a passo
 

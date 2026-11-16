@@ -4,6 +4,8 @@ Cardápio digital de **consulta no local** para uma lanchonete: o cliente aponta
 
 **Demonstração:** <https://salgae-producao.vercel.app> · **Stage (com conteúdo de exemplo):** <https://salgae-homologacao.vercel.app>
 
+> A hospedagem é gratuita (Vercel Hobby e Supabase free). O Supabase pausa o banco depois de cerca de 7 dias sem uso: se o cardápio não carregar, o banco precisa ser reativado no painel do Supabase. O roteiro antes de mostrar o sistema está em [Publicação e demonstração](docs/publicacao-producao.md).
+
 ![Telas do cardápio no celular: início, cardápio, produto, informações e entrada do painel](docs/readme/telas.jpg)
 
 > Este repositório não inclui delivery, carrinho, checkout nem pagamento. O cardápio é só de consulta: _"Consulta apenas. Faça seu pedido com o atendente."_
@@ -20,8 +22,8 @@ Cardápio digital de **consulta no local** para uma lanchonete: o cliente aponta
 
 **Para a equipe**
 
-- Produtos, categorias e destaques: criar, editar, ordenar, ativar e desativar.
-- Situação única por produto: no cardápio, indisponível ou oculto.
+- Produtos, categorias e destaques: criar, editar, ordenar, mostrar e esconder.
+- Situação única por produto: **No cardápio**, **Em falta hoje** ou **Escondido**.
 - Envio de foto e de vídeo com otimização automática, inclusive a foto de cada categoria.
 - Dados e horários da loja, com abrir ou fechar manualmente em dois toques.
 - Registro de auditoria das alterações feitas no painel.
@@ -41,11 +43,11 @@ Cardápio digital de **consulta no local** para uma lanchonete: o cliente aponta
 
 ## Arquitetura
 
-O site só desenha a tela. Tudo o que lê ou grava dados passa pela API, a única peça que fala com o banco; o site usa o Supabase apenas para o login.
+O site só desenha a tela. Tudo o que lê ou grava dados passa pela API, a única peça que fala com o banco. O site usa o Supabase só para o login e para um caso de Storage: o vídeo bruto vai do navegador direto para o Storage, por uma URL assinada que a API cria; depois a API confere, compacta e publica o vídeo.
 
-Em cada ambiente, os dois são publicados juntos em um único projeto: o site chama a API dentro do mesmo processo, sem passar pela rede, e ela também responde em `/api`. Só `apps/web/src/lib/api/` importa a API, e o ESLint barra esse import no restante do site. A decisão e as alternativas estão em `docs/planejamento/dois-projetos-por-ambiente.md`.
+Em cada ambiente, os dois são publicados juntos em um único projeto: o site chama a API dentro do mesmo processo, sem passar pela rede, e ela também responde em `/api`. Só `apps/web/src/lib/api/` importa a API, e o ESLint barra esse import no restante do site. A exceção é a rota de vídeo (`app/admin/(painel)/midia/video/route.ts`), que importa da API o caminho do binário do `ffmpeg` para a função da Vercel. A decisão e as alternativas estão em `docs/planejamento/dois-projetos-por-ambiente.md`.
 
-> **Exceção: o vídeo.** O envio e a compactação de vídeo ficam numa rota do Next (`apps/web/src/app/admin/(painel)/midia/video/route.ts` e `features/media/server/`), com acesso ao banco e ao Storage.
+O vídeo segue a mesma regra: quem confere, compacta e publica é a API (`apps/api/src/modules/media/video/`). A rota do painel `apps/web/src/app/admin/(painel)/midia/video/route.ts` só repassa o pedido para ela, porque a compactação precisa de uma função de até 180 s com o binário do `ffmpeg`. Por isso essa rota é o único outro ponto do site que referencia a API, e pelo endereço `/api` o processamento de vídeo responde 501.
 
 ```mermaid
 flowchart LR
@@ -119,7 +121,7 @@ apps/web/src/
   proxy.ts          renovação da sessão, só em /admin
 ```
 
-O ESLint do site também guarda as fronteiras: `@supabase/*` só em `lib/supabase` e `lib/auth`, nada de `sharp`/`ffmpeg-static` (exceto no vídeo e nos testes; `@supabase/*` continua proibido neles) e o Motion só por `motion/react-m`. O `packages/core` não pode importar framework, banco nem os apps.
+O ESLint do site também guarda as fronteiras: `@supabase/*` só em `lib/supabase` e `lib/auth`, `sharp` e `ffmpeg-static` só nos testes, a API só em `lib/api/embedded-api.ts` e na rota do vídeo, e o Motion só por `motion/react-m`. O `packages/core` não pode importar framework, banco nem os apps.
 
 ### Convenção de nomes
 
@@ -146,15 +148,15 @@ O ESLint do site também guarda as fronteiras: `@supabase/*` só em `lib/supabas
 
 **Páginas públicas estáticas, painel dinâmico.** O cardápio é gerado estaticamente e revalidado a cada 60 segundos. As leituras públicas vão à API com etiquetas de cache (`menu`, `store`, `product:<slug>`), e cada alteração no painel chama `updateTag` na Server Action: quem alterou vê o resultado na hora. O visitante nunca espera o banco. O "aberta ou fechada" é recalculado no navegador, porque uma página em cache não sabe que horas são.
 
-**API fora do ar não estraga o cardápio.** O cliente público da API desiste depois de 10 segundos e **lança** o erro em vez de publicar uma tela de erro: no build a publicação falha, e no ISR o Next mantém a última versão boa. O CI derruba a API de propósito (`e2e/scripts/api-fora-do-ar.sh`) para conferir isso.
+**Banco fora do ar não estraga o cardápio.** Se a leitura pública falhar (erro do banco, ou 504 da API depois de 15 s), o site **lança** o erro em vez de publicar uma tela de erro: no build a publicação falha, e na revalidação o Next mantém a última versão boa. No fim do CI, o Supabase local é derrubado de propósito (`e2e/scripts/banco-fora-do-ar.sh`): o script espera passar a revalidação de 60 s e confere que Início, Cardápio e produto continuam no ar.
 
 **Sem segredo novo.** A API usa a mesma chave pública do site e, nas escritas, um cliente Supabase por requisição com o token do administrador. A RLS continua sendo a última barreira.
 
 **Fotos em duas variantes.** O navegador reduz a foto antes de enviar; o servidor valida pelo conteúdo, remove metadados e gera WebP `card` (até 640 px, meta de 80 KB) e `detail` (até 1600 px, meta de 300 KB). O banco guarda só a base do caminho e a interface escolhe a variante.
 
-**Vídeo sempre leve.** O arquivo bruto vai direto do navegador para um bucket privado por URL assinada. Uma rota do servidor confere o tipo real pela assinatura do arquivo, compacta com `ffmpeg` (H.264, até 720p, sem áudio, `faststart`) e publica o resultado, tipicamente de dezenas de megabytes para 1 a 3 MB. O bruto e os temporários são apagados sempre, com sucesso ou com erro.
+**Vídeo sempre leve.** O arquivo bruto vai direto do navegador para um bucket privado por URL assinada. Depois, a API confere o tipo real pela assinatura do arquivo, compacta com `ffmpeg` (H.264, até 720p, sem áudio, `faststart`) e publica o resultado, tipicamente de dezenas de megabytes para 1 a 3 MB. O bruto e os temporários são apagados sempre, com sucesso ou com erro.
 
-**Troca de mídia sem deixar item quebrado.** O arquivo novo é enviado, o registro passa a apontar para ele e só então o antigo é apagado — e apenas se nenhum outro registro o usar. Se a gravação falhar, o arquivo novo é removido e o item continua como estava.
+**Troca de mídia sem deixar item quebrado.** O arquivo novo é enviado, o registro passa a apontar para ele e só então o antigo é apagado — e apenas se nenhum outro registro o usar. A troca só grava se o item ainda aponta para o arquivo lido no começo; quem perde uma corrida apaga o que enviou. Se a gravação falhar, o arquivo novo é removido e o item continua como estava. Uma regra única (`apps/api/src/modules/media/remove-media-if-unused.ts`) vale para foto, vídeo e exclusões.
 
 **Reordenação atômica.** Trocar dois itens de posição é uma única instrução no banco, por uma função SQL. Ou as duas posições mudam, ou nenhuma.
 
@@ -164,10 +166,10 @@ O ESLint do site também guarda as fronteiras: `@supabase/*` só em `lib/supabas
 
 ## Qualidade
 
-- 306 testes unitários e de integração com Vitest (`npm test`): 95 na API (services com repositório falso e rotas com `app.request()`), 171 no site e 40 no core. Cada pacote tem um piso de cobertura próprio, medido no CI.
-- Testes de RLS em SQL (`supabase/tests/`), que rodam dentro de uma transação desfeita no fim e conferem o que visitante, usuário comum e administrador conseguem ler e escrever.
-- 125 execuções de ponta a ponta com Playwright (`e2e/`), contra os builds de produção da API e do site: cardápio no celular e no computador, painel, foto e vídeo, cache, API fora do ar, sessão, acessibilidade com axe e movimento com e sem `prefers-reduced-motion`.
-- CI no GitHub Actions a cada PR, em dois jobs. O primeiro confere formatação, lint, typecheck, `knip` (arquivos, exports e dependências sem uso), testes e o build da API. O segundo sobe o Supabase local, aplica as migrations num banco vazio, confere os tipos versionados, roda os testes de RLS, sobe a API, faz o build do site lendo dela e roda os testes de ponta a ponta.
+- Testes unitários e de integração com Vitest (`npm test`) nos três pacotes: na API, services com repositório falso e rotas com `app.request()`; no site, Server Actions, rotas e regras de tela; no core, as regras puras. Cada pacote tem um piso de cobertura próprio, conferido no CI (`npm run test:coverage`).
+- Testes em SQL (`supabase/tests/`) de RLS, Storage, reordenação, auditoria, endereço do produto e troca de categoria. Rodam dentro de uma transação desfeita no fim e conferem o que visitante, usuário comum e administrador conseguem ler e escrever.
+- Testes de ponta a ponta com Playwright (`e2e/`), contra o build de produção do site, com a API dentro, ligado ao Supabase local: cardápio no celular e no computador, painel (produtos, situações, categorias, destaques e loja), foto e vídeo, cache, cliques repetidos, sessão expirada, acessibilidade com axe e movimento com e sem `prefers-reduced-motion`.
+- CI no GitHub Actions a cada PR para `develop` ou `main`, em dois jobs. O primeiro confere formatação, lint, typecheck, `knip` (arquivos, exports e dependências sem uso), `npm audit` das dependências de produção, testes com cobertura e o build da API. O segundo sobe o Supabase local, aplica todas as migrations num banco vazio, confere os tipos versionados, roda os testes SQL, faz o build do site lendo esse banco, roda os testes de ponta a ponta, sobe a imagem Docker da API e, por último, derruba o banco para conferir que o cardápio continua no ar.
 - Acessibilidade tratada como requisito: navegação por teclado, foco preso e devolvido nas camadas do painel, rótulos para leitor de tela e respeito a movimento reduzido.
 - Cabeçalhos de segurança (`Content-Security-Policy`, `HSTS`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) e páginas de stage fora dos buscadores. A CSP (`apps/web/src/lib/security/csp.ts`) só aceita scripts do próprio site, e os testes de ponta a ponta falham se alguma página tiver algo bloqueado por ela.
 - Erros registrados como uma linha JSON, com evento e código, no site e na API (cada resposta da API leva um `request-id`).
@@ -175,7 +177,7 @@ O ESLint do site também guarda as fronteiras: `@supabase/*` só em `lib/supabas
 
 ## Executar localmente
 
-Requisitos: Node.js 22 ou superior e um projeto Supabase (o de stage serve para desenvolver; com Docker, `npx supabase start` sobe um local).
+Requisitos: Node.js 22 ou superior e um projeto Supabase (o de stage serve para desenvolver; com Docker, `npx supabase start` sobe um local). Os testes de banco e de ponta a ponta usam o Supabase local.
 
 ```bash
 npm install
@@ -200,9 +202,37 @@ A API já vem junto, em `/api`. O build de produção também lê o banco, porqu
 | `npm run knip` | Arquivos, exports e dependências sem uso. |
 | `npm test` / `npm run test:coverage` | Vitest em todos os pacotes, com ou sem cobertura. |
 | `npm run test:db` | Testes SQL de RLS, Storage e reordenação contra o Supabase local. |
-| `npm run test:e2e` | Testes de ponta a ponta com Playwright, contra os builds de produção. |
+| `npm run test:e2e` | Testes de ponta a ponta com Playwright, contra o build de produção do site e o Supabase local. |
 | `npm run test:types-db` | Confere os tipos versionados contra os gerados do banco local (usado no CI). |
 | `npm run format` / `npm run format:check` | Formata ou confere a formatação com Prettier. |
+
+### Testes de ponta a ponta no computador
+
+Os testes do painel criam, alteram e apagam dados. Por isso, fora do CI, o Playwright se recusa a rodar quando `NEXT_PUBLIC_SUPABASE_URL` não aponta para `127.0.0.1` ou `localhost`. Ele só segue com outro banco se `E2E_ALLOW_REMOTE_SUPABASE=1` estiver definido. Com o Docker no ar:
+
+```bash
+npx supabase start          # banco local com todas as migrations e o seed
+npx supabase status -o env  # mostra API_URL e ANON_KEY do banco local
+```
+
+Exporte as variáveis no terminal. Os valores do terminal valem mais que os do `apps/web/.env.local`, tanto no build quanto no Playwright:
+
+```bash
+export NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+export NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY do comando acima>
+export NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
+export E2E_ADMIN_EMAIL=admin@salgae.test
+export E2E_ADMIN_PASSWORD=<uma senha qualquer, só para o banco local>
+```
+
+`E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD` são o login do administrador de teste. Ele só existe no banco local e é criado pelo `npm run test:db`. Depois:
+
+```bash
+npm run test:db                     # cria o administrador de teste e roda os testes SQL
+npx playwright install chromium     # uma vez só
+npm run build
+npm run test:e2e                    # sobe o site na porta 3000 e roda o Playwright
+```
 
 ### Servidor próprio (VPS)
 
@@ -228,9 +258,9 @@ docker run -d --restart unless-stopped -p 127.0.0.1:4000:4000 \
 
 ## Banco de dados
 
-As migrations ficam em `supabase/migrations/` e são aplicadas pelo GitHub Actions, com a CLI do Supabase: no stage, a cada merge na `develop`; em produção, por um passo manual antes da promoção, e o PR para a `main` é reprovado enquanto a produção não tiver a migration. O passo a passo e a configuração dos segredos estão em [Migrations pelo CI](docs/migrations-pelo-ci.md). Sem os segredos cadastrados o workflow falha, de propósito, em vez de passar sem conferir nada.
+As migrations ficam em `supabase/migrations/`. O workflow **Migrations** do GitHub Actions as aplica com a CLI do Supabase: no stage, a cada merge na `develop` que mude migrations; em produção, por um "Run workflow" manual antes da promoção, e o PR para a `main` é reprovado enquanto a produção não tiver a migration. Ele depende de três segredos do repositório: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD_STAGE` e `SUPABASE_DB_PASSWORD_PRODUCAO`. **Enquanto eles não forem cadastrados, o workflow falha de propósito e nenhuma migration é aplicada pelo CI.** Até lá, a aplicação é manual, pelos comandos abaixo. O passo a passo está em [Migrations pelo CI](docs/migrations-pelo-ci.md).
 
-O workflow **Ambientes no ar** chama o `/api/health` do stage e da produção a cada 2 dias (a rota consulta o banco, o que evita a pausa do Supabase gratuito e avisa quando algum ambiente cai) e, aos domingos, guarda uma cópia do banco da produção como artefato por 30 dias.
+O workflow **Ambientes no ar** chama o `/api/health` do stage e da produção a cada 2 dias (a rota consulta o banco, o que evita a pausa do Supabase gratuito e avisa quando algum ambiente cai) e, aos domingos, guarda uma cópia do banco da produção como artefato por 30 dias. A cópia precisa de `SUPABASE_ACCESS_TOKEN` e `SUPABASE_DB_PASSWORD_PRODUCAO`. O GitHub só roda workflows agendados a partir da branch padrão (`main`), então o ping e a cópia passam a rodar sozinhos depois que este workflow chegar à `main`.
 
 O mesmo comando funciona à mão, se for preciso:
 
@@ -249,6 +279,9 @@ npx supabase db push
 | `20261009121148_media_storage` | Buckets públicos de imagens e vídeos e suas políticas. |
 | `20261011003026_video_compression_storage` | Bucket privado para o vídeo bruto e limite de 4 MB no publicado. |
 | `20261013151000_atomic_sort_order_swap` | Funções de troca de posição em uma única instrução. |
+| `20261014120000_audit_and_sort_order_triggers` | Gatilhos que gravam a auditoria na mesma transação e põem o item novo no fim da lista. |
+| `20261014150000_product_slug` | Endereço do produto pelo nome (`slug` único), gerado na criação. |
+| `20261115120000_product_sort_order_on_category_change` | Produto que troca de categoria vai para o fim da categoria nova; corrige posições repetidas. |
 
 `supabase/seed.sql` traz dados de exemplo para ambiente local ou stage. Não execute o seed em produção.
 
@@ -297,12 +330,12 @@ Toda mudança entra por PR na `develop`, é conferida no stage e só então é p
 | Áudio | qualquer | removido |
 | Extras | HDR, rotação, GPS do celular | SDR, rotação aplicada, metadados removidos, `faststart` |
 
-O `ffmpeg` vem do pacote `ffmpeg-static` e roda como programa separado; o binário é distribuído sob GPL. Em servidor próprio também é possível usar o do sistema: `sudo apt install ffmpeg` e `FFMPEG_PATH=/usr/bin/ffmpeg`. Na Vercel, `next.config.ts` inclui o binário no pacote da rota e a rota declara `maxDuration = 180`. A foto continua obrigatória: é a capa do vídeo.
+O `ffmpeg` vem do pacote `ffmpeg-static` e roda como programa separado; o binário é distribuído sob GPL. Em servidor próprio também é possível usar o do sistema: `sudo apt install ffmpeg` e `FFMPEG_PATH=/usr/bin/ffmpeg`. Na Vercel, `next.config.ts` inclui o binário só no pacote da rota `/admin/midia/video`, que declara `maxDuration = 180` e chama a API dentro da mesma função. A foto continua obrigatória: é a capa do vídeo.
 
 ## Mais documentação
 
 - [Guia da equipe](docs/guia-da-equipe.md) — como usar o painel no dia a dia.
-- [Publicação em produção](docs/publicacao-producao.md) — passo a passo de migrations, variáveis e conferência.
+- [Publicação e demonstração](docs/publicacao-producao.md) — estado dos ambientes, workflows e segredos, e o roteiro antes e depois de uma demonstração.
 - [Migrations pelo CI](docs/migrations-pelo-ci.md) — como o GitHub Actions aplica as migrations no stage e na produção.
 - [Resultados de testes](docs/testes/) — planos e medições de cada entrega.
 - `Salgae_Lanchonete_Obsidian/` — visão do produto, decisões, modelo de dados e identidade visual, em notas do Obsidian.
