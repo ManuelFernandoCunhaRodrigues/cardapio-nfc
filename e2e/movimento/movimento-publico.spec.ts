@@ -160,7 +160,7 @@ test.describe('movimento público sem redução', () => {
     await expect(activeSlide(page)).toHaveAttribute('aria-label', /^2 de/);
   });
 
-  test('termina a entrada dos cards do cardápio visíveis e no lugar', async ({ page }) => {
+  test('mostra os cards do cardápio no lugar, sem recuar depois de carregar', async ({ page }) => {
     await page.goto('/cardapio');
 
     await expect(firstMenuCard(page)).toHaveCSS('opacity', '1');

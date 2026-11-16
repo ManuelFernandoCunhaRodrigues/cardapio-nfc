@@ -51,9 +51,10 @@ export function ProductCard({ product, compact = false, preview = false }: Produ
         >
           {product.name}
         </h3>
-        <p className={`mt-0.5 line-clamp-2 text-xs leading-4 text-muted`}>
-          {product.description || 'Feito na Salgaê'}
-        </p>
+        {/* Sem descrição, o card fica sem a linha: um texto fixo se repetiria em toda a faixa. */}
+        {product.description ? (
+          <p className="mt-0.5 line-clamp-2 text-xs leading-4 text-muted">{product.description}</p>
+        ) : null}
         <div className="mt-auto flex items-center justify-between gap-1 pt-2">
           <p
             className={`disp whitespace-nowrap text-base font-bold leading-5 ${product.is_available ? 'text-brand-strong' : 'text-muted'}`}
