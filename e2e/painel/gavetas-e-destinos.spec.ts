@@ -1,4 +1,26 @@
-import { expect, test } from '../fixtures';
+import { expect, test, type AdminDb } from '../fixtures';
+
+async function createCategory(adminDb: AdminDb, name: string) {
+  const { data, error } = await adminDb.client
+    .from('categories')
+    .insert({ name, slug: name.toLowerCase(), sort_order: 9000 })
+    .select('id')
+    .single();
+  expect(error).toBeNull();
+  adminDb.track('categories', data!.id);
+  return data!.id;
+}
+
+async function createProduct(adminDb: AdminDb, name: string, categoryId: string, active = true) {
+  const { data, error } = await adminDb.client
+    .from('products')
+    .insert({ name, category_id: categoryId, price_cents: 700, is_active: active })
+    .select('id, slug')
+    .single();
+  expect(error).toBeNull();
+  adminDb.track('products', data!.id);
+  return data!;
+}
 
 test.describe('gaveta com alterações', () => {
   test('pergunta antes de fechar e só descarta quando a pessoa confirma', async ({ page }) => {
@@ -27,5 +49,68 @@ test.describe('gaveta com alterações', () => {
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  });
+});
+
+test.describe('destino do destaque', () => {
+  test('um produto grava o endereço pelo slug e o cartão mostra o destino', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    const categoryId = await createCategory(adminDb, uniqueName('destino-categoria'));
+    const productName = uniqueName('destino-produto');
+    const hiddenName = uniqueName('destino-escondido');
+    const product = await createProduct(adminDb, productName, categoryId);
+    await createProduct(adminDb, hiddenName, categoryId, false);
+    const title = uniqueName('destino-destaque');
+
+    await page.goto('/admin/destaques');
+    await page.getByRole('button', { name: 'Novo', exact: true }).click();
+    const sheet = page.getByRole('dialog', { name: 'Novo destaque' });
+    await sheet.getByLabel('Título').fill(title);
+    await sheet.getByText('Um produto', { exact: true }).click();
+    await expect(sheet.getByRole('radio', { name: 'Um produto' })).toBeChecked();
+    const select = sheet.getByLabel('Escolha o produto');
+    // Só o que aparece no cardápio pode ser destino.
+    await expect(select.locator('option', { hasText: hiddenName })).toHaveCount(0);
+    await select.selectOption({ label: productName });
+    await sheet.getByRole('button', { name: 'Criar destaque' }).click();
+    await expect(page.getByText('Destaque criado com sucesso.')).toBeVisible();
+
+    const { data, error } = await adminDb.client
+      .from('highlights')
+      .select('id, target')
+      .eq('title', title)
+      .single();
+    expect(error).toBeNull();
+    adminDb.track('highlights', data!.id);
+    expect(data!.target).toBe(`/produto/${product.slug}`);
+    await expect(
+      page.getByRole('article').filter({ hasText: title }).getByText(`Leva para: ${productName}`),
+    ).toBeVisible();
+  });
+
+  test('o cartão avisa quando o destino deixou de existir', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    const title = uniqueName('destino-sumiu');
+    const { data, error } = await adminDb.client
+      .from('highlights')
+      .insert({ title, target: '/cardapio#categoria-que-nao-existe-mais', is_active: false })
+      .select('id')
+      .single();
+    expect(error).toBeNull();
+    adminDb.track('highlights', data!.id);
+
+    await page.goto('/admin/destaques');
+    await expect(
+      page
+        .getByRole('article')
+        .filter({ hasText: title })
+        .getByText('O destino deste banner não existe mais. Edite o destaque e escolha outro.'),
+    ).toBeVisible();
   });
 });
