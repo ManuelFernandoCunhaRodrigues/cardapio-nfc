@@ -15,6 +15,18 @@ function isPanelPath(pathname: string): boolean {
   return pathname === PANEL_HOME || pathname.startsWith(`${PANEL_HOME}/`);
 }
 
+// O roteador decodifica o caminho e ignora a barra final: `/admin/login/` e `/admin/%6Cogin` também
+// são o login.
+function isLoginPath(pathname: string): boolean {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(pathname).toLowerCase();
+  } catch {
+    return true;
+  }
+  return decoded === LOGIN_PATH || decoded.startsWith(`${LOGIN_PATH}/`);
+}
+
 /**
  * Aceita só telas do próprio painel (`/admin` e abaixo), nunca o login nem outro site. Qualquer
  * outra coisa (endereço absoluto, `//site`, `/\site`, fora de `/admin`) volta para o início.
@@ -29,7 +41,7 @@ export function safeAdminReturnPath(value: string | null | undefined): string {
   } catch {
     return PANEL_HOME;
   }
-  if (url.origin !== PARSE_BASE || !isPanelPath(url.pathname) || url.pathname === LOGIN_PATH) {
+  if (url.origin !== PARSE_BASE || !isPanelPath(url.pathname) || isLoginPath(url.pathname)) {
     return PANEL_HOME;
   }
   ROUTER_PARAMS.forEach((name) => url.searchParams.delete(name));

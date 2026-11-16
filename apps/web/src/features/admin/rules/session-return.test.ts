@@ -25,6 +25,10 @@ describe('safeAdminReturnPath', () => {
     ['prefixo parecido', '/administracao'],
     ['subida de pasta para fora', '/admin/../cardapio'],
     ['o próprio login', '/admin/login?voltar=/admin/produtos'],
+    ['o login com barra final', '/admin/login/'],
+    ['o login com letra codificada', '/admin/%6Cogin'],
+    ['o login em maiúsculas', '/admin/LOGIN'],
+    ['abaixo do login', '/admin/login/qualquer'],
     ['vazio', ''],
     ['ausente', null],
   ])('troca %s pelo início do painel', (_name, value) => {
