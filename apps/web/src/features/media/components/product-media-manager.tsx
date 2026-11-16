@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- prévias locais usam URLs blob */
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { removeProductVideo } from '@/features/media/server/actions';
 import { removeProductImage, uploadProductImage } from '@/features/media/server/image-actions';
@@ -27,6 +27,8 @@ type Props = {
   onVideoPrepared?: (file: File | null, preview: string | null) => void;
   preparedPreview?: string | null;
   preparedVideoPreview?: string | null;
+  /** Avisa quando uma foto ou vídeo começa ou termina de ser preparado ou enviado. */
+  onBusyChange?: (busy: boolean) => void;
 };
 
 function Progress({ value, label }: Readonly<{ value: number; label: string }>) {
@@ -55,6 +57,7 @@ export function ProductMediaManager({
   onVideoPrepared,
   preparedPreview,
   preparedVideoPreview,
+  onBusyChange,
 }: Readonly<Props>) {
   const [preview, setPreview] = useState<string | null>(
     preparedPreview ?? getPublicImageVariantUrl('product-images', imagePath, 'card'),
@@ -72,6 +75,9 @@ export function ProductMediaManager({
   // desmontaria a confirmação antes de ela fechar e devolver o foco.
   const [hasStoredImage, setHasStoredImage] = useState(Boolean(imagePath));
   const titleRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
 
   async function selectImage(file: File | undefined) {
     if (!file) return;

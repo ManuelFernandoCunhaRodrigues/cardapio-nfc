@@ -46,6 +46,7 @@ import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { ProductMediaManager } from '@/features/media/components/product-media-manager';
 
 const REVIEW_FIELDS_MESSAGE = 'Revise os campos destacados antes de salvar.';
+const LEAVE_WHILE_BUSY_MESSAGE = 'O envio ainda não terminou. Sair mesmo assim?';
 
 const situationOptions: Array<{ value: ProductSituation; label: string; help: string }> = [
   { value: 'menu', label: 'No cardápio', help: 'Visível e disponível' },
@@ -234,6 +235,8 @@ export function ProductForm({
   const [preparedVideo, setPreparedVideo] = useState<File | null>(null);
   const [preparedVideoPreview, setPreparedVideoPreview] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  // Foto ou vídeo sendo preparado ou enviado (o vídeo pode levar uns 2 minutos).
+  const [mediaBusy, setMediaBusy] = useState(false);
   const [creationStage, setCreationStage] = useState<CreationStage | null>(null);
   const [failedCreationStep, setFailedCreationStep] = useState<FailedCreationStep | null>(null);
   const submittingRef = useRef(false);
@@ -248,10 +251,15 @@ export function ProductForm({
     current: draft,
     hasPreparedMedia: Boolean(preparedImage || preparedVideo),
   });
-  useLeaveGuard(hasUnsavedChanges && !creating);
+  // Sair no meio da criação ou do envio interrompe o envio. O `router.replace` do fim da criação
+  // não passa pelo guarda (não é clique nem voltar), então ele pode continuar ligado.
+  const sending = creating || mediaBusy;
+  const leaveMessage = sending ? LEAVE_WHILE_BUSY_MESSAGE : undefined;
+  useLeaveGuard(hasUnsavedChanges || sending, leaveMessage);
   useFocusFirstInvalid(formRef, state);
   function leave() {
-    if (!hasUnsavedChanges || window.confirm('Sair sem salvar as alterações?'))
+    const mustConfirm = hasUnsavedChanges || sending;
+    if (!mustConfirm || window.confirm(leaveMessage ?? 'Sair sem salvar as alterações?'))
       router.push('/admin/produtos');
   }
 
@@ -525,6 +533,7 @@ export function ProductForm({
           <ProductMediaManager
             imagePath={product?.image_path ?? null}
             name={draft.name || 'Produto'}
+            onBusyChange={setMediaBusy}
             onImagePrepared={
               editing
                 ? undefined
