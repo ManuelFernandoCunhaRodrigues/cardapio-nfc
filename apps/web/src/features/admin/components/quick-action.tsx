@@ -14,6 +14,7 @@ import {
 
 import { AdminIcon } from './admin-icon';
 import { AdminNotice } from './admin-notice';
+import { ChoiceDialog } from './choice-dialog';
 
 type QuickActionState = {
   status: 'idle' | 'success' | 'error';
@@ -30,6 +31,8 @@ type QuickActionLock = {
 };
 
 const INITIAL_STATE: QuickActionState = { status: 'idle' };
+
+type QuickActionConfirm = { title: string; description: string; confirmLabel: string };
 const QuickActionLockContext = createContext<QuickActionLock | null>(null);
 
 /**
@@ -73,6 +76,7 @@ export function QuickAction({
   label,
   icon,
   disabled = false,
+  confirm,
   onResult,
 }: Readonly<{
   action: (state: QuickActionState, formData: FormData) => Promise<QuickActionState>;
@@ -80,6 +84,8 @@ export function QuickAction({
   label: string;
   icon?: 'up' | 'down';
   disabled?: boolean;
+  /** Pergunta antes de enviar, quando a ação tem efeito que a pessoa precisa saber. */
+  confirm?: QuickActionConfirm;
   /**
    * Quem passa isto mostra o resultado na própria tela; sem ele, o erro aparece junto do botão.
    * Recebe o estado inicial quando a ação começa, para tirar o aviso anterior.
@@ -90,6 +96,9 @@ export function QuickAction({
   const { busy, actionNumber, acquire, release } = useQuickActionLock();
   const holdsLock = useRef(false);
   const [ownAction, setOwnAction] = useState(0);
+  const formRef = useRef<HTMLFormElement>(null);
+  const confirmed = useRef(false);
+  const [asking, setAsking] = useState(false);
 
   useEffect(() => {
     if (state.status !== 'idle' && state.message) onResult?.(state);
@@ -115,6 +124,12 @@ export function QuickAction({
           event.preventDefault();
           return;
         }
+        if (confirm && !confirmed.current) {
+          event.preventDefault();
+          if (!busy) setAsking(true);
+          return;
+        }
+        confirmed.current = false;
         const acquired = acquire();
         if (acquired === null) {
           event.preventDefault();
@@ -124,6 +139,7 @@ export function QuickAction({
         setOwnAction(acquired);
         onResult?.(INITIAL_STATE);
       }}
+      ref={formRef}
     >
       {Object.entries(values).map(([name, value]) => (
         <input key={name} name={name} type="hidden" value={value} />
@@ -167,6 +183,20 @@ export function QuickAction({
           ) : null}
         </>
       )}
+      {confirm ? (
+        <ChoiceDialog
+          confirmLabel={confirm.confirmLabel}
+          description={confirm.description}
+          onCancel={() => setAsking(false)}
+          onConfirm={() => {
+            setAsking(false);
+            confirmed.current = true;
+            formRef.current?.requestSubmit();
+          }}
+          open={asking}
+          title={confirm.title}
+        />
+      ) : null}
     </form>
   );
 }

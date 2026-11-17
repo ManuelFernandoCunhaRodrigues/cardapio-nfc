@@ -189,27 +189,43 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
                 className="grid min-h-[62px] grid-cols-[minmax(56px,1fr)_96px_96px] items-center gap-2 py-2"
                 key={hour.day}
               >
-                <label className="flex min-h-11 min-w-0 items-center gap-2 text-xs font-bold text-ink">
-                  <input
-                    checked={hour.closed}
-                    className="size-5 shrink-0 accent-green"
-                    name={`closed-${hour.day}`}
-                    onChange={(event) => updateHour(hour.day, { closed: event.target.checked })}
-                    role="switch"
-                    type="checkbox"
-                  />
-                  <span className="truncate">{DAYS[hour.day]}</span>
-                  <span className="sr-only">Fechado</span>
-                </label>
+                <div className="min-w-0">
+                  <span className="block truncate text-xs font-bold text-ink">
+                    {DAYS[hour.day]}
+                  </span>
+                  <label className="flex min-h-11 items-center gap-2 text-xs text-muted">
+                    <input
+                      aria-label={`${DAYS[hour.day]} fechado`}
+                      checked={hour.closed}
+                      className="size-5 shrink-0 accent-danger"
+                      name={`closed-${hour.day}`}
+                      onChange={(event) => updateHour(hour.day, { closed: event.target.checked })}
+                      role="switch"
+                      type="checkbox"
+                    />
+                    <span className={hour.closed ? 'font-bold text-danger' : undefined}>
+                      Fechado
+                    </span>
+                  </label>
+                </div>
+                {/* Campo desativado não vai no envio: o horário guardado segue junto, para voltar
+                    igual quando o dia abrir de novo. */}
+                {hour.closed ? (
+                  <>
+                    <input name={`open-${hour.day}`} type="hidden" value={hour.open} />
+                    <input name={`close-${hour.day}`} type="hidden" value={hour.close} />
+                  </>
+                ) : null}
                 <label className="sr-only" htmlFor={`open-${hour.day}`}>
                   Abertura de {DAYS[hour.day]}
                 </label>
                 <input
                   className={`min-h-11 min-w-0 w-[96px] rounded-xl border border-border px-0 text-center text-sm ${hour.closed ? 'bg-surface-inner text-muted' : 'bg-white text-ink'}`}
+                  disabled={hour.closed}
                   id={`open-${hour.day}`}
-                  name={`open-${hour.day}`}
+                  name={hour.closed ? undefined : `open-${hour.day}`}
                   onChange={(event) => updateHour(hour.day, { open: event.target.value })}
-                  required
+                  required={!hour.closed}
                   type="time"
                   value={hour.open}
                 />
@@ -221,10 +237,11 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
                     aria-describedby={hourError ? `close-${hour.day}-error` : undefined}
                     aria-invalid={Boolean(hourError)}
                     className={`min-h-11 min-w-0 w-[96px] rounded-xl border border-border px-0 text-center text-sm ${hour.closed ? 'bg-surface-inner text-muted' : 'bg-white text-ink'}`}
+                    disabled={hour.closed}
                     id={`close-${hour.day}`}
-                    name={`close-${hour.day}`}
+                    name={hour.closed ? undefined : `close-${hour.day}`}
                     onChange={(event) => updateHour(hour.day, { close: event.target.value })}
-                    required
+                    required={!hour.closed}
                     type="time"
                     value={hour.close}
                   />
