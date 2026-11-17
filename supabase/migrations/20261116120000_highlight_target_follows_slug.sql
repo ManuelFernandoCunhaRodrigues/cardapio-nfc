@@ -19,6 +19,7 @@ $$;
 alter function private.follow_category_slug_in_highlights() owner to postgres;
 revoke all on function private.follow_category_slug_in_highlights() from public;
 
+drop trigger if exists categories_follow_slug_in_highlights on public.categories;
 create trigger categories_follow_slug_in_highlights
 after update of slug on public.categories
 for each row
@@ -42,6 +43,7 @@ $$;
 alter function private.follow_product_slug_in_highlights() owner to postgres;
 revoke all on function private.follow_product_slug_in_highlights() from public;
 
+drop trigger if exists products_follow_slug_in_highlights on public.products;
 create trigger products_follow_slug_in_highlights
 after update of slug on public.products
 for each row
