@@ -2,7 +2,7 @@
 
 const CLIENT_IMAGE_MAX_SIDE = 2048;
 export const CLIENT_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
-export const CLIENT_IMAGE_UPLOAD_MAX_BYTES = 3_750_000;
+const CLIENT_IMAGE_UPLOAD_MAX_BYTES = 3_750_000;
 
 export type ImageDimensions = { width: number; height: number };
 

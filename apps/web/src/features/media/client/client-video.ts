@@ -11,10 +11,10 @@ import { MediaUserError } from '@/features/media/client/friendly-media-error';
 
 export const VIDEO_MAX_BYTES = VIDEO_RAW_MAX_BYTES;
 const VIDEO_MAX_DURATION_SECONDS = VIDEO_DURATION_TOLERANCE_SECONDS;
-export const acceptedVideoTypes = ACCEPTED_VIDEO_MIME_TYPES;
+const acceptedVideoTypes = ACCEPTED_VIDEO_MIME_TYPES;
 const VIDEO_METADATA_TIMEOUT_MS = 8_000;
 
-export function isAcceptedVideoType(type: string): type is (typeof acceptedVideoTypes)[number] {
+function isAcceptedVideoType(type: string): type is (typeof acceptedVideoTypes)[number] {
   return (acceptedVideoTypes as readonly string[]).includes(type);
 }
 
