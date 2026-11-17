@@ -317,9 +317,18 @@ test.describe('listas do painel', () => {
   });
 
   test('trocar de tela mostra que está carregando', { tag: '@leitura' }, async ({ page }) => {
+    // Espera o pedido antecipado de Categorias: é ele que deixa a tela de carregamento pronta para o
+    // clique. Só o prefetch tem estes cabeçalhos; a navegação normal leva apenas `rsc`.
+    const prefetched = page.waitForResponse((response) => {
+      const headers = response.request().headers();
+      return (
+        new URL(response.url()).pathname === '/admin/categorias' &&
+        (headers['next-router-prefetch'] !== undefined ||
+          headers['next-router-segment-prefetch'] !== undefined)
+      );
+    });
     await page.goto('/admin');
-    // Espera os pedidos antecipados: são eles que deixam a tela de carregamento pronta para o clique.
-    await page.waitForLoadState('networkidle');
+    await prefetched;
     let release = () => {};
     const held = new Promise<void>((resolve) => (release = resolve));
     await page.route('**/admin/categorias**', async (route) => {

@@ -74,6 +74,22 @@ async function createHighlight(adminDb: AdminDb, title: string) {
   return data!;
 }
 
+/** Diz se `upperId` está antes de `lowerId` na ordem gravada no banco. */
+async function isAbove(
+  adminDb: AdminDb,
+  table: 'products' | 'highlights',
+  upperId: string,
+  lowerId: string,
+) {
+  const { data, error } = await adminDb.client
+    .from(table)
+    .select('id, sort_order')
+    .in('id', [upperId, lowerId]);
+  expect(error).toBeNull();
+  const order = new Map(data!.map((item) => [item.id, item.sort_order]));
+  return order.get(upperId)! < order.get(lowerId)!;
+}
+
 async function holdPosts(page: Page, path: string) {
   let requests = 0;
   let release = () => {};
@@ -265,16 +281,17 @@ test.describe('situações públicas e rajadas do painel', () => {
     await otherItem.evaluate((button: HTMLElement) => button.click());
     moves.release();
     await expect(page.getByText('Ordem do produto atualizada.')).toBeVisible();
-    await page.waitForTimeout(1_000);
-    expect(moves.requests()).toBe(1);
+    const secondIsAbove = () => isAbove(adminDb, 'products', second.id, first.id);
+    await expect.poll(secondIsAbove).toBe(true);
 
-    const { data, error } = await adminDb.client
-      .from('products')
-      .select('id, sort_order')
-      .in('id', [first.id, second.id]);
-    expect(error).toBeNull();
-    const order = new Map(data!.map((item) => [item.id, item.sort_order]));
-    expect(order.get(second.id)).toBeLessThan(order.get(first.id)!);
+    // As Server Actions saem uma por vez. Um clique que tivesse entrado na fila sairia antes desta
+    // ação de controle; quando o efeito dela aparece no banco, a fila já esvaziou.
+    await page
+      .getByRole('button', { name: `Subir ${firstName}` })
+      .filter({ visible: true })
+      .click();
+    await expect.poll(secondIsAbove).toBe(false);
+    expect(moves.requests()).toBe(2);
   });
 
   test('bloqueia a rajada em Destaques e move uma posição com um único POST', async ({
@@ -305,15 +322,12 @@ test.describe('situações públicas e rajadas do painel', () => {
     await otherItem.evaluate((button: HTMLElement) => button.click());
     moves.release();
     await expect(page.getByText('Ordem atualizada.')).toBeVisible();
-    await page.waitForTimeout(1_000);
-    expect(moves.requests()).toBe(1);
+    const secondIsAbove = () => isAbove(adminDb, 'highlights', second.id, first.id);
+    await expect.poll(secondIsAbove).toBe(true);
 
-    const { data, error } = await adminDb.client
-      .from('highlights')
-      .select('id, sort_order')
-      .in('id', [first.id, second.id]);
-    expect(error).toBeNull();
-    const order = new Map(data!.map((item) => [item.id, item.sort_order]));
-    expect(order.get(second.id)).toBeLessThan(order.get(first.id)!);
+    // Ação de controle: veja o teste de Produtos acima.
+    await otherItem.click();
+    await expect.poll(secondIsAbove).toBe(false);
+    expect(moves.requests()).toBe(2);
   });
 });
