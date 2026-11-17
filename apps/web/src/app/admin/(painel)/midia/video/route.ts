@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { adminApi } from '@/lib/api/admin-api-client';
-import { ApiRequestError } from '@/lib/api/api-request-error';
+import { ApiRequestError, SESSION_EXPIRED_MESSAGE } from '@/lib/api/api-request-error';
 import { revalidateMenuCache } from '@/lib/cache/revalidate-public-cache';
 import { reportServerError } from '@/lib/observability';
 
@@ -60,6 +60,9 @@ export async function POST(request: Request): Promise<Response> {
     refreshProduct(productId);
     return Response.json(result);
   } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 401) {
+      return jsonError(SESSION_EXPIRED_MESSAGE, 401);
+    }
     if (error instanceof ApiRequestError) return jsonError(error.message, error.status);
     reportServerError('media_video_proxy_failed', error);
     return jsonError('Não foi possível processar o vídeo agora. Tente novamente.', 500);

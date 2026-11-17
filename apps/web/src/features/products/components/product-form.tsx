@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useActionState, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 
@@ -46,6 +46,9 @@ import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { ProductMediaManager } from '@/features/media/components/product-media-manager';
 
 const REVIEW_FIELDS_MESSAGE = 'Revise os campos destacados antes de salvar.';
+const LEAVE_WHILE_BUSY_MESSAGE = 'O envio ainda não terminou. Sair mesmo assim?';
+// Tempo em que o botão mostra "Salvo" depois de gravar.
+const SAVED_LABEL_MS = 2000;
 
 const situationOptions: Array<{ value: ProductSituation; label: string; help: string }> = [
   { value: 'menu', label: 'No cardápio', help: 'Visível e disponível' },
@@ -91,19 +94,47 @@ function createdProductUrl(result: CreationFlowResult, hadVideo: boolean): strin
   return `/admin/produtos/${result.productId}?${query}`;
 }
 
-function SaveButton({ editing, busy = false }: Readonly<{ editing: boolean; busy?: boolean }>) {
+function saveButtonLabel({
+  editing,
+  working,
+  saved,
+}: Readonly<{ editing: boolean; working: boolean; saved: boolean }>): string {
+  if (working) return editing ? 'Salvando…' : 'Criando…';
+  if (saved) return 'Salvo ✓';
+  return editing ? 'Salvar alterações' : 'Criar produto';
+}
+
+function SaveButton({
+  editing,
+  busy = false,
+  saved = false,
+  blocked = false,
+}: Readonly<{ editing: boolean; busy?: boolean; saved?: boolean; blocked?: boolean }>) {
   const { pending } = useFormStatus();
-  const disabled = pending || busy;
+  const working = pending || busy;
   return (
-    <Button className="w-full lg:w-auto" disabled={disabled} type="submit">
-      {disabled
-        ? editing
-          ? 'Salvando…'
-          : 'Criando…'
-        : editing
-          ? 'Salvar alterações'
-          : 'Criar produto'}
+    <Button className="w-full lg:w-auto" disabled={working || blocked} type="submit">
+      {saveButtonLabel({ editing, working, saved })}
     </Button>
+  );
+}
+
+/** Produto novo sem nenhuma categoria: avisa antes de enviar e leva direto à criação de uma. */
+function MissingCategoryNotice() {
+  return (
+    <div
+      className="mb-4 rounded-xl border border-amber/30 bg-amber-soft px-3 py-2.5 text-sm text-body"
+      role="status"
+    >
+      <p className="font-bold">Crie uma categoria antes de cadastrar produtos.</p>
+      <p className="mt-0.5">Todo produto fica dentro de uma categoria do cardápio.</p>
+      <Link
+        className="mt-1 inline-flex min-h-11 items-center font-bold text-brand-strong underline"
+        href="/admin/categorias?nova=1"
+      >
+        Criar categoria
+      </Link>
+    </div>
   );
 }
 
@@ -176,6 +207,9 @@ function CategoryPicker({
         role="group"
         tabIndex={error ? -1 : undefined}
       >
+        {categories.length ? null : (
+          <p className="text-sm text-muted">Nenhuma categoria cadastrada ainda.</p>
+        )}
         {categories.map((category) => (
           <button
             aria-pressed={selectedId === category.id}
@@ -234,10 +268,21 @@ export function ProductForm({
   const [preparedVideo, setPreparedVideo] = useState<File | null>(null);
   const [preparedVideoPreview, setPreparedVideoPreview] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  // Foto ou vídeo sendo preparado ou enviado (o vídeo pode levar uns 2 minutos).
+  const [mediaBusy, setMediaBusy] = useState(false);
   const [creationStage, setCreationStage] = useState<CreationStage | null>(null);
   const [failedCreationStep, setFailedCreationStep] = useState<FailedCreationStep | null>(null);
   const submittingRef = useRef(false);
   const creationStageRef = useRef<CreationStage | null>(null);
+  const missingCategory = !editing && categories.length === 0;
+  // Resultado de gravação cujo "Salvo" já passou do tempo: guardar o estado, e não um booleano,
+  // faz cada gravação nova mostrar o aviso de novo.
+  const [expiredSaveState, setExpiredSaveState] = useState<ProductActionState | null>(null);
+  useEffect(() => {
+    if (updateState.status !== 'success') return;
+    const timer = window.setTimeout(() => setExpiredSaveState(updateState), SAVED_LABEL_MS);
+    return () => window.clearTimeout(timer);
+  }, [updateState]);
   const situationFields = fieldsFromProductSituation(draft.situation);
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
   const updateDraft = (changes: Partial<ProductDraft>) =>
@@ -248,10 +293,21 @@ export function ProductForm({
     current: draft,
     hasPreparedMedia: Boolean(preparedImage || preparedVideo),
   });
-  useLeaveGuard(hasUnsavedChanges && !creating);
+  // Sair no meio da criação ou do envio interrompe o envio. O `router.replace` do fim da criação
+  // não passa pelo guarda (não é clique nem voltar), então ele pode continuar ligado.
+  const sending = creating || mediaBusy;
+  const leaveMessage = sending ? LEAVE_WHILE_BUSY_MESSAGE : undefined;
+  useLeaveGuard(hasUnsavedChanges || sending, leaveMessage);
   useFocusFirstInvalid(formRef, state);
+  const justSaved =
+    editing &&
+    state === updateState &&
+    updateState.status === 'success' &&
+    updateState !== expiredSaveState &&
+    !hasUnsavedChanges;
   function leave() {
-    if (!hasUnsavedChanges || window.confirm('Sair sem salvar as alterações?'))
+    const mustConfirm = hasUnsavedChanges || sending;
+    if (!mustConfirm || window.confirm(leaveMessage ?? 'Sair sem salvar as alterações?'))
       router.push('/admin/produtos');
   }
 
@@ -362,7 +418,8 @@ export function ProductForm({
       onSubmit={editing ? handleUpdate : handleCreate}
       ref={formRef}
     >
-      <header className="mb-4 grid grid-cols-[44px_1fr_44px] items-center gap-2 lg:flex lg:justify-between">
+      {/* No computador o cabeçalho fica preso no topo: o Salvar continua à vista ao rolar. */}
+      <header className="mb-4 grid grid-cols-[44px_1fr_44px] items-center gap-2 lg:sticky lg:top-0 lg:z-30 lg:-mx-8 lg:flex lg:justify-between lg:bg-cream/95 lg:px-8 lg:py-3 lg:backdrop-blur">
         <button
           aria-label="Voltar para produtos"
           className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-border bg-white text-ink lg:hidden"
@@ -372,9 +429,15 @@ export function ProductForm({
           <AdminIcon name="back" />
         </button>
         <div className="text-center lg:text-left">
-          <p className="hidden text-xs text-brand-strong lg:block">
-            Produtos <span className="text-muted">› {product?.name ?? 'Novo produto'}</span>
-          </p>
+          <nav aria-label="Caminho" className="hidden text-xs lg:block">
+            <Link
+              className="font-bold text-brand-strong underline-offset-2 hover:underline"
+              href="/admin/produtos"
+            >
+              Produtos
+            </Link>{' '}
+            <span className="text-muted">› {product?.name ?? 'Novo produto'}</span>
+          </nav>
           <h1 className="disp text-xl font-bold text-ink lg:mt-1 lg:text-[28px]">
             {editing ? 'Editar produto' : 'Novo produto'}
           </h1>
@@ -405,9 +468,15 @@ export function ProductForm({
               Ver no cardápio
             </Link>
           ) : null}
-          <SaveButton busy={creating} editing={editing} />
+          <SaveButton
+            blocked={missingCategory || mediaBusy}
+            busy={creating}
+            editing={editing}
+            saved={justSaved}
+          />
         </div>
       </header>
+      {missingCategory ? <MissingCategoryNotice /> : null}
       {created ? <AdminNotice className="mb-4" message="Produto criado com sucesso." /> : null}
       {creationWarning ? (
         <AdminNotice className="mb-4" kind="error" message={creationWarning} />
@@ -521,10 +590,11 @@ export function ProductForm({
             message={state.message}
           />
         </div>
-        <aside className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-6">
+        <aside className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-28">
           <ProductMediaManager
             imagePath={product?.image_path ?? null}
             name={draft.name || 'Produto'}
+            onBusyChange={setMediaBusy}
             onImagePrepared={
               editing
                 ? undefined
@@ -558,7 +628,12 @@ export function ProductForm({
         </aside>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-3px_12px_rgba(23,17,13,0.08)] backdrop-blur lg:hidden">
-        <SaveButton busy={creating} editing={editing} />
+        <SaveButton
+          blocked={missingCategory || mediaBusy}
+          busy={creating}
+          editing={editing}
+          saved={justSaved}
+        />
       </div>
     </form>
   );

@@ -1,15 +1,19 @@
 import { expect, test, type AdminDb, type Page } from '../fixtures';
 
-async function signIn(page: Page) {
+async function signInFromCurrentPage(page: Page) {
   const email = process.env.E2E_ADMIN_EMAIL;
   const password = process.env.E2E_ADMIN_PASSWORD;
   if (!email || !password)
     throw new Error('Defina E2E_ADMIN_EMAIL e E2E_ADMIN_PASSWORD para executar os testes E2E.');
 
-  await page.goto('/admin/login');
   await page.getByLabel('E-mail').fill(email);
   await page.getByLabel('Senha', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Entrar no painel' }).click();
+}
+
+async function signIn(page: Page) {
+  await page.goto('/admin/login');
+  await signInFromCurrentPage(page);
   await expect(page).toHaveURL(/\/admin$/);
 }
 
@@ -32,7 +36,7 @@ async function createCategory(page: Page, adminDb: AdminDb, name: string) {
 test.describe('sessão expirada durante uma gravação', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('recusa a ação, preserva o público e manda a próxima navegação ao login', async ({
+  test('recusa a ação, preserva o público, explica no login e volta para a tela', async ({
     page,
     context,
     adminDb,
@@ -46,6 +50,9 @@ test.describe('sessão expirada durante uma gravação', () => {
     await publicPage.goto('/cardapio');
     await expect(publicPage.getByRole('heading', { level: 2, name: categoryName })).toBeVisible();
 
+    // Encerra a sessão no servidor e devolve o cookie antigo: é o caso real de sessão vencida,
+    // em que o navegador ainda guarda o cookie, mas o Auth já não aceita o token.
+    const staleCookies = await context.cookies();
     const logoutPage = await context.newPage();
     await logoutPage.goto('/admin');
     await logoutPage.getByRole('button', { name: /^Sair/ }).filter({ visible: true }).click();
@@ -54,22 +61,23 @@ test.describe('sessão expirada durante uma gravação', () => {
       .getByRole('button', { name: 'Sair', exact: true })
       .click();
     await expect(logoutPage).toHaveURL(/\/admin\/login$/);
+    await logoutPage.close();
+    await context.addCookies(staleCookies);
 
     const card = page.getByRole('article').filter({ hasText: categoryName });
     await card.getByRole('button', { name: 'Esconder', exact: true }).click();
+    await expect(page).toHaveURL(/\/admin\/login\?motivo=sessao&voltar=%2Fadmin%2Fcategorias$/);
     await expect(
       page
-        .locator('p[role="alert"]')
-        .filter({ hasText: 'Sua sessão não permite esta alteração. Entre novamente.' }),
+        .getByRole('status')
+        .filter({ hasText: 'Sua sessão expirou. Entre de novo para continuar.' }),
     ).toBeVisible();
 
     await publicPage.reload();
     await expect(publicPage.getByRole('heading', { level: 2, name: categoryName })).toBeVisible();
 
-    await page
-      .getByRole('link', { name: 'Produtos', exact: true })
-      .filter({ visible: true })
-      .click();
-    await expect(page).toHaveURL(/\/admin\/login$/);
+    await signInFromCurrentPage(page);
+    await expect(page).toHaveURL(/\/admin\/categorias$/);
+    await expect(page.getByRole('article').filter({ hasText: categoryName })).toBeVisible();
   });
 });

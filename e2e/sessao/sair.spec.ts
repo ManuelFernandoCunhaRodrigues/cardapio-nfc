@@ -28,7 +28,8 @@ test.describe('sessão do painel', () => {
       .click();
     await expect(page).toHaveURL(/\/admin\/login$/);
 
+    // Sem cookie de sessão, o login não fala em sessão expirada, mas guarda a volta.
     await page.goto('/admin/produtos');
-    await expect(page).toHaveURL(/\/admin\/login$/);
+    await expect(page).toHaveURL(/\/admin\/login\?voltar=%2Fadmin%2Fprodutos$/);
   });
 });

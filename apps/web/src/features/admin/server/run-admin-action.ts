@@ -1,11 +1,10 @@
 import type { FieldErrors } from '@salgae/core/contracts/admin-api';
+import { unstable_rethrow } from 'next/navigation';
 
 import { readSubmittedValues, type SubmittedValues } from '@/features/admin/rules/submitted-values';
-import { ApiRequestError } from '@/lib/api/api-request-error';
+import { redirectIfSessionExpiredForRequest } from '@/features/admin/server/session-redirect';
+import { ADMIN_FORBIDDEN_MESSAGE, ApiRequestError } from '@/lib/api/api-request-error';
 import { reportServerError } from '@/lib/observability';
-
-const SESSION_REJECTED_MESSAGE = 'Sua sessão não permite esta alteração. Entre novamente.';
-const SESSION_REJECTED_STATUSES = new Set([401, 403]);
 
 export type AdminActionError = {
   status: 'error';
@@ -33,8 +32,8 @@ function describeAdminActionError(
   error: unknown,
   options: AdminActionOptions,
 ): Omit<AdminActionError, 'values'> {
-  if (error instanceof ApiRequestError && SESSION_REJECTED_STATUSES.has(error.status)) {
-    return { status: 'error', message: SESSION_REJECTED_MESSAGE };
+  if (error instanceof ApiRequestError && error.status === 403) {
+    return { status: 'error', message: ADMIN_FORBIDDEN_MESSAGE };
   }
   if (error instanceof ApiRequestError && error.isExpected) {
     return {
@@ -58,6 +57,10 @@ export async function runAdminAction<TSuccess>(
   try {
     return await perform();
   } catch (error) {
+    // `redirect` e afins do Next lançam um erro próprio, que não é falha da ação.
+    unstable_rethrow(error);
+    // Sessão vencida segue o mesmo caminho das leituras: login com o motivo e volta para a tela.
+    await redirectIfSessionExpiredForRequest(error);
     const failure = describeAdminActionError(error, options);
     return options.submitted
       ? { ...failure, values: readSubmittedValues(options.submitted) }

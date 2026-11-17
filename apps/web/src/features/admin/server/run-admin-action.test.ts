@@ -1,9 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ reportServerError: vi.fn() }));
+const mocks = vi.hoisted(() => {
+  class RedirectSignal extends Error {
+    constructor(readonly path: string) {
+      super(`redirect ${path}`);
+    }
+  }
+  return { reportServerError: vi.fn(), RedirectSignal };
+});
 vi.mock('@/lib/observability', () => ({ reportServerError: mocks.reportServerError }));
+vi.mock('next/navigation', () => ({
+  redirect: (path: string) => {
+    throw new mocks.RedirectSignal(path);
+  },
+  unstable_rethrow: (error: unknown) => {
+    if (error instanceof mocks.RedirectSignal) throw error;
+  },
+}));
+vi.mock('next/headers', () => ({
+  headers: async () => new Headers({ 'x-salgae-current-path': '/admin/categorias?filtro=x' }),
+}));
 
-import { ApiRequestError } from '@/lib/api/api-request-error';
+import { ADMIN_FORBIDDEN_MESSAGE, ApiRequestError } from '@/lib/api/api-request-error';
 
 import { readFormText, runAdminAction } from './run-admin-action';
 
@@ -31,19 +49,35 @@ describe('runAdminAction', () => {
     expect(mocks.reportServerError).not.toHaveBeenCalled();
   });
 
-  it.each([401, 403])(
-    'pede para entrar de novo quando a API recusa a sessão (%i)',
-    async (status) => {
-      const state = await runAdminAction(async () => {
-        throw new ApiRequestError(status, 'Mensagem da API.');
-      }, options);
+  it('leva ao login com o motivo e a volta para a tela quando a sessão venceu (401)', async () => {
+    const result = runAdminAction(async () => {
+      throw new ApiRequestError(401, 'Mensagem da API.');
+    }, options);
 
-      expect(state).toEqual({
-        status: 'error',
-        message: 'Sua sessão não permite esta alteração. Entre novamente.',
-      });
-    },
-  );
+    await expect(result).rejects.toMatchObject({
+      path: '/admin/login?motivo=sessao&voltar=%2Fadmin%2Fcategorias%3Ffiltro%3Dx',
+    });
+    expect(mocks.reportServerError).not.toHaveBeenCalled();
+  });
+
+  it('avisa que a conta não tem acesso quando a API recusa a permissão (403)', async () => {
+    const state = await runAdminAction(async () => {
+      throw new ApiRequestError(403, 'Mensagem da API.');
+    }, options);
+
+    expect(state).toEqual({ status: 'error', message: ADMIN_FORBIDDEN_MESSAGE });
+  });
+
+  it('deixa passar o redirecionamento do Next lançado dentro da ação', async () => {
+    const signal = new mocks.RedirectSignal('/admin/produtos');
+
+    await expect(
+      runAdminAction(async () => {
+        throw signal;
+      }, options),
+    ).rejects.toBe(signal);
+    expect(mocks.reportServerError).not.toHaveBeenCalled();
+  });
 
   it('registra a falha inesperada e mostra o texto da ação', async () => {
     const failure = new TypeError('fetch failed');
