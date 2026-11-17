@@ -137,6 +137,8 @@ select pg_temp.tentar(
 
 -- ===================== CONVERSÃO DOS DESTAQUES ANTIGOS =====================
 -- A primeira rodada converte ao menos o destaque deste teste; a segunda não encontra mais nada.
+-- A auditoria grava auth.uid(); o usuário comum não existe em auth.users, então volta o admin.
+select set_config('request.jwt.claims', '{"sub":"bae2a6b4-c6fd-4567-b01c-01c70e5d940a","role":"authenticated"}', true);
 insert into _r
 select 'conversao_primeira_vez', case when private.highlight_targets_use_product_slug() >= 1 then 'ok' else 'nada' end;
 select pg_temp.tentar(
