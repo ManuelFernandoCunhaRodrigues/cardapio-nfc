@@ -7,6 +7,8 @@ import {
   type AcceptedVideoMimeType,
 } from '@salgae/core/rules/video-limits';
 
+import { MediaUserError } from '@/features/media/client/friendly-media-error';
+
 export const VIDEO_MAX_BYTES = VIDEO_RAW_MAX_BYTES;
 const VIDEO_MAX_DURATION_SECONDS = VIDEO_DURATION_TOLERANCE_SECONDS;
 export const acceptedVideoTypes = ACCEPTED_VIDEO_MIME_TYPES;
@@ -32,10 +34,12 @@ export async function validateVideoForUpload(
   file: File,
 ): Promise<{ duration: number | null; mimeType: AcceptedVideoMimeType }> {
   const mimeType = resolveVideoMimeType(file);
-  if (!mimeType) throw new Error('Escolha um vídeo MP4, MOV ou WebM.');
-  if (file.size <= 0) throw new Error('Este arquivo de vídeo está vazio.');
+  if (!mimeType) throw new MediaUserError('Escolha um vídeo MP4, MOV ou WebM.');
+  if (file.size <= 0) throw new MediaUserError('Este arquivo de vídeo está vazio.');
   if (file.size > VIDEO_MAX_BYTES)
-    throw new Error('O vídeo deve ter no máximo 50 MB. Grave em Full HD (1080p), não em 4K.');
+    throw new MediaUserError(
+      'O vídeo deve ter no máximo 50 MB. Grave em Full HD (1080p), não em 4K.',
+    );
   const objectUrl = URL.createObjectURL(file);
   try {
     const duration = await new Promise<number | null>((resolve) => {
@@ -58,7 +62,7 @@ export async function validateVideoForUpload(
       video.src = objectUrl;
     });
     if (duration !== null && Number.isFinite(duration) && duration > VIDEO_MAX_DURATION_SECONDS)
-      throw new Error('O vídeo deve durar no máximo 15 segundos.');
+      throw new MediaUserError('O vídeo deve durar no máximo 15 segundos.');
     return {
       duration: duration !== null && Number.isFinite(duration) && duration > 0 ? duration : null,
       mimeType,

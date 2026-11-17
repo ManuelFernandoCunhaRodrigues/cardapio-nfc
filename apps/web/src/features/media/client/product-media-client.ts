@@ -3,6 +3,7 @@
 import { createProductVideoUpload } from '@/features/media/server/actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { validateVideoForUpload } from '@/features/media/client/client-video';
+import { friendlyMediaError, MediaUserError } from '@/features/media/client/friendly-media-error';
 
 async function putSignedVideo(
   signedUrl: string,
@@ -24,7 +25,7 @@ async function putSignedVideo(
     request.onload = () =>
       request.status >= 200 && request.status < 300
         ? resolve()
-        : reject(new Error('upload_failed'));
+        : reject(new Error(request.status === 413 ? 'upload_too_large' : 'upload_failed'));
     request.onerror = () => reject(new Error('upload_failed'));
     request.send(file);
   });
@@ -44,7 +45,7 @@ export async function uploadProductVideoFile(
   signedForm.set('size', String(file.size));
   const signed = await createProductVideoUpload(initialMediaActionState, signedForm);
   if (signed.status !== 'success' || !signed.signedUrl || !signed.path)
-    throw new Error(signed.message || 'video_prepare_failed');
+    throw signed.message ? new MediaUserError(signed.message) : new Error('video_prepare_failed');
   callbacks.onMessage?.('Enviando vídeo…');
   await putSignedVideo(signed.signedUrl, file, validation.mimeType, (value) => {
     callbacks.onProgress?.(value);
@@ -61,17 +62,12 @@ export async function uploadProductVideoFile(
   if (!contentType.includes('application/json')) throw new Error('video_timeout_gateway');
   const result = (await response.json()) as { status?: string; message?: string; path?: string };
   if (!response.ok || result.status !== 'success' || !result.path)
-    throw new Error(result.message || 'video_process_failed');
+    throw result.message ? new MediaUserError(result.message) : new Error('video_process_failed');
   callbacks.onProgress?.(100);
   callbacks.onMessage?.(result.message ?? 'Vídeo enviado.');
   return result.path;
 }
 
 export function friendlyVideoError(error: unknown): string {
-  const reason = error instanceof Error ? error.message : '';
-  if (reason === 'video_timeout_gateway')
-    return 'O preparo demorou mais que o esperado. Tente novamente.';
-  if (reason && !['upload_failed', 'video_process_failed', 'video_prepare_failed'].includes(reason))
-    return reason;
-  return 'Não foi possível enviar o vídeo. Tente novamente.';
+  return friendlyMediaError(error, 'video');
 }

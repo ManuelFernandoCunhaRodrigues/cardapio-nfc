@@ -343,7 +343,7 @@ test.describe('categorias do painel', () => {
     await expect(page.getByRole('article').filter({ hasText: name })).toHaveCount(0);
   });
 
-  test('recusa apagar uma categoria com produto vinculado', async ({
+  test('não deixa excluir categoria com produto e avisa antes de esconder', async ({
     page,
     adminDb,
     uniqueName,
@@ -360,15 +360,26 @@ test.describe('categorias do painel', () => {
     expect(product).not.toBeNull();
     adminDb.track('products', product!.id);
 
+    await page.reload();
     const card = page.getByRole('article').filter({ hasText: categoryName });
-    await card.getByRole('button', { name: 'Excluir', exact: true }).click();
-    const dialog = page.getByRole('dialog', { name: `Excluir ${categoryName}?` });
-    await dialog.getByRole('button', { name: 'Excluir de vez' }).click();
+    await expect(card.getByRole('button', { name: 'Excluir', exact: true })).toBeDisabled();
     await expect(
-      dialog.getByText(
-        'Esta categoria possui produtos vinculados. Mova os produtos para outra categoria ou desative-a.',
+      card.getByText(
+        'Para excluir, mova o produto para outra categoria ou apenas esconda a categoria.',
       ),
     ).toBeVisible();
-    await expect(page.getByRole('article').filter({ hasText: categoryName })).toBeVisible();
+
+    // Esconder diz quantos produtos somem do cardápio e não muda nada se a pessoa desistir.
+    await card.getByRole('button', { name: 'Esconder', exact: true }).click();
+    const question = page.getByRole('alertdialog', { name: `Esconder ${categoryName}?` });
+    await expect(
+      question.getByText(
+        '1 produto deixará de aparecer no cardápio até você mostrar a categoria de novo.',
+      ),
+    ).toBeVisible();
+    await question.getByRole('button', { name: 'Voltar' }).click();
+    await expect(question).toHaveCount(0);
+    await expect(card.getByRole('button', { name: 'Esconder', exact: true })).toBeFocused();
+    await expect(card.getByText('VISÍVEL', { exact: true })).toBeVisible();
   });
 });

@@ -40,6 +40,7 @@ export function ConfirmDialog({
   fieldName = 'id',
   onSuccess,
   disabled = false,
+  triggerDescribedBy,
   fallbackFocusRef,
 }: Readonly<{
   action: ConfirmAction;
@@ -50,6 +51,8 @@ export function ConfirmDialog({
   fieldName?: string;
   onSuccess?: () => void;
   disabled?: boolean;
+  /** Id do texto que explica por que o gatilho está desativado. */
+  triggerDescribedBy?: string;
   // Para onde o foco vai quando o gatilho some (ex.: o item foi excluído).
   fallbackFocusRef?: RefObject<HTMLElement | null>;
 }>) {
@@ -99,6 +102,7 @@ export function ConfirmDialog({
   return (
     <>
       <Button
+        aria-describedby={triggerDescribedBy}
         aria-haspopup="dialog"
         disabled={disabled}
         id={triggerId}

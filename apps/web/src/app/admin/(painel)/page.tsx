@@ -14,7 +14,8 @@ import { formatPriceBRL } from '@salgae/core/rules/price';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const reasonLabel = { unavailable: 'INDISPONÍVEL', 'without-image': 'SEM FOTO' } as const;
+// Mesmos nomes da Situação do produto: "Em falta hoje" e "Escondido".
+const reasonLabel = { unavailable: 'EM FALTA HOJE', 'without-image': 'SEM FOTO' } as const;
 
 export default async function AdminDashboardPage() {
   const [products, categories, store] = await Promise.all([
@@ -26,6 +27,7 @@ export default async function AdminDashboardPage() {
   const unavailable = onMenu.filter((product) => !product.is_available).length;
   const hiddenCategories = categories.filter((category) => !category.is_active);
   const withoutImage = products.filter((product) => !product.image_path).length;
+  const hiddenProducts = products.filter((product) => !product.is_active).length;
   // Só o que o cliente vê: produto de categoria escondida não precisa de atenção agora.
   const attention = productsNeedingAttention(onMenu);
   const now = new Date();
@@ -36,11 +38,13 @@ export default async function AdminDashboardPage() {
     {
       label: 'No cardápio',
       value: onMenu.length,
-      detail: 'Produtos que o cliente vê',
+      detail: hiddenProducts
+        ? `Produtos que o cliente vê · ${hiddenProducts} ${hiddenProducts === 1 ? 'escondido' : 'escondidos'}`
+        : 'Produtos que o cliente vê',
       href: '/admin/produtos',
     },
     {
-      label: 'Indisponíveis',
+      label: 'Em falta hoje',
       value: unavailable,
       detail: 'Seguem visíveis com aviso',
       href: '/admin/produtos?filtro=indisponiveis',
@@ -141,9 +145,9 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="mt-4 grid grid-cols-2 gap-3 lg:hidden">
-        {quickLinks.map((item, index) => (
+        {quickLinks.map((item) => (
           <Link
-            className={`flex min-h-[72px] items-center gap-3 rounded-xl border border-border bg-white p-3 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20 ${index === 2 ? 'col-span-2' : ''}`}
+            className="flex min-h-[72px] items-center gap-3 rounded-xl border border-border bg-white p-3 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
             href={item.href}
             key={item.href}
           >
@@ -157,6 +161,19 @@ export default async function AdminDashboardPage() {
             </span>
           </Link>
         ))}
+        {/* No celular, ver o resultado da alteração é o atalho que mais falta. */}
+        <Link
+          className="flex min-h-[72px] items-center gap-3 rounded-xl border border-border bg-white p-3 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
+          href="/cardapio"
+          target="_blank"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-peach text-brand-strong">
+            <AdminIcon name="eye" />
+          </span>
+          <strong className="block font-[family-name:var(--font-poppins)] text-sm text-ink">
+            Ver cardápio
+          </strong>
+        </Link>
       </section>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]">
@@ -247,7 +264,7 @@ export default async function AdminDashboardPage() {
             </p>
           )}
         </Card>
-        <Card className="hidden border-0 bg-white lg:block">
+        <Card className="border-0 bg-white">
           <div className="flex items-center justify-between gap-3">
             <h2 className="disp text-lg font-semibold text-ink">Loja hoje</h2>
             <span

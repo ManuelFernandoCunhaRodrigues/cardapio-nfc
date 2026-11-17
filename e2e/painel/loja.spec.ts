@@ -61,3 +61,22 @@ test.describe('estado da loja', () => {
     });
   });
 });
+
+test(
+  'dia fechado mostra "Fechado" e desativa os horários',
+  { tag: '@leitura' },
+  async ({ page }) => {
+    await page.goto('/admin/loja');
+    const sundayClosed = page.getByRole('switch', { name: 'Domingo fechado' });
+    const opening = page.getByLabel('Abertura de Domingo');
+    const closing = page.getByLabel('Fechamento de Domingo');
+
+    await sundayClosed.setChecked(true);
+    await expect(opening).toBeDisabled();
+    await expect(closing).toBeDisabled();
+
+    await sundayClosed.setChecked(false);
+    await expect(opening).toBeEnabled();
+    await expect(closing).toBeEnabled();
+  },
+);
