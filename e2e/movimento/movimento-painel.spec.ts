@@ -53,6 +53,32 @@ for (const reducedMotion of ['reduce', 'no-preference'] as const) {
       await expect(openButton).toBeFocused();
     });
 
+    // No celular, o formulário do destaque é o mais longo das gavetas: o botão do fim tem de ser
+    // alcançável e clicável (QA-03).
+    test('a gaveta do destaque chega até o botão Criar destaque', async ({
+      page,
+      adminDb,
+      uniqueName,
+    }) => {
+      const title = uniqueName('motion-gaveta-longa');
+      await page.goto('/admin/destaques');
+      await page.getByRole('button', { name: 'Novo', exact: true }).click();
+      const sheet = page.getByRole('dialog', { name: 'Novo destaque' });
+      await sheet.getByLabel('Título').fill(title);
+      await sheet.getByLabel('Descrição').fill(`Descrição de ${title}`);
+
+      await sheet.getByRole('button', { name: 'Criar destaque' }).click();
+
+      await expect(page.getByText('Destaque criado com sucesso.')).toBeVisible();
+      const { data, error } = await adminDb.client
+        .from('highlights')
+        .select('id')
+        .eq('title', title)
+        .single();
+      expect(error).toBeNull();
+      adminDb.track('highlights', data!.id);
+    });
+
     test('reabrir a gaveta durante a saída deixa um só diálogo acessível', async ({ page }) => {
       await page.goto('/admin/categorias');
       const openButton = page.getByRole('button', { name: 'Nova', exact: true });
@@ -151,11 +177,7 @@ for (const reducedMotion of ['reduce', 'no-preference'] as const) {
       page,
       adminDb,
       uniqueName,
-    }, testInfo) => {
-      test.skip(
-        testInfo.project.name === 'movimento-celular',
-        'No Pixel 7 emulado o formulário longo da gaveta do destaque fica encoberto (pendência da E9).',
-      );
+    }) => {
       const title = uniqueName('motion-camadas');
       await insertHighlightWithPhoto(adminDb, title);
       await page.goto('/admin/destaques');
