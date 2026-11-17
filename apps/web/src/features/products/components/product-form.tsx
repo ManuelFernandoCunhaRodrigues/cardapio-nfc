@@ -469,7 +469,7 @@ export function ProductForm({
             </Link>
           ) : null}
           <SaveButton
-            blocked={missingCategory}
+            blocked={missingCategory || mediaBusy}
             busy={creating}
             editing={editing}
             saved={justSaved}
@@ -628,7 +628,7 @@ export function ProductForm({
         </aside>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-3px_12px_rgba(23,17,13,0.08)] backdrop-blur lg:hidden">
-        <SaveButton blocked={missingCategory} busy={creating} editing={editing} saved={justSaved} />
+        <SaveButton blocked={missingCategory || mediaBusy} busy={creating} editing={editing} saved={justSaved} />
       </div>
     </form>
   );
