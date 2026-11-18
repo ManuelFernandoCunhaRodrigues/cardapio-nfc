@@ -1,4 +1,4 @@
-import { expect, test, type AdminDb, type Page } from '../fixtures';
+import { expect, test, type AdminDb, type Page, type Request } from '../fixtures';
 
 const CARD_PRICE_CENTS = 700;
 
@@ -317,22 +317,45 @@ test.describe('listas do painel', () => {
   });
 
   test('trocar de tela mostra que está carregando', { tag: '@leitura' }, async ({ page }) => {
-    // Espera o pedido antecipado de Categorias: é ele que deixa a tela de carregamento pronta para o
-    // clique. Só o prefetch tem estes cabeçalhos; a navegação normal leva apenas `rsc`.
-    const prefetched = page.waitForResponse((response) => {
-      const headers = response.request().headers();
+    // Os pedidos antecipados de Categorias deixam a tela de carregamento pronta para o clique. No
+    // Next 16 são vários (um por segmento), então espera todos terminarem, não só o primeiro. Só o
+    // prefetch tem estes cabeçalhos; a navegação normal leva apenas `rsc`.
+    const isCategoriesPrefetch = (request: Request) => {
+      const headers = request.headers();
       return (
-        new URL(response.url()).pathname === '/admin/categorias' &&
+        new URL(request.url()).pathname === '/admin/categorias' &&
         (headers['next-router-prefetch'] !== undefined ||
           headers['next-router-segment-prefetch'] !== undefined)
       );
+    };
+    const prefetch = { seen: 0, pending: 0, lastChange: Date.now() };
+    const settle = (request: Request) => {
+      if (!isCategoriesPrefetch(request)) return;
+      prefetch.pending -= 1;
+      prefetch.lastChange = Date.now();
+    };
+    page.on('request', (request) => {
+      if (!isCategoriesPrefetch(request)) return;
+      prefetch.seen += 1;
+      prefetch.pending += 1;
+      prefetch.lastChange = Date.now();
     });
+    page.on('requestfinished', settle);
+    page.on('requestfailed', settle);
+
     await page.goto('/admin');
-    await prefetched;
+    await expect
+      .poll(
+        () => prefetch.seen > 0 && prefetch.pending === 0 && Date.now() - prefetch.lastChange > 300,
+        { message: 'pedidos antecipados de Categorias terminados' },
+      )
+      .toBe(true);
+
+    // Segura só a navegação de verdade; um prefetch atrasado passa direto.
     let release = () => {};
     const held = new Promise<void>((resolve) => (release = resolve));
     await page.route('**/admin/categorias**', async (route) => {
-      await held;
+      if (!isCategoriesPrefetch(route.request())) await held;
       await route.continue();
     });
     await panelLink(page, 'Categorias').click();
