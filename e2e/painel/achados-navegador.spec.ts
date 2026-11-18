@@ -317,9 +317,10 @@ test.describe('listas do painel', () => {
   });
 
   test('trocar de tela mostra que está carregando', { tag: '@leitura' }, async ({ page }) => {
-    // Os pedidos antecipados de Categorias deixam a tela de carregamento pronta para o clique. No
-    // Next 16 são vários (um por segmento), então espera todos terminarem, não só o primeiro. Só o
-    // prefetch tem estes cabeçalhos; a navegação normal leva apenas `rsc`.
+    // A tela de carregamento fica pronta quando chega o prefetch do "loading boundary" de Categorias.
+    // No Next 16 ele vem depois do pedido da árvore (`next-router-segment-prefetch: /_tree`) e é o
+    // único com `next-router-prefetch: 1`, sem cabeçalho de segmento e com a árvore de estado.
+    // A navegação normal leva apenas `rsc`.
     const isCategoriesPrefetch = (request: Request) => {
       const headers = request.headers();
       return (
@@ -328,28 +329,20 @@ test.describe('listas do painel', () => {
           headers['next-router-segment-prefetch'] !== undefined)
       );
     };
-    const prefetch = { seen: 0, pending: 0, lastChange: Date.now() };
-    const settle = (request: Request) => {
-      if (!isCategoriesPrefetch(request)) return;
-      prefetch.pending -= 1;
-      prefetch.lastChange = Date.now();
+    const isLoadingBoundaryPrefetch = (request: Request) => {
+      const headers = request.headers();
+      return (
+        isCategoriesPrefetch(request) &&
+        headers['next-router-prefetch'] === '1' &&
+        headers['next-router-segment-prefetch'] === undefined &&
+        headers['next-router-state-tree'] !== undefined
+      );
     };
-    page.on('request', (request) => {
-      if (!isCategoriesPrefetch(request)) return;
-      prefetch.seen += 1;
-      prefetch.pending += 1;
-      prefetch.lastChange = Date.now();
-    });
-    page.on('requestfinished', settle);
-    page.on('requestfailed', settle);
+    const loadingReady = page.waitForEvent('requestfinished', isLoadingBoundaryPrefetch);
 
     await page.goto('/admin');
-    await expect
-      .poll(
-        () => prefetch.seen > 0 && prefetch.pending === 0 && Date.now() - prefetch.lastChange > 300,
-        { message: 'pedidos antecipados de Categorias terminados' },
-      )
-      .toBe(true);
+    await panelLink(page, 'Categorias').hover();
+    await loadingReady;
 
     // Segura só a navegação de verdade; um prefetch atrasado passa direto.
     let release = () => {};
