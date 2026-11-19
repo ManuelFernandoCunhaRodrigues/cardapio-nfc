@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { storeSettingsSchema } from '../schemas/store-settings';
 import { productFormSchema } from '../schemas/product';
+import { slugSchema } from '../schemas/slug';
 
 const adminRoot = '/v1/admin';
 
@@ -33,6 +34,7 @@ export const apiErrorResponseSchema = z.object({
   status: z.literal('error'),
   message: z.string(),
   fieldErrors: z.record(z.string(), z.array(z.string())).optional(),
+  requestId: z.string().optional(),
 });
 
 export const adminSessionResponseSchema = z.object({
@@ -42,7 +44,7 @@ export const adminSessionResponseSchema = z.object({
   role: z.literal('admin'),
 });
 
-export const createdResponseSchema = z.object({ id: z.string().uuid() });
+export const createdResponseSchema = z.object({ id: z.uuid() });
 export const imageResponseSchema = z.object({ path: z.string().min(1) });
 export const videoUploadResponseSchema = z.object({
   path: z.string().min(1),
@@ -69,7 +71,7 @@ export const storeStatusInputSchema = z.object({
 export const adminStoreResponseSchema = storeSettingsSchema;
 
 export const adminCategorySchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   name: z.string(),
   slug: z.string(),
   description: z.string().nullable(),
@@ -80,7 +82,7 @@ export const adminCategorySchema = z.object({
 });
 
 export const adminHighlightSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   title: z.string(),
   description: z.string().nullable(),
   image_path: z.string().nullable(),
@@ -90,8 +92,8 @@ export const adminHighlightSchema = z.object({
 });
 
 export const adminProductSchema = z.object({
-  id: z.string().uuid(),
-  category_id: z.string().uuid(),
+  id: z.uuid(),
+  category_id: z.uuid(),
   name: z.string(),
   slug: z.string(),
   description: z.string().nullable(),
@@ -107,11 +109,7 @@ export const adminProductSchema = z.object({
 
 /** Entrada do formulário de produto; o preço chega como texto e o service o converte. */
 export const productInputSchema = productFormSchema.extend({
-  slug: z
-    .string()
-    .trim()
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use letras minúsculas, números e hífens.')
-    .optional(),
+  slug: slugSchema.optional(),
 });
 
 export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;

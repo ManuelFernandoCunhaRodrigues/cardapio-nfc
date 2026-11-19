@@ -105,10 +105,12 @@ describe('HTTP middleware', () => {
       '/v1/admin/session',
     );
 
-    expect(await response.json()).toEqual({
+    const body = await response.json();
+    expect(body).toMatchObject({
       status: 'error',
       message: 'Sua sessão expirou. Entre novamente.',
     });
+    expect(body.requestId).toBe(response.headers.get('x-request-id'));
   });
 
   it('devolve rotas ausentes no envelope de erro', async () => {
@@ -118,10 +120,12 @@ describe('HTTP middleware', () => {
     );
 
     expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({
+    const body = await response.json();
+    expect(body).toMatchObject({
       status: 'error',
       message: 'Recurso não encontrado.',
     });
+    expect(body.requestId).toBe(response.headers.get('x-request-id'));
   });
 
   it('permite CORS para a origem do site', async () => {
@@ -249,11 +253,13 @@ describe('GET /v1/admin/session', () => {
     );
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({
+    const body = await response.json();
+    expect(body).toMatchObject({
       status: 'error',
       message: 'Não foi possível concluir a solicitação agora. Tente novamente.',
     });
     expect(log).toHaveBeenCalledOnce();
+    expect(JSON.parse(String(log.mock.calls[0]?.[0])).requestId).toBe(body.requestId);
     log.mockRestore();
   });
 });
@@ -267,6 +273,9 @@ describe('GET /health', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ status: 'ok' });
+    expect(response.headers.get('cache-control')).toBe(
+      'public, s-maxage=60, stale-while-revalidate',
+    );
   });
 
   it('responde 503 quando o Supabase não responde', async () => {
@@ -276,6 +285,10 @@ describe('GET /health', () => {
     );
 
     expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ status: 'error', message: 'Serviço indisponível.' });
+    expect(await response.json()).toMatchObject({
+      status: 'error',
+      message: 'Serviço indisponível.',
+      requestId: response.headers.get('x-request-id'),
+    });
   });
 });

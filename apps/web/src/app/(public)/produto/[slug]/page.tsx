@@ -6,6 +6,7 @@ import { Icon } from '@/features/menu/components/icons';
 import { MediaVideo } from '@/features/media/components/media-video';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
+import { badgeColor } from '@/features/menu/rules/badge-color';
 import { getBadgeLabel } from '@salgae/core/rules/badges';
 import { getPublicProduct, getPublicSitemap, getPublicStore } from '@/lib/api/public-api-client';
 import { ProductAvailability } from '@/features/store/components/store-status-live';
@@ -18,7 +19,6 @@ import { formatPriceBRL } from '@salgae/core/rules/price';
 export const revalidate = 60;
 type ProductPageProps = { params: Promise<{ slug: string }> };
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
   const [result, store] = await Promise.all([getPublicProduct(slug), getPublicStore()]);
@@ -74,7 +74,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {category?.name ?? 'CARDÁPIO'}
           </span>
           {badge ? (
-            <span className="lbl rounded-full bg-ink px-2.5 py-1 text-white">{badge}</span>
+            <span
+              className={`lbl rounded-full px-2.5 py-1 text-white ${product.badge ? badgeColor[product.badge] : 'bg-ink'}`}
+            >
+              {badge}
+            </span>
           ) : null}
           {!product.is_available ? (
             <span className="lbl rounded-full bg-danger px-2.5 py-1 text-white">INDISPONÍVEL</span>

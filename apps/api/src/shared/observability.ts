@@ -10,9 +10,11 @@ type ErrorDetails = {
 type ServerErrorContext = {
   event: string;
   error: unknown;
-  /** Ausente quando quem relata não enxerga a requisição (um service, por exemplo). */
+  /** Sobrescreve o identificador associado à requisição atual, quando necessário. */
   requestId?: string;
 };
+
+import { currentRequestId } from './http/request-id';
 
 function pickText(source: Record<string, unknown>, key: 'code' | 'details' | 'hint') {
   const value = source[key];
@@ -49,7 +51,7 @@ export function reportServerError({ event, error, requestId }: ServerErrorContex
       level: 'error',
       app: 'salgae-api',
       event,
-      requestId,
+      requestId: requestId ?? currentRequestId(),
       time: new Date().toISOString(),
       error: describeError(error),
     }),

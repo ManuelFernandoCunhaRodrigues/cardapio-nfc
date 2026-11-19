@@ -40,6 +40,7 @@ import { EditorSubmitButton } from '@/features/admin/components/editor-submit-bu
 import { AdminSheet, useAdminSheetClose } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
 import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
+import { removeSearchParam } from '@/features/admin/client/remove-search-param';
 
 const INITIAL: CategoryActionState = { status: 'idle' };
 
@@ -158,14 +159,21 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
     setSelected(category);
     setOpen(true);
   };
-  const onSaved = useCallback((message: string, kind: 'success' | 'error') => {
-    setNotice({
-      kind,
-      message:
-        kind === 'error' ? `Categoria salva, mas a foto não foi enviada. ${message}` : message,
-    });
+  const closeEditor = useCallback(() => {
     setOpen(false);
+    removeSearchParam('nova');
   }, []);
+  const onSaved = useCallback(
+    (message: string, kind: 'success' | 'error') => {
+      setNotice({
+        kind,
+        message:
+          kind === 'error' ? `Categoria salva, mas a foto não foi enviada. ${message}` : message,
+      });
+      closeEditor();
+    },
+    [closeEditor],
+  );
   return (
     <QuickActionGroup>
       <header className="mb-5 flex items-end justify-between gap-3">
@@ -294,7 +302,7 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
         ) : null}
       </div>
       <AdminSheet
-        onClose={() => setOpen(false)}
+        onClose={closeEditor}
         open={open}
         title={selected ? 'Editar categoria' : 'Nova categoria'}
       >

@@ -58,7 +58,7 @@ export class MenuService {
   }
 
   private findProduct(slugOrId: string): Promise<unknown> {
-    return z.string().uuid().safeParse(slugOrId).success
+    return z.uuid().safeParse(slugOrId).success
       ? this.repository.findProductById(slugOrId)
       : this.repository.findProductBySlug(slugOrId);
   }

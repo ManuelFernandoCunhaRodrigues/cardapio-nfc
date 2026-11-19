@@ -42,6 +42,7 @@ import { EditorSubmitButton } from '@/features/admin/components/editor-submit-bu
 import { AdminSheet, useAdminSheetClose } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
 import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
+import { removeSearchParam } from '@/features/admin/client/remove-search-param';
 
 const TARGET_KINDS = [
   ['menu', 'Cardápio inteiro'],
@@ -268,10 +269,17 @@ export function HighlightsManager({
     setSelected(highlight);
     setOpen(true);
   };
-  const onSaved = useCallback((message: string, kind: 'success' | 'error' = 'success') => {
-    setNotice({ message, kind });
+  const closeEditor = useCallback(() => {
     setOpen(false);
+    removeSearchParam('novo');
   }, []);
+  const onSaved = useCallback(
+    (message: string, kind: 'success' | 'error' = 'success') => {
+      setNotice({ message, kind });
+      closeEditor();
+    },
+    [closeEditor],
+  );
   return (
     <QuickActionGroup>
       <header className="mb-5 flex items-end justify-between gap-3">
@@ -384,7 +392,7 @@ export function HighlightsManager({
         ) : null}
       </div>
       <AdminSheet
-        onClose={() => setOpen(false)}
+        onClose={closeEditor}
         open={open}
         title={selected ? 'Editar destaque' : 'Novo destaque'}
       >
