@@ -166,8 +166,17 @@ test.describe('categorias do painel', () => {
   }) => {
     const firstName = uniqueName('categoria-clique-a');
     const secondName = uniqueName('categoria-clique-b');
-    await createCategory(page, adminDb, firstName);
-    await createCategory(page, adminDb, secondName);
+    const firstId = await createCategory(page, adminDb, firstName);
+    const secondId = await createCategory(page, adminDb, secondName);
+    const secondIsAbove = async () => {
+      const { data, error } = await adminDb.client
+        .from('categories')
+        .select('id, sort_order')
+        .in('id', [firstId, secondId]);
+      expect(error).toBeNull();
+      const order = new Map(data!.map((item) => [item.id, item.sort_order]));
+      return order.get(secondId)! < order.get(firstId)!;
+    };
 
     await page.goto('/admin/categorias');
     const moves = await holdCategoryMoves(page);
@@ -194,10 +203,13 @@ test.describe('categorias do painel', () => {
     await expect(moveUp).toHaveAttribute('aria-busy', 'false');
     await expect(otherItem).toHaveAttribute('aria-disabled', 'false');
     await expect(moveUp).toBeFocused();
-    // Um clique que tivesse entrado na fila sairia logo depois do primeiro.
-    await page.waitForTimeout(1_000);
-    expect(moves.requests()).toBe(1);
-    expect((await publicCategoryOrder(page)).slice(-2)).toEqual([secondName, firstName]);
+    await expect.poll(secondIsAbove).toBe(true);
+
+    // As Server Actions saem uma por vez. Um clique que tivesse entrado na fila sairia antes desta
+    // ação de controle; quando o efeito dela aparece no banco, a fila já esvaziou.
+    await otherItem.click();
+    await expect.poll(secondIsAbove).toBe(false);
+    expect(moves.requests()).toBe(2);
   });
 
   test('com menos animação, o botão em andamento não gira', async ({

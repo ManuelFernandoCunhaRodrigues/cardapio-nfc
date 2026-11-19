@@ -156,6 +156,7 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
     >
       <m.div
         className="flex snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        data-testid="highlight-track"
         drag={enhanced && interactive ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
         dragControls={drag.dragControls}

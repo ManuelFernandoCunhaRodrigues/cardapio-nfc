@@ -176,7 +176,7 @@ export default async function AdminDashboardPage() {
         </Link>
       </section>
 
-      <section className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]">
+      <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]">
         <Card className="border-0 bg-white p-4 lg:p-5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="disp text-lg font-semibold text-ink">Precisam de atenção</h2>

@@ -41,14 +41,14 @@ function activeSlide(page: Page) {
 }
 
 function carouselTrack(page: Page) {
-  return carousel(page).locator('> div').first();
+  return carousel(page).getByTestId('highlight-track');
 }
 
 function firstMenuCard(page: Page) {
   return page
     .getByRole('list', { name: /^Produtos de / })
     .first()
-    .locator('> div')
+    .getByRole('listitem')
     .first();
 }
 
@@ -89,7 +89,7 @@ test.describe('movimento público com movimento reduzido', () => {
     await page.goto('/cardapio');
 
     await expect(menuNavigationLink(page)).toHaveAttribute('aria-current', 'page');
-    await expect(menuNavigationLink(page).locator('.bg-peach')).toHaveCount(1);
+    await expect(menuNavigationLink(page).getByTestId('nav-active-indicator')).toHaveCount(1);
   });
 });
 

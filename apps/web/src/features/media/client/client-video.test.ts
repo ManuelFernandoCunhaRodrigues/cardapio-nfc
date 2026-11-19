@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { validateVideoForUpload } from './client-video';
+import { VIDEO_MAX_BYTES, resolveVideoMimeType, validateVideoForUpload } from './client-video';
 
 type FakeVideo = {
   preload: string;
@@ -42,6 +42,17 @@ afterEach(() => {
 });
 
 describe('metadados de vídeo no navegador', () => {
+  it('reconhece MOV pela extensão quando o navegador omite o MIME', () => {
+    expect(resolveVideoMimeType({ name: 'video-do-iphone.MOV', type: '' })).toBe('video/quicktime');
+  });
+
+  it('rejeita arquivo que excede o limite antes de ler os metadados', async () => {
+    const oversized = new File([new Uint8Array(1)], 'video.mp4', { type: 'video/mp4' });
+    Object.defineProperty(oversized, 'size', { value: VIDEO_MAX_BYTES + 1 });
+
+    await expect(validateVideoForUpload(oversized)).rejects.toThrow('50 MB');
+  });
+
   it('abandona a leitura após 8 s, limpa o elemento e permite seguir sem duração', async () => {
     vi.useFakeTimers();
     const fake = installVideo('none');

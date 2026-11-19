@@ -5,7 +5,7 @@ import type { Database } from '@salgae/core/database/database.types';
 import { watchCspViolations } from './csp';
 import { requiredEnv } from './env';
 
-export type { APIRequestContext, Page } from '@playwright/test';
+export type { APIRequestContext, Page, Request } from '@playwright/test';
 
 type CleanupTable = 'products' | 'highlights' | 'categories';
 type StoreSettings = Database['public']['Tables']['store_settings']['Row'];

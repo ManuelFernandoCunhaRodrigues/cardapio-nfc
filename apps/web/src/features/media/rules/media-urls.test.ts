@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPublicMediaUrl } from '@/features/media/rules/media-urls';
+import { getImageVariantPath, getPublicMediaUrl } from '@/features/media/rules/media-urls';
+
+describe('getImageVariantPath', () => {
+  it('monta o caminho da variante para um caminho-base', () => {
+    expect(getImageVariantPath('products/id/base', 'card')).toBe('products/id/base-card.webp');
+  });
+
+  it('preserva o caminho de uma imagem legada', () => {
+    expect(getImageVariantPath('products/id/legacy.jpg', 'detail')).toBe('products/id/legacy.jpg');
+  });
+});
 
 describe('getPublicMediaUrl', () => {
   it('monta a URL pública e codifica cada segmento do caminho', () => {

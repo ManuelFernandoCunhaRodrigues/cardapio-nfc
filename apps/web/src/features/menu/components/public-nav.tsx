@@ -48,11 +48,13 @@ export function PublicNav() {
             >
               <span
                 className={`relative grid h-[30px] w-14 place-items-center rounded-full ${active && !hydrated ? 'bg-peach' : ''}`}
+                data-testid={active && !hydrated ? 'nav-active-indicator' : undefined}
               >
                 {hydrated && active ? (
                   <m.span
                     aria-hidden="true"
                     className="absolute h-[30px] w-14 rounded-full bg-peach"
+                    data-testid="nav-active-indicator"
                     layoutId="public-navigation-indicator"
                     transition={gentleSpring}
                   />

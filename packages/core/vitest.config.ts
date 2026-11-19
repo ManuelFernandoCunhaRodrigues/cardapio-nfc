@@ -11,7 +11,7 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.test.ts', 'src/database/database.types*.ts'],
       reporter: ['text-summary', 'json-summary', 'html'],
-      thresholds: { statements: 52, branches: 51, functions: 68, lines: 53 },
+      thresholds: { statements: 73, branches: 85, functions: 72, lines: 73 },
     },
   },
 });

@@ -13,7 +13,7 @@ export default defineConfig({
       // (`e2e/api`), contra o Supabase local do CI. A regra fica nos services, medidos aqui.
       exclude: ['src/**/*.test.ts', 'src/test-support/**', 'src/**/*.repository.ts'],
       reporter: ['text-summary', 'json-summary', 'html'],
-      thresholds: { statements: 70, branches: 65, functions: 75, lines: 70 },
+      thresholds: { statements: 85, branches: 80, functions: 85, lines: 87 },
     },
   },
 });

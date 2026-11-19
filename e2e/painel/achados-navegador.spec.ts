@@ -1,4 +1,4 @@
-import { expect, test, type AdminDb, type Page } from '../fixtures';
+import { expect, test, type AdminDb, type Page, type Request } from '../fixtures';
 
 const CARD_PRICE_CENTS = 700;
 
@@ -317,13 +317,38 @@ test.describe('listas do painel', () => {
   });
 
   test('trocar de tela mostra que está carregando', { tag: '@leitura' }, async ({ page }) => {
+    // A tela de carregamento fica pronta quando chega o prefetch do "loading boundary" de Categorias.
+    // No Next 16 ele vem depois do pedido da árvore (`next-router-segment-prefetch: /_tree`) e é o
+    // único com `next-router-prefetch: 1`, sem cabeçalho de segmento e com a árvore de estado.
+    // A navegação normal leva apenas `rsc`.
+    const isCategoriesPrefetch = (request: Request) => {
+      const headers = request.headers();
+      return (
+        new URL(request.url()).pathname === '/admin/categorias' &&
+        (headers['next-router-prefetch'] !== undefined ||
+          headers['next-router-segment-prefetch'] !== undefined)
+      );
+    };
+    const isLoadingBoundaryPrefetch = (request: Request) => {
+      const headers = request.headers();
+      return (
+        isCategoriesPrefetch(request) &&
+        headers['next-router-prefetch'] === '1' &&
+        headers['next-router-segment-prefetch'] === undefined &&
+        headers['next-router-state-tree'] !== undefined
+      );
+    };
+    const loadingReady = page.waitForEvent('requestfinished', isLoadingBoundaryPrefetch);
+
     await page.goto('/admin');
-    // Espera os pedidos antecipados: são eles que deixam a tela de carregamento pronta para o clique.
-    await page.waitForLoadState('networkidle');
+    await panelLink(page, 'Categorias').hover();
+    await loadingReady;
+
+    // Segura só a navegação de verdade; um prefetch atrasado passa direto.
     let release = () => {};
     const held = new Promise<void>((resolve) => (release = resolve));
     await page.route('**/admin/categorias**', async (route) => {
-      await held;
+      if (!isCategoriesPrefetch(route.request())) await held;
       await route.continue();
     });
     await panelLink(page, 'Categorias').click();
