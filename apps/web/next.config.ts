@@ -27,13 +27,14 @@ const nextConfig: NextConfig = {
             value: buildContentSecurityPolicy({
               supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
               development: process.env.NODE_ENV === 'development',
+              // No CI o site roda em http://127.0.0.1; lá a diretiva quebraria os recursos.
+              upgradeInsecureRequests: process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https://'),
             }),
           },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-          { key: 'Upgrade-Insecure-Requests', value: '1' },
           {
             key: 'Permissions-Policy',
             value: 'camera=(), geolocation=(), microphone=(), payment=(), usb=()',

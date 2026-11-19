@@ -43,7 +43,8 @@ describe('productSchema', () => {
   it('aceita somente slugs no formato de URL', () => {
     expect(productSchema.safeParse(product).success).toBe(true);
     expect(productSchema.safeParse({ ...product, slug: 'Coxinha de frango' }).success).toBe(false);
-    expect(productSchema.safeParse({ ...product, slug: 'a'.repeat(81) }).success).toBe(false);
+    // O banco gera slugs longos para nomes de até 120 caracteres: o formato vale, o tamanho não.
+    expect(productSchema.safeParse({ ...product, slug: 'a'.repeat(81) }).success).toBe(true);
   });
 
   it('valida os campos editáveis do formulário', () => {

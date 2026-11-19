@@ -3,6 +3,8 @@ type CspOptions = {
   supabaseUrl?: string;
   /** Em `next dev` o React precisa de `eval` para as ferramentas de depuração. */
   development?: boolean;
+  /** Site servido por https (stage e produção): pedidos http da página sobem para https. */
+  upgradeInsecureRequests?: boolean;
 };
 
 function originOf(url: string | undefined): string[] {
@@ -26,6 +28,7 @@ function originOf(url: string | undefined): string[] {
 export function buildContentSecurityPolicy({
   supabaseUrl,
   development = false,
+  upgradeInsecureRequests = false,
 }: CspOptions = {}): string {
   const supabase = originOf(supabaseUrl);
   const supabaseRealtime = supabase.map((origin) => origin.replace(/^http/, 'ws'));
@@ -46,7 +49,9 @@ export function buildContentSecurityPolicy({
     'manifest-src': ["'self'"],
   };
 
-  return Object.entries(directives)
-    .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
-    .join('; ');
+  const policy = Object.entries(directives).map(
+    ([directive, sources]) => `${directive} ${sources.join(' ')}`,
+  );
+  if (upgradeInsecureRequests) policy.push('upgrade-insecure-requests');
+  return policy.join('; ');
 }

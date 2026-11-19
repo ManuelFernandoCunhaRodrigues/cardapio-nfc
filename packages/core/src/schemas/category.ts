@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { slugSchema } from './slug';
+import { slugInputSchema } from './slug';
 
 const nullableText = z
   .string()
@@ -14,7 +14,7 @@ export const categoryFormSchema = z.object({
     .trim()
     .min(2, 'Informe o nome da categoria.')
     .max(80, 'Use no máximo 80 caracteres.'),
-  slug: slugSchema,
+  slug: slugInputSchema,
   description: nullableText,
   is_active: z.boolean(),
 });

@@ -47,3 +47,12 @@ describe('buildContentSecurityPolicy', () => {
     expect(directive(local, 'connect-src')).toContain('ws://127.0.0.1:54321');
   });
 });
+
+describe('upgrade-insecure-requests', () => {
+  test('entra só quando o site é servido por https', () => {
+    expect(buildContentSecurityPolicy({ upgradeInsecureRequests: true })).toContain(
+      'upgrade-insecure-requests',
+    );
+    expect(buildContentSecurityPolicy()).not.toContain('upgrade-insecure-requests');
+  });
+});
