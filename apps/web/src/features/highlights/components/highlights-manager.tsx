@@ -300,7 +300,7 @@ export function HighlightsManager({
           message="Há mais de 8 destaques ativos. Os últimos podem receber pouca atenção."
         />
       ) : null}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {highlights.map((highlight, index) => {
           const destination = describeHighlightTarget(highlight.target, categories, products);
           return (

@@ -79,6 +79,22 @@ for (const reducedMotion of ['reduce', 'no-preference'] as const) {
       adminDb.track('highlights', data!.id);
     });
 
+    test('a lista de destaques não tem rolagem lateral com título longo', async ({
+      page,
+      adminDb,
+      uniqueName,
+    }) => {
+      const title = uniqueName('destaquelongosemespacos').replaceAll('-', '');
+      await insertHighlightWithPhoto(adminDb, title);
+      await page.goto('/admin/destaques');
+      await expect(page.getByRole('article').filter({ hasText: title })).toBeVisible();
+
+      const fitsViewport = await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      );
+      expect(fitsViewport).toBe(true);
+    });
+
     test('reabrir a gaveta durante a saída deixa um só diálogo acessível', async ({ page }) => {
       await page.goto('/admin/categorias');
       const openButton = page.getByRole('button', { name: 'Nova', exact: true });
