@@ -32,3 +32,17 @@ export type SchemaMatchesTypes = Expect<Equal<Versioned['public']['Tables'], Exp
 export type FunctionSignaturesMatch = Expect<
   Equal<Versioned['public']['Functions'], FromMigrations['public']['Functions']>
 >;
+
+// DIAGNÓSTICO TEMPORÁRIO: mostra no log do CI qual propriedade difere.
+type VT = Versioned['public']['Tables'];
+type Keys = keyof VT | keyof ExpectedTables;
+export type DiagRow = { [K in Keys]: Equal<VT[K & keyof VT]['Row'], ExpectedTables[K & keyof ExpectedTables]['Row']> };
+export type DiagInsert = { [K in Keys]: Equal<VT[K & keyof VT]['Insert'], ExpectedTables[K & keyof ExpectedTables]['Insert']> };
+export type DiagUpdate = { [K in Keys]: Equal<VT[K & keyof VT]['Update'], ExpectedTables[K & keyof ExpectedTables]['Update']> };
+export type DiagRel = { [K in Keys]: Equal<VT[K & keyof VT]['Relationships'], ExpectedTables[K & keyof ExpectedTables]['Relationships']> };
+export const diagRow: { [K in Keys]: true } = null as unknown as DiagRow;
+export const diagInsert: { [K in Keys]: true } = null as unknown as DiagInsert;
+export const diagUpdate: { [K in Keys]: true } = null as unknown as DiagUpdate;
+export const diagRel: { [K in Keys]: true } = null as unknown as DiagRel;
+export const diagVtoE: ExpectedTables = null as unknown as VT;
+export const diagEtoV: VT = null as unknown as ExpectedTables;
