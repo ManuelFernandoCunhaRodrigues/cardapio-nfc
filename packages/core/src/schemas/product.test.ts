@@ -43,6 +43,7 @@ describe('productSchema', () => {
   it('aceita somente slugs no formato de URL', () => {
     expect(productSchema.safeParse(product).success).toBe(true);
     expect(productSchema.safeParse({ ...product, slug: 'Coxinha de frango' }).success).toBe(false);
+    expect(productSchema.safeParse({ ...product, slug: 'a'.repeat(81) }).success).toBe(false);
   });
 
   it('valida os campos editáveis do formulário', () => {

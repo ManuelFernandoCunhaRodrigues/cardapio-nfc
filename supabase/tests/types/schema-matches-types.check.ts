@@ -9,13 +9,9 @@ type Equal<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 type Expect<T extends true> = T;
 
-type PublicSchema = { Tables: Record<string, { Row: object }>; Functions: object };
-
-type Shape<Schema extends PublicSchema> = {
-  columns: { [Table in keyof Schema['Tables']]: keyof Schema['Tables'][Table]['Row'] };
-  functions: keyof Schema['Functions'];
-};
-
 export type SchemaMatchesTypes = Expect<
-  Equal<Shape<Versioned['public']>, Shape<FromMigrations['public']>>
+  Equal<Versioned['public']['Tables'], FromMigrations['public']['Tables']>
+>;
+export type FunctionSignaturesMatch = Expect<
+  Equal<Versioned['public']['Functions'], FromMigrations['public']['Functions']>
 >;

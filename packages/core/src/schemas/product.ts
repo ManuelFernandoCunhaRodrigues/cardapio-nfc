@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { slugSchema } from './slug';
+
 const nullableDescription = z
   .string()
   .trim()
@@ -18,7 +20,7 @@ export const productFormSchema = z.object({
     .trim()
     .min(1, 'Informe o preço.')
     .max(20, 'Informe um preço válido, como R$ 8,90.'),
-  category_id: z.string().uuid('Escolha uma categoria válida.'),
+  category_id: z.uuid('Escolha uma categoria válida.'),
   badge: z.enum(['mais_pedido', 'novo', 'quentinho']).nullable(),
   is_active: z.boolean(),
   is_available: z.boolean(),
@@ -26,10 +28,10 @@ export const productFormSchema = z.object({
 
 export const productSchema = z
   .object({
-    id: z.string().uuid(),
-    category_id: z.string().uuid(),
+    id: z.uuid(),
+    category_id: z.uuid(),
     name: z.string(),
-    slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    slug: slugSchema,
     description: z.string().nullable(),
     price_cents: z.number().int().nonnegative(),
     image_path: z.string().nullable(),

@@ -39,7 +39,6 @@ export interface ImageRepository {
 export type ImageCompressor = (input: Buffer) => Promise<CompressedImage>;
 
 const messages = {
-  missing: 'Escolha uma foto antes de enviar.',
   invalid: 'Este arquivo não é uma imagem válida. Escolha outra foto.',
   tooSmall: 'Escolha uma foto com pelo menos 400 px no menor lado.',
   unsupportedFormat:
@@ -101,7 +100,6 @@ export class ImageService {
     file: File,
     signal: AbortSignal = NEVER_CANCELLED,
   ): Promise<string> {
-    if (!file.size) throw new ValidationError(messages.missing);
     const current = await this.requireRecord(target, id);
     const compressed = await this.compressFile(file);
     signal.throwIfAborted();

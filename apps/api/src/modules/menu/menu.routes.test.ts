@@ -51,6 +51,13 @@ describe('public menu routes', () => {
     expect(await response.json()).toEqual({ status: 'error', message: 'Produto não encontrado.' });
   });
 
+  it('GET /v1/menu/products/:slug rejeita identificador inválido sem consultar o repositório', async () => {
+    const response = await testApp().request('/v1/menu/products/Produto%20invalido');
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ status: 'error', message: 'Produto não encontrado.' });
+  });
+
   it('GET /v1/menu/sitemap returns sitemap items', async () => {
     const response = await testApp().request('/v1/menu/sitemap');
 

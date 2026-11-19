@@ -12,6 +12,8 @@ import { createAdminStoreModule, createPublicStoreModule } from './modules/store
 import {
   corsMiddleware,
   errorHandler,
+  errorResponse,
+  publicCacheMiddleware,
   requestIdMiddleware,
   requestTimeoutMiddleware,
 } from './shared/http/index';
@@ -31,6 +33,7 @@ export function createApp({ corsOrigin, supabase }: AppDependencies) {
   const app = new Hono<AppHonoEnv>();
   const publicClient = supabase.createPublicClient();
   app.use('*', requestIdMiddleware());
+  app.use('*', publicCacheMiddleware);
   if (corsOrigin) app.use('*', corsMiddleware(corsOrigin));
   app.use(
     '*',
@@ -42,9 +45,7 @@ export function createApp({ corsOrigin, supabase }: AppDependencies) {
     ),
   );
   app.onError(errorHandler);
-  app.notFound((context) =>
-    context.json({ status: 'error' as const, message: 'Recurso não encontrado.' }, 404),
-  );
+  app.notFound((context) => errorResponse(context, 404, 'Recurso não encontrado.'));
 
   app.route('/health', createHealthModule(publicClient));
   app.route('/v1', createMenuModule(publicClient));

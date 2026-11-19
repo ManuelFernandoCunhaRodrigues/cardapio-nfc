@@ -8,6 +8,7 @@ import { buildContentSecurityPolicy } from './src/lib/security/csp';
 const monorepoRoot = path.resolve(__dirname, '../..');
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   transpilePackages: ['@salgae/api', '@salgae/core'],
   turbopack: { root: monorepoRoot },
   outputFileTracingRoot: monorepoRoot,
@@ -31,6 +32,8 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Upgrade-Insecure-Requests', value: '1' },
           {
             key: 'Permissions-Policy',
             value: 'camera=(), geolocation=(), microphone=(), payment=(), usb=()',

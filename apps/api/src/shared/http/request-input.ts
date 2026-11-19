@@ -2,7 +2,7 @@ import type { FieldErrors } from '@salgae/core/contracts/admin-api';
 import type { Context } from 'hono';
 import { z } from 'zod';
 
-import { ValidationError } from '../errors/domain-errors';
+import { NotFoundError, ValidationError } from '../errors/domain-errors';
 import type { AppHonoEnv } from '../types';
 
 const INVALID_FORM_MESSAGE = 'Revise os campos destacados antes de salvar.';
@@ -39,7 +39,22 @@ export function readUuidParam(
   name: string,
   invalidMessage: string,
 ): string {
-  const parsed = z.string().uuid().safeParse(context.req.param(name));
+  const parsed = z.uuid().safeParse(context.req.param(name));
   if (!parsed.success) throw new ValidationError(invalidMessage);
+  return parsed.data;
+}
+
+const slugOrIdSchema = z.union([
+  z.uuid(),
+  z
+    .string()
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+]);
+
+/** Lê o identificador público de produto sem encaminhar texto arbitrário ao banco. */
+export function readSlugOrIdParam(context: Context<AppHonoEnv>, invalidMessage: string): string {
+  const parsed = slugOrIdSchema.safeParse(context.req.param('slugOrId'));
+  if (!parsed.success) throw new NotFoundError(invalidMessage);
   return parsed.data;
 }

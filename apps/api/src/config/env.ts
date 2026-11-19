@@ -1,10 +1,9 @@
 import { z } from 'zod';
 
 const envSchema = z.object({
-  SUPABASE_URL: z.string().url('must be a valid URL'),
+  SUPABASE_URL: z.url('must be a valid URL'),
   SUPABASE_ANON_KEY: z.string().min(1, 'is required'),
   WEB_ORIGIN: z
-    .string()
     .url('must be a valid URL')
     .refine((value) => new URL(value).origin === value, 'must contain only the origin'),
   PORT: z.coerce.number().int().positive().max(65_535).optional(),
