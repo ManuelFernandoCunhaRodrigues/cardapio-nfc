@@ -18,6 +18,11 @@ import { formatPriceBRL } from '@salgae/core/rules/price';
 export const revalidate = 60;
 type ProductPageProps = { params: Promise<{ slug: string }> };
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const badgeColor = {
+  mais_pedido: 'bg-ink',
+  novo: 'bg-green',
+  quentinho: 'bg-brand-strong',
+} as const;
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -74,7 +79,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {category?.name ?? 'CARDÁPIO'}
           </span>
           {badge ? (
-            <span className="lbl rounded-full bg-ink px-2.5 py-1 text-white">{badge}</span>
+            <span
+              className={`lbl rounded-full px-2.5 py-1 text-white ${product.badge ? badgeColor[product.badge] : 'bg-ink'}`}
+            >
+              {badge}
+            </span>
           ) : null}
           {!product.is_available ? (
             <span className="lbl rounded-full bg-danger px-2.5 py-1 text-white">INDISPONÍVEL</span>
