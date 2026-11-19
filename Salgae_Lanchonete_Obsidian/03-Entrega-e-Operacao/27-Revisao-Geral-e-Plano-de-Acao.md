@@ -95,7 +95,7 @@ Verificação: lint, typecheck, knip e 339 testes unitários passam (api 107, we
 
 Cada onda vira um PR para a `develop`. Divisão padrão: **o Codex escreve o código**; **o Claude orquestra**, cuida de CI e Vercel, testa no navegador e revisa. Toda execução é revisada e testada pelo outro antes do merge ([[11-Agentes-de-IA]]). Produção, `main` e exclusões ficam com o "sim" do responsável.
 
-### Andamento (atualizado em 2026-11-16)
+### Andamento (atualizado em 2026-11-18)
 
 Tudo abaixo está na `develop` (e no stage). A produção continua na promoção de 2026-11-04 (PR #83) e recebe estas ondas na próxima promoção, com o "sim" do responsável.
 
@@ -105,11 +105,11 @@ Tudo abaixo está na `develop` (e no stage). A produção continua na promoção
 | 1 — o que aparece na demonstração | **Feita.** | #89, #90, #91 |
 | 2 — backend firme | **Quase toda feita.** Faltam o destaque gravando o slug (WEB-07) e a sessão vencida levando ao login (WEB-11, UXA-10). | #92, #94 |
 | 3 — segurança e operação | **Em parte.** Feitos: ping, cópia semanal, migrations sem verde falso, `npm audit` no CI e Docker sem root. Faltam: segredos (responsável), aprovação de ambiente no workflow, auditoria de `profiles`, cabeçalhos e a decisão sobre MFA. | #88 |
-| 4 — UX do painel e do público | **Público feito; painel em andamento.** | #101 (público) |
-| 5 — testes e qualidade | **Em parte.** Feitos: Playwright local sem gravar no stage e 401/403 em todas as rotas de escrita. Faltam: testes de componente, pisos de cobertura, esperas fixas e a gaveta no Pixel 7. | #92, #93, #100 |
+| 4 — UX do painel e do público | **Feita.** A migration do destaque que segue o slug (20261116120000) está na `develop`, mas ainda não foi aplicada no stage nem na produção. | #101, #106, #107 |
+| 5 — testes e qualidade | **Feita.** Testes de componente, pisos de cobertura, E2E sem esperas fixas e a gaveta no Pixel 7 sem `skip` (a causa era a lista alargando a página com nome longo). Falta só conferir num celular real. | #92, #93, #100, #108 |
 | 6 — pronto para demonstrar | **Em parte.** Produção restaurada em 2026-11-15 e roteiro de demonstração em `docs/publicacao-producao.md` (onda 7). Faltam conteúdo de exemplo, teste em celular real e a promoção. | — |
-| 7 — documentação e limpeza | **Neste PR** (branch `docs/onda7-documentacao`). | — |
-| 8 — polimento | Não começou. | — |
+| 7 — documentação e limpeza | **Feita.** | #104 |
+| 8 — polimento | **Em andamento** (branch `fix/onda8-polimento`). | — |
 
 ### Onda 0: destravar (já)
 
@@ -150,13 +150,13 @@ Quem: Codex escreve; Claude revisa e testa no stage. Esforço: grande, de 3 a 4 
 
 Quem: Claude (CI e Supabase); Codex revisa. Esforço: médio.
 
-### Onda 4: UX do painel e do público (P2) — público feito (#101), painel em andamento
+### Onda 4: UX do painel e do público (P2) — feita (#101, #106, #107)
 
 Voltar do navegador com aviso ou rascunho (UXA-01), menu "⋯" com `popover` (UXA-02), prévia do produto sem link (UXA-04), mensagens de upload em português e limites visíveis antes de escolher (UXA-11, UXA-12), nomes únicos para a situação (UXA-18), aviso ao esconder categoria com produtos (UXA-21), slug fora da vista do dono (UXA-22), atalho "Ver cardápio" no celular (UXA-28), "Fechado" visível na Loja (UXA-31), botão de pausar o carrossel (UXP-09), carregamento nas rotas públicas (UXP-10), primeira tela com preço em celular baixo (UXP-11). O restante dos P2 está nos relatórios 01 e 02.
 
 Quem: Codex escreve; Claude testa no navegador. Esforço: grande.
 
-### Onda 5: testes e qualidade — em parte (#92, #93, #100)
+### Onda 5: testes e qualidade — feita (#92, #93, #100, #108)
 
 Testes de componente no `apps/web`; 401/403 em todas as rotas de escrita; pisos de cobertura perto do real; E2E sem esperas fixas e sem seletor por classe; Playwright local sem gravar no stage; corrigir a gaveta no Pixel 7 e tirar o `test.skip`; dois testes que conferem implementação reescritos (WEB-09, WEB-24, QA-03 a QA-06).
 
@@ -175,7 +175,7 @@ README, guia da equipe, `publicacao-producao.md`, notas 03, 06, 07, 08, 09, 12, 
 
 Na branch `docs/onda7-documentacao` (2026-11-16): README, guia da equipe, `publicacao-producao.md` (agora roteiro de publicação e de demonstração), `migrations-pelo-ci.md`, notas 03, 05, 06, 07, 08, 09, 12, 13, 14, 15, 16, 25 e esta; `.gitignore`, `.prettierignore` e `.vercelignore` (LIMP-05, LIMP-06); `vitest.config.mts` no `apps/web` (QA-11); títulos de teste em português (QA-13). A conferência do Codex fica para quando ele revisar o PR.
 
-### Onda 8: polimento (P3) — não começou
+### Onda 8: polimento (P3) — em andamento
 
 Os P3 dos relatórios, agrupados por tela, quando as ondas anteriores estiverem na `develop`.
 
