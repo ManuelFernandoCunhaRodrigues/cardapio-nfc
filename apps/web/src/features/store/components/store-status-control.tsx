@@ -37,12 +37,12 @@ export function StoreStatusControl({
     updateStoreStatusOverride,
     initialStoreSettingsActionState,
   );
-  const label = storeOpen === null ? 'Indisponível' : storeOpen ? 'Aberta' : 'Fechada';
+  const label = storeOpen === null ? 'Sem informação' : storeOpen ? 'Aberta' : 'Fechada';
   return (
     <>
       <button
         aria-haspopup="dialog"
-        className={`inline-flex min-h-11 items-center gap-1.5 rounded-full font-[family-name:var(--font-poppins)] text-xs font-semibold ${storeOpen ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'} ${compact ? 'px-3' : 'px-3.5'}`}
+        className={`inline-flex min-h-11 items-center gap-1.5 rounded-full font-[family-name:var(--font-poppins)] text-xs font-semibold ${storeOpen === null ? 'bg-surface-inner text-muted' : storeOpen ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'} ${compact ? 'px-3' : 'px-3.5'}`}
         onClick={() => setOpen(true)}
         ref={triggerRef}
         type="button"

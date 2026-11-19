@@ -29,7 +29,6 @@ export default async function AdminPanelLayout({
   return (
     <MotionProvider>
       <AdminShell
-        name={admin.name}
         statusOverride={loaded ? store.settings.status_override : null}
         storeOpen={loaded ? getStoreStatus(store.settings, new Date()).isOpen : null}
       >

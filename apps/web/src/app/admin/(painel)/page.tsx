@@ -268,10 +268,10 @@ export default async function AdminDashboardPage() {
           <div className="flex items-center justify-between gap-3">
             <h2 className="disp text-lg font-semibold text-ink">Loja hoje</h2>
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${status?.isOpen ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${status === null ? 'bg-surface-inner text-muted' : status.isOpen ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}
             >
               <span className="size-1.5 rounded-full bg-current" />
-              {status?.isOpen ? 'Aberta' : 'Fechada'}
+              {status === null ? 'Sem informação' : status.isOpen ? 'Aberta' : 'Fechada'}
             </span>
           </div>
           <dl className="mt-4 space-y-4 text-sm">

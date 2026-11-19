@@ -207,7 +207,7 @@ export function ProductMediaManager({
             <ConfirmDialog
               action={removeProductImage}
               description="A foto deixará de aparecer no cardápio. Remova o vídeo antes, se existir."
-              disabled={busy}
+              disabled={busy || hasVideo}
               entityId={productId}
               fallbackFocusRef={titleRef}
               fieldName="product_id"
@@ -218,8 +218,14 @@ export function ProductMediaManager({
                 setMessage('Foto removida.');
               }}
               title="Remover foto deste produto?"
+              triggerDescribedBy={hasVideo ? 'remove-photo-video-hint' : undefined}
               triggerLabel="Remover foto"
             />
+          ) : null}
+          {hasVideo ? (
+            <p className="mt-2 text-xs text-muted" id="remove-photo-video-hint">
+              Remova o vídeo antes de remover a foto.
+            </p>
           ) : null}
         </div>
         <div>

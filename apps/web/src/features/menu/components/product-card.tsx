@@ -4,18 +4,13 @@ import Link, { useLinkStatus } from 'next/link';
 
 import { getBadgeLabel } from '@salgae/core/rules/badges';
 import { rememberProductOrigin } from '@/features/menu/rules/product-origin';
+import { badgeColor } from '@/features/menu/rules/badge-color';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import type { MenuProduct } from '@/features/menu/types';
 import { formatPriceBRL } from '@salgae/core/rules/price';
 
 import { Icon } from './icons';
 import { MediaImage } from '@/features/media/components/media-image';
-
-const badgeColor = {
-  mais_pedido: 'bg-ink',
-  novo: 'bg-green',
-  quentinho: 'bg-brand-strong',
-} as const;
 
 type ProductCardProps = Readonly<{
   product: MenuProduct;

@@ -66,20 +66,20 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
             placeholder="Salgados quentes"
           />
           <Input
-            className="sm:col-span-2"
             defaultValue={defaults.text('address', settings.address ?? '')}
             error={errorFor('address')}
             label="Endereço"
             name="address"
+            wrapperClassName="sm:col-span-2"
           />
           <Input
-            className="sm:col-span-2"
             defaultValue={defaults.text('maps_url', settings.maps_url ?? '')}
             error={errorFor('maps_url')}
             label="Link do mapa"
             name="maps_url"
             placeholder="https://…"
             type="url"
+            wrapperClassName="sm:col-span-2"
           />
           <Input
             defaultValue={defaults.text('phone', settings.phone ?? '')}

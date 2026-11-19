@@ -30,7 +30,6 @@ export function AdminShell({
   statusOverride,
 }: Readonly<{
   children: React.ReactNode;
-  name: string | null;
   storeOpen: boolean | null;
   statusOverride: 'auto' | 'open' | 'closed' | null;
 }>) {

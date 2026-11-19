@@ -6,6 +6,7 @@ import { Icon } from '@/features/menu/components/icons';
 import { MediaVideo } from '@/features/media/components/media-video';
 import { ProductCard } from '@/features/menu/components/product-card';
 import { ProductRow } from '@/features/menu/components/product-row';
+import { badgeColor } from '@/features/menu/rules/badge-color';
 import { getBadgeLabel } from '@salgae/core/rules/badges';
 import { getPublicProduct, getPublicSitemap, getPublicStore } from '@/lib/api/public-api-client';
 import { ProductAvailability } from '@/features/store/components/store-status-live';
@@ -18,12 +19,6 @@ import { formatPriceBRL } from '@salgae/core/rules/price';
 export const revalidate = 60;
 type ProductPageProps = { params: Promise<{ slug: string }> };
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const badgeColor = {
-  mais_pedido: 'bg-ink',
-  novo: 'bg-green',
-  quentinho: 'bg-brand-strong',
-} as const;
-
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
   const [result, store] = await Promise.all([getPublicProduct(slug), getPublicStore()]);
