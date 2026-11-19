@@ -67,16 +67,14 @@ for (const reducedMotion of ['reduce', 'no-preference'] as const) {
       await sheet.getByLabel('Título').fill(title);
       await sheet.getByLabel('Descrição').fill(`Descrição de ${title}`);
 
-      await sheet.getByRole('button', { name: 'Criar destaque' }).click();
-
-      await expect(page.getByText('Destaque criado com sucesso.')).toBeVisible();
-      const { data, error } = await adminDb.client
-        .from('highlights')
-        .select('id')
-        .eq('title', title)
-        .single();
-      expect(error).toBeNull();
-      adminDb.track('highlights', data!.id);
+      try {
+        await sheet.getByRole('button', { name: 'Criar destaque' }).click();
+        await expect(page.getByText('Destaque criado com sucesso.')).toBeVisible();
+      } finally {
+        // Rastreia o que foi criado mesmo se a asserção falhar, para não sobrar dado no banco.
+        const { data } = await adminDb.client.from('highlights').select('id').eq('title', title);
+        for (const { id } of data ?? []) adminDb.track('highlights', id);
+      }
     });
 
     test('a lista de destaques não tem rolagem lateral com título longo', async ({

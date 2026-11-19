@@ -42,6 +42,8 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  // Um teste que falhe no meio não deixa a Navigation API falsa para os seguintes.
+  Reflect.deleteProperty(window, 'navigation');
 });
 
 describe('aviso ao sair de um formulário alterado', () => {
@@ -103,7 +105,6 @@ describe('aviso ao sair de um formulário alterado', () => {
     expect(traverse.defaultPrevented).toBe(true);
     expect(push.defaultPrevented).toBe(false);
     expect(confirmSpy).toHaveBeenCalledOnce();
-    Reflect.deleteProperty(window, 'navigation');
   });
 
   it('ao sair da tela, para de perguntar', () => {
