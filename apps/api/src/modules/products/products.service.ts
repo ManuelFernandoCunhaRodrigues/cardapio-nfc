@@ -9,7 +9,7 @@ import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
 import { readPriceInput } from '@salgae/core/rules/parse-price';
 import { fieldsFromProductSituation } from '@salgae/core/rules/product-situation';
 
-import { ValidationError } from '../../shared/errors/domain-errors';
+import { ConflictError, NotFoundError, ValidationError } from '../../shared/errors/domain-errors';
 import { MissingReferenceError } from '../../shared/errors/persistence-errors';
 import { requireFound, withUniqueSlug } from '../../shared/errors/record-guards';
 import { moveInOrder } from '../../shared/ordering/move-in-order';
@@ -38,6 +38,8 @@ export interface ProductRepository {
 const messages = {
   notFound: 'Produto não encontrado.',
   atListEdge: 'Este produto já está no limite da categoria.',
+  changedCategory:
+    'Este produto mudou de categoria em outra aba ou aparelho. Recarregue a página e tente de novo.',
   missingCategory: 'A categoria escolhida não existe mais. Escolha outra.',
   missingCategoryField: 'Escolha uma categoria válida.',
 };
@@ -69,14 +71,22 @@ export class ProductsService {
 
   async moveProduct(id: string, input: ReorderInput): Promise<void> {
     const categoryId = requireFound(await this.repository.findCategoryId(id), messages.notFound);
-    await moveInOrder(
-      {
-        listSortOrders: () => this.repository.listSortOrders(categoryId),
-        swapSortOrders: (sourceId, neighborId) =>
-          this.repository.swapSortOrders(sourceId, neighborId),
-      },
-      { id, ...input, edgeMessage: messages.atListEdge, notFoundMessage: messages.notFound },
-    );
+    try {
+      await moveInOrder(
+        {
+          listSortOrders: () => this.repository.listSortOrders(categoryId),
+          swapSortOrders: (sourceId, neighborId) =>
+            this.repository.swapSortOrders(sourceId, neighborId),
+        },
+        { id, ...input, edgeMessage: messages.atListEdge, notFoundMessage: messages.notFound },
+      );
+    } catch (error) {
+      // Fora da lista lida, mas ainda existe: outra aba trocou a categoria no meio do caminho.
+      if (error instanceof NotFoundError && (await this.repository.findCategoryId(id))) {
+        throw new ConflictError(messages.changedCategory);
+      }
+      throw error;
+    }
   }
 
   async deleteProduct(id: string): Promise<void> {
