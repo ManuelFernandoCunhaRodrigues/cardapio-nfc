@@ -33,6 +33,15 @@ const getAdminAuthorization = cache(async (): Promise<AdminAuthorization> => {
   }
 });
 
+/** A conta atual é admin? Falha na consulta conta como "não": quem pergunta só decide o log. */
+export async function isAuthorizedAdmin(): Promise<boolean> {
+  try {
+    return (await getAdminAuthorization()).status === 'authorized';
+  } catch {
+    return false;
+  }
+}
+
 /** Centraliza a autorização da interface e das Server Actions do painel. */
 export async function requireAdmin(
   options: { redirectUnauthenticated?: boolean } = {},

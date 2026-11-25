@@ -3,6 +3,7 @@ import type { StoreSettings } from '@salgae/core/schemas/store-settings';
 import { cache } from 'react';
 
 import { redirectIfSessionExpired } from '@/features/admin/server/session-redirect';
+import { isAuthorizedAdmin } from '@/features/auth/server/require-admin';
 import { adminApi } from '@/lib/api/admin-api-client';
 import { ApiRequestError } from '@/lib/api/api-request-error';
 import { reportServerError } from '@/lib/observability';
@@ -22,9 +23,12 @@ export const getAdminStoreSettings = cache(async (): Promise<AdminStoreSettingsR
   } catch (error) {
     redirectIfSessionExpired(error);
     // O layout lê a loja junto com a autorização; quem não é admin recebe 403 e vê o aviso de acesso
-    // negado, o que não é falha a registrar.
+    // negado, o que não é falha a registrar. 403 para um admin autorizado é defeito e vai ao log.
+    // A autorização está em `cache`: perguntar de novo não faz outra chamada à API.
     const forbidden = error instanceof ApiRequestError && error.status === 403;
-    if (!forbidden) reportServerError('admin_store_settings_read_failed', error);
+    if (!forbidden || (await isAuthorizedAdmin())) {
+      reportServerError('admin_store_settings_read_failed', error);
+    }
     return { status: 'unavailable' };
   }
 });
