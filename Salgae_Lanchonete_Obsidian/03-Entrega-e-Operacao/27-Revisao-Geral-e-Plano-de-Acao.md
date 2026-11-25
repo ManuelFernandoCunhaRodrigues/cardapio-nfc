@@ -183,6 +183,16 @@ Feito em 2026-11-18 (#110, código do Codex, revisão do Codex aprovada): selo d
 
 Adiados: UXP-22 (falta arte para ícone `maskable`); UXA-33 a 36, 38 a 43 e 48; WEB-12, 13, 15 a 17 e 19 a 24; API-13, 16, 17, 21, 24 e 26; BD-05, 06 e 08; BD-07 (a CLI do CI gera `ComputedFields` e `NonNullable<Json>`: a comparação inteira dos tipos pede regenerar `database.types.ts` com a mesma versão); SEG-03, 04, 06 e 08 (com o cadastro desligado no Supabase local o E2E não cria o token de cliente; precisa de usuário comum na fixture); QA-09, 10, 12 e 14; LIMP-02, 03 e 07 a 09; FALTA-12. Sugestões da revisão para depois: levar o `requestId` ao `ApiRequestError` e registrar que o cache da `/api` pública pode mostrar dado antigo por até 60 s.
 
+Feito em 2026-11-25 (adiados pequenos, sem depender do responsável; revisão do Codex aprovada em todos):
+
+- #111: Dependabot, 16 atualizações menores (next 16.4.6 e outras).
+- #112: `upgrade-insecure-requests` também em toda build da Vercel (`VERCEL=1`), porque o stage não tem `NEXT_PUBLIC_SITE_URL`. Conferido no stage.
+- #113: `requestId` da API no `ApiRequestError` e no log do painel (corpo ou cabeçalho `x-request-id`; vazio fica de fora).
+- #114: foto e vídeo já vinculados não são apagados quando a resposta da troca se perde; o serviço relê o registro antes de apagar. Junto, o E2E da busca vazia procura o aviso dentro do `main` (instável na hidratação).
+- #115: mover produto que trocou de categoria em outra aba responde 409 pedindo recarregar, não 404.
+
+Seguem adiados: os da lista acima, o registro do cache de 60 s da `/api` pública e a supressão do 403 em `get-store-settings` valendo para todos.
+
 ## Decisões que dependem do responsável
 
 1. ~~"Sim" para restaurar a produção agora.~~ Feito: produção restaurada em 2026-11-15.
