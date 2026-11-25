@@ -76,6 +76,65 @@ describe('VideoService', () => {
     expect(repository.removeRaw).toHaveBeenCalledWith(rawPath);
   });
 
+  it('troca gravada com a resposta perdida: mantém o vídeo novo e apaga o anterior', async () => {
+    let videoPath: string | null = previousPath;
+    const removeVideo = vi.fn(async () => undefined);
+    const repository = fakeRepository({
+      findProduct: async () => ({ imagePath: `products/${productId}/capa`, videoPath }),
+      replaceVideoPath: async (_id, change) => {
+        videoPath = change.to;
+        throw new Error('fetch failed');
+      },
+      removeVideo,
+    });
+
+    const result = await new VideoService(repository, fakeCompressor).process(productId, rawPath);
+
+    expect(videoPath).toBe(result.path);
+    expect(removeVideo).toHaveBeenCalledTimes(1);
+    expect(removeVideo).toHaveBeenCalledWith(previousPath);
+  });
+
+  it('troca com falha e produto ilegível: não apaga o vídeo novo e repassa a falha', async () => {
+    let reads = 0;
+    const removeVideo = vi.fn(async () => undefined);
+    const repository = fakeRepository({
+      findProduct: async () => {
+        reads += 1;
+        if (reads > 1) throw new Error('banco fora do ar');
+        return { imagePath: `products/${productId}/capa`, videoPath: previousPath };
+      },
+      replaceVideoPath: async () => {
+        throw new Error('fetch failed');
+      },
+      removeVideo,
+    });
+
+    await expect(
+      new VideoService(repository, fakeCompressor).process(productId, rawPath),
+    ).rejects.toBeInstanceOf(Error);
+
+    expect(removeVideo).not.toHaveBeenCalled();
+    expect(repository.removeRaw).toHaveBeenCalledWith(rawPath);
+  });
+
+  it('troca com falha que não gravou: apaga o vídeo novo e preserva o anterior', async () => {
+    const removeVideo = vi.fn(async () => undefined);
+    const repository = fakeRepository({
+      replaceVideoPath: async () => {
+        throw new Error('policy quebrada');
+      },
+      removeVideo,
+    });
+
+    await expect(
+      new VideoService(repository, fakeCompressor).process(productId, rawPath),
+    ).rejects.toBeInstanceOf(Error);
+
+    expect(removeVideo).toHaveBeenCalledTimes(1);
+    expect(removeVideo).not.toHaveBeenCalledWith(previousPath);
+  });
+
   it.each([
     [
       'a compactação falha',

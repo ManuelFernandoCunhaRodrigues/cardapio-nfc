@@ -127,7 +127,12 @@ export class ImageService {
     await this.removeIfUnused(target, current.imagePath);
   }
 
-  /** Qualquer falha antes ou durante o vínculo apaga os arquivos novos: nada fica órfão. */
+  /**
+   * Qualquer falha antes ou durante o vínculo apaga os arquivos novos: nada fica órfão. A exceção
+   * é a resposta da troca que se perde depois de gravada: o registro já aponta para a foto nova,
+   * então ela fica e o envio segue. Sem como conferir, os arquivos ficam (órfão é melhor que foto
+   * quebrada) e a falha sobe.
+   */
   private async linkStaged(
     target: ImageTarget,
     id: string,
@@ -137,15 +142,37 @@ export class ImageService {
     let linked: boolean;
     try {
       signal.throwIfAborted();
+    } catch (error) {
+      await this.removeStaged(target, change.to);
+      throw error;
+    }
+    try {
       linked = await this.repository.replaceImagePath(target, id, change);
     } catch (error) {
       // O errorHandler registra e responde 500 (ou 504, se foi o cancelamento).
-      await this.removeStaged(target, change.to);
+      const state = await this.linkStateAfterFailure(target, id, change.to);
+      if (state === 'linked') return;
+      if (state === 'not-linked') await this.removeStaged(target, change.to);
       throw error;
     }
     if (!linked) {
       await this.removeStaged(target, change.to);
       throw await this.lostReplaceError(target, id);
+    }
+  }
+
+  /** Relê o registro depois de uma troca que falhou, para saber se ela chegou a ser gravada. */
+  private async linkStateAfterFailure(
+    target: ImageTarget,
+    id: string,
+    path: string,
+  ): Promise<'linked' | 'not-linked' | 'unknown'> {
+    try {
+      const record = await this.repository.findRecord(target, id);
+      return record?.imagePath === path ? 'linked' : 'not-linked';
+    } catch (error) {
+      reportServerError({ event: 'image.link_check_failed', error });
+      return 'unknown';
     }
   }
 
