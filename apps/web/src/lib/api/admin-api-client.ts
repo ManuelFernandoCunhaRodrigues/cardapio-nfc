@@ -23,9 +23,10 @@ const UNEXPECTED_RESPONSE_MESSAGE = 'A API respondeu de um jeito inesperado.';
 
 async function toRequestError(response: Response): Promise<ApiRequestError> {
   const body = apiErrorResponseSchema.safeParse(await response.json().catch(() => null));
+  // Texto vazio não identifica pedido nenhum: fica de fora do erro e do log.
   const requestId =
-    (body.success ? body.data.requestId : undefined) ??
-    response.headers.get('x-request-id') ??
+    (body.success ? body.data.requestId : undefined) ||
+    response.headers.get('x-request-id') ||
     undefined;
   return body.success
     ? new ApiRequestError(response.status, body.data.message, body.data.fieldErrors, requestId)

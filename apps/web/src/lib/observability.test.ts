@@ -23,6 +23,7 @@ describe('describeError', () => {
   test('leva o código do pedido da API para o log', () => {
     const error = Object.assign(new Error('Falhou.'), { requestId: 'req-123' });
     expect(describeError(error)).toMatchObject({ message: 'Falhou.', requestId: 'req-123' });
+    expect(describeError(new Error('Sem código.'))).not.toHaveProperty('requestId');
   });
 
   test('converte valores que não são objeto', () => {

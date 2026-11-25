@@ -113,6 +113,23 @@ describe('createAdminApiClient', () => {
     });
   });
 
+  it.each([
+    ['ausente', {}],
+    ['vazio', { 'x-request-id': '' }],
+  ])('deixa o código de fora quando o cabeçalho está %s', async (_label, headers) => {
+    const { api } = client(
+      new Response(JSON.stringify({ status: 'error', message: 'Falhou.', requestId: '' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...headers },
+      }),
+    );
+
+    const error = await api.write('POST', '/v1/admin/highlights', {}).catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(ApiRequestError);
+    expect(error.requestId).toBeUndefined();
+  });
+
   it('trata resposta de erro fora do contrato como inesperada', async () => {
     const { api } = client(new Response('Bad gateway', { status: 502 }));
 
