@@ -12,7 +12,6 @@ const externalPackages = Object.keys(packageJson.dependencies)
 
 await build({
   entryPoints: {
-    index: join(apiRoot, 'src/index.ts'),
     server: join(apiRoot, 'src/server.ts'),
   },
   outdir: join(apiRoot, 'dist'),

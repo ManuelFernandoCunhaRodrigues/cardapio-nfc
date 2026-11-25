@@ -119,7 +119,7 @@ Tudo abaixo está na `develop` (e no stage). A produção continua na promoção
 | Revisão final do Codex no #85, conferência do painel no stage e merge na `develop` | Codex revisa, Claude junta | crédito do Codex; login do responsável para o painel | **Feito**: #85 na `develop` em 2026-11-15 |
 | Merge do #86 (hono, next) e subida do `next` para 16.4.6 | Claude | CI verde | **Em parte**: #86 na `develop`; o `next` está em 16.4.5 |
 | Fechar #72 e #73; decidir #62; apagar branches resolvidas | Claude | "ok" para o #62 | **Em parte**: #72 e #73 fechados e a maior parte das branches antigas apagada; o #62 segue aberto |
-| Excluir `salgae-api-stage` na Vercel; depois o PR que tira os arquivos legados | Responsável, depois Claude | exclusão feita por ele | Pendente |
+| Excluir `salgae-api-stage` na Vercel; depois o PR que tira os arquivos legados | Responsável, depois Claude | exclusão feita por ele | **Feito** em 2026-11-25: projeto excluído por ele e arquivos removidos |
 
 ### Onda 1: o que aparece na demonstração (P1) — feita (#89, #90, #91)
 
