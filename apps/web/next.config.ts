@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import type { NextConfig } from 'next';
 
-import { buildContentSecurityPolicy } from './src/lib/security/csp';
+import { buildContentSecurityPolicy, isServedOverHttps } from './src/lib/security/csp';
 
 // Raiz do monorepo: as dependências ficam no `node_modules` de lá (npm workspaces).
 const monorepoRoot = path.resolve(__dirname, '../..');
@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
               supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
               development: process.env.NODE_ENV === 'development',
               // No CI o site roda em http://127.0.0.1; lá a diretiva quebraria os recursos.
-              upgradeInsecureRequests: process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https://'),
+              upgradeInsecureRequests: isServedOverHttps(process.env),
             }),
           },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
