@@ -12,6 +12,8 @@ export class ApiRequestError extends Error {
     readonly status: number,
     message: string,
     readonly fieldErrors?: FieldErrors,
+    /** Código do pedido na API (`x-request-id`): liga o log do site ao log da API. */
+    readonly requestId?: string,
   ) {
     super(message);
   }

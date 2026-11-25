@@ -91,6 +91,45 @@ describe('createAdminApiClient', () => {
     });
   });
 
+  it('guarda o código do pedido que a API devolve no corpo', async () => {
+    const { api } = client(
+      jsonResponse({ status: 'error', message: 'Falhou.', requestId: 'req-corpo' }, 500),
+    );
+
+    await expect(api.write('DELETE', '/v1/admin/products/x')).rejects.toMatchObject({
+      status: 500,
+      requestId: 'req-corpo',
+    });
+  });
+
+  it('usa o cabeçalho x-request-id quando o corpo não traz o código', async () => {
+    const { api } = client(
+      new Response('Bad gateway', { status: 502, headers: { 'x-request-id': 'req-cabecalho' } }),
+    );
+
+    await expect(api.write('POST', '/v1/admin/highlights', {})).rejects.toMatchObject({
+      status: 502,
+      requestId: 'req-cabecalho',
+    });
+  });
+
+  it.each([
+    ['ausente', {}],
+    ['vazio', { 'x-request-id': '' }],
+  ])('deixa o código de fora quando o cabeçalho está %s', async (_label, headers) => {
+    const { api } = client(
+      new Response(JSON.stringify({ status: 'error', message: 'Falhou.', requestId: '' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...headers },
+      }),
+    );
+
+    const error = await api.write('POST', '/v1/admin/highlights', {}).catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(ApiRequestError);
+    expect(error.requestId).toBeUndefined();
+  });
+
   it('trata resposta de erro fora do contrato como inesperada', async () => {
     const { api } = client(new Response('Bad gateway', { status: 502 }));
 

@@ -4,10 +4,11 @@ type ErrorDetails = {
   code?: string;
   details?: string;
   hint?: string;
+  requestId?: string;
   stack?: string;
 };
 
-function pickText(source: Record<string, unknown>, key: 'code' | 'details' | 'hint') {
+function pickText(source: Record<string, unknown>, key: 'code' | 'details' | 'hint' | 'requestId') {
   const value = source[key];
   return typeof value === 'string' && value ? { [key]: value } : {};
 }
@@ -22,6 +23,7 @@ export function describeError(error: unknown): ErrorDetails {
       ...pickText(source, 'code'),
       ...pickText(source, 'details'),
       ...pickText(source, 'hint'),
+      ...pickText(source, 'requestId'),
       ...(error.stack ? { stack: error.stack } : {}),
     };
   }
