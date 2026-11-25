@@ -197,11 +197,13 @@ Seguem adiados: os da lista acima, o registro do cache de 60 s da `/api` públic
 
 1. ~~"Sim" para restaurar a produção agora.~~ Feito: produção restaurada em 2026-11-15.
 2. Excluir `salgae-api-stage` na Vercel.
-3. Fotos para o conteúdo de exemplo: dele ou de banco de imagens.
-4. Contato do cliente na demonstração: WhatsApp, "chamar atendente" ou nada.
+3. ~~Fotos para o conteúdo de exemplo: dele ou de banco de imagens.~~ Decidido em 2026-11-25: as fotos serão geradas com o Codex.
+4. ~~Contato do cliente na demonstração: WhatsApp, "chamar atendente" ou nada.~~ Decidido em 2026-11-25: nenhum contato por enquanto.
 5. MFA para o admin: sim ou não.
-6. PR #62 (protótipo no Claude Design): juntar ou fechar.
+6. ~~PR #62 (protótipo no Claude Design): juntar ou fechar.~~ Juntado na `develop` em 2026-11-25 (562256d).
 7. Cadastrar os segredos do workflow de migrations, ou desligar o workflow por enquanto.
 8. Promoção para a `main` no fim da onda 6.
+
+Também em 2026-11-25: "ok" do responsável para o conteúdo de exemplo na produção (backup antes, nomes corrigidos, Info sem contato, ordem das categorias). O teste em celular real ele ainda vai fazer.
 
 Voltar: [[_Indice-03-Entrega-e-Operacao]] · [[Home]]
