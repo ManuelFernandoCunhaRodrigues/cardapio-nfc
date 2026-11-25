@@ -38,9 +38,18 @@ async function deleteProduct(page: Page, name: string) {
   await expect(row).toHaveCount(0);
 }
 
+/**
+ * A API apaga os arquivos antes de responder à exclusão, mas o Storage local pode seguir entregando
+ * o objeto por um instante (falhou assim no CI desde 2026-11-25). Repete a leitura por alguns
+ * segundos: um arquivo que nunca some continua reprovando o teste.
+ */
 async function expectStorageObjectRemoved(adminDb: AdminDb, bucket: string, objectPath: string) {
-  const { error } = await adminDb.client.storage.from(bucket).download(objectPath);
-  expect(error, `${bucket}/${objectPath} ainda existe após excluir o produto`).not.toBeNull();
+  await expect
+    .poll(
+      async () => (await adminDb.client.storage.from(bucket).download(objectPath)).error !== null,
+      { message: `${bucket}/${objectPath} ainda existe após excluir o produto`, timeout: 15_000 },
+    )
+    .toBe(true);
 }
 
 /**
