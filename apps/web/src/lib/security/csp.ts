@@ -7,6 +7,17 @@ type CspOptions = {
   upgradeInsecureRequests?: boolean;
 };
 
+type HttpsEnv = Readonly<Record<string, string | undefined>>;
+
+/**
+ * O site é servido só por https? Vale quando o endereço público é https ou quando a build roda
+ * na Vercel, que serve todo projeto (stage, produção e prévias) por https, mesmo sem
+ * `NEXT_PUBLIC_SITE_URL`. No CI o site roda em http://127.0.0.1 e fica de fora.
+ */
+export function isServedOverHttps(env: HttpsEnv): boolean {
+  return env.VERCEL === '1' || Boolean(env.NEXT_PUBLIC_SITE_URL?.startsWith('https://'));
+}
+
 function originOf(url: string | undefined): string[] {
   if (!url) return [];
   try {
