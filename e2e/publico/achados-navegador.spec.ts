@@ -121,7 +121,10 @@ test.describe('achados dos testes no navegador', () => {
     await page.getByRole('searchbox', { name: 'Buscar no cardápio' }).fill('   ');
 
     await expect(page).toHaveURL(/\/busca$/);
-    await expect(page.getByText('Escolha uma categoria ou digite o que procura')).toBeVisible();
+    // Dentro do main: o aviso do fallback pode seguir no DOM durante a hidratação.
+    await expect(
+      page.getByRole('main').getByText('Escolha uma categoria ou digite o que procura'),
+    ).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Categorias', exact: true })).toBeVisible();
     await expect(productLinks).toHaveCount(initialProducts);
   });
