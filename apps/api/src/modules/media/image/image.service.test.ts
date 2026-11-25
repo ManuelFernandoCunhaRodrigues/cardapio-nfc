@@ -168,6 +168,44 @@ describe('ImageService', () => {
     expect([...store.files]).toEqual(filesOf(oldPath));
   });
 
+  it('troca gravada com a resposta perdida: mantém a foto nova e apaga a antiga', async () => {
+    const store = new InMemoryImageStore(oldPath);
+    const replace = store.replaceImagePath.bind(store);
+    store.replaceImagePath = async (...args) => {
+      await replace(...args);
+      throw new Error('fetch failed');
+    };
+
+    const newPath = await new ImageService(store, compressImage).upload('product', productId, file);
+
+    expect(store.imagePath).toBe(newPath);
+    expect([...store.files]).toEqual(filesOf(newPath));
+  });
+
+  it('troca com falha e registro ilegível: não apaga a foto nova e repassa a falha', async () => {
+    const store = new InMemoryImageStore(oldPath);
+    const failure = new Error('fetch failed');
+    const replace = store.replaceImagePath.bind(store);
+    const read = store.findRecord.bind(store);
+    let reads = 0;
+    store.findRecord = async () => {
+      reads += 1;
+      if (reads > 1) throw new Error('banco fora do ar');
+      return read();
+    };
+    store.replaceImagePath = async (...args) => {
+      await replace(...args);
+      throw failure;
+    };
+
+    await expect(
+      new ImageService(store, compressImage).upload('product', productId, file),
+    ).rejects.toBe(failure);
+    const newPath = store.imagePath!;
+    expect(newPath).not.toBe(oldPath);
+    expect(store.files).toEqual(new Set([...filesOf(oldPath), ...filesOf(newPath)]));
+  });
+
   describe('requisição cancelada pelo timeout', () => {
     it('cancelada durante a compressão: não sobe nem troca nada', async () => {
       const store = new InMemoryImageStore(oldPath);

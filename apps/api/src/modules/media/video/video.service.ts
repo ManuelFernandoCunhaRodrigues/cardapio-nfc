@@ -206,15 +206,11 @@ export class VideoService {
       stagedPath = `products/${productId}/${randomUUID()}.mp4`;
       await this.uploadVideo(stagedPath, await readFile(compressed.outputPath), deadline, signal);
       signal.throwIfAborted();
-      if (
-        !(await this.repository.replaceVideoPath(productId, {
-          from: current.videoPath,
-          to: stagedPath,
-        }))
-      ) {
-        throw await this.lostReplaceError(productId);
-      }
-      linked = true;
+      const link = await this.linkStaged(productId, { from: current.videoPath, to: stagedPath });
+      // Gravado ou incerto (resposta perdida sem como reler): o arquivo novo não pode ser apagado.
+      linked = link.state !== 'not-linked';
+      if (link.error) throw link.error;
+      if (link.state === 'not-linked') throw await this.lostReplaceError(productId);
       await this.removeIfUnused(current.videoPath);
       return {
         path: stagedPath,
@@ -302,6 +298,31 @@ export class VideoService {
     const product = await this.repository.findProduct(id);
     if (!product) throw new NotFoundError(messages.notFound);
     return product;
+  }
+
+  /**
+   * Troca condicional do vídeo. Se a chamada falha, relê o produto: a troca pode ter sido gravada
+   * com a resposta perdida no caminho. Sem como reler, o estado fica incerto e a falha sobe.
+   */
+  private async linkStaged(
+    id: string,
+    change: VideoPathChange & { to: string },
+  ): Promise<{ state: 'linked' | 'not-linked' | 'unknown'; error?: unknown }> {
+    try {
+      return {
+        state: (await this.repository.replaceVideoPath(id, change)) ? 'linked' : 'not-linked',
+      };
+    } catch (error) {
+      try {
+        const product = await this.repository.findProduct(id);
+        return product?.videoPath === change.to
+          ? { state: 'linked' }
+          : { state: 'not-linked', error };
+      } catch (readError) {
+        reportServerError({ event: 'media.video_link_check_failed', error: readError });
+        return { state: 'unknown', error };
+      }
+    }
   }
 
   private async lostReplaceError(id: string): Promise<Error> {
