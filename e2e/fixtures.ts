@@ -143,3 +143,13 @@ export const test = base.extend<Fixtures>({
 });
 
 export const expect = baseExpect;
+
+// A API otimiza a foto (redimensiona e gera as variantes) antes de responder; no CI isso passa
+// às vezes dos 5 s padrão do expect.
+const PHOTO_SAVE_TIMEOUT_MS = 30_000;
+
+export async function expectPhotoSaved(page: Page) {
+  await baseExpect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible({
+    timeout: PHOTO_SAVE_TIMEOUT_MS,
+  });
+}

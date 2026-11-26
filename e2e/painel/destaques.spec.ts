@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { expect, test, type AdminDb, type Page } from '../fixtures';
+import { expect, expectPhotoSaved, test, type AdminDb, type Page } from '../fixtures';
 
 const PHOTO_FILE = path.join(__dirname, '../arquivos/foto-teste.jpg');
 // Imagem válida de 1 px: passa pelo navegador e a API recusa por ser menor que 400 px.
@@ -80,7 +80,7 @@ test.describe('destaques do painel', () => {
     await editor.getByLabel('Escolher foto').setInputFiles(PHOTO_FILE);
     await expect(page.getByText('Foto pronta para salvar junto com o destaque.')).toBeVisible();
     await page.getByRole('button', { name: 'Salvar destaque' }).click();
-    await expect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible();
+    await expectPhotoSaved(page);
     expect(await storedHighlightImage(adminDb, id)).toMatch(new RegExp(`^highlights/${id}/`));
 
     await page.reload();
