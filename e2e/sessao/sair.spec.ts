@@ -22,9 +22,14 @@ test.describe('sessão do painel', () => {
   test('sair encerra a sessão', async ({ page }) => {
     await signIn(page);
     await page.getByRole('button', { name: /^Sair/ }).filter({ visible: true }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Sair do painel?' })
+      .getByRole('button', { name: 'Sair', exact: true })
+      .click();
     await expect(page).toHaveURL(/\/admin\/login$/);
 
+    // Sem cookie de sessão, o login não fala em sessão expirada, mas guarda a volta.
     await page.goto('/admin/produtos');
-    await expect(page).toHaveURL(/\/admin\/login$/);
+    await expect(page).toHaveURL(/\/admin\/login\?voltar=%2Fadmin%2Fprodutos$/);
   });
 });

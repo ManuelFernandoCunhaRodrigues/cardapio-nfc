@@ -6,6 +6,7 @@ import { useRef, useState, type ComponentProps } from 'react';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
 import { resizeImageForUpload } from '@/features/media/client/client-resize';
+import { friendlyMediaError } from '@/features/media/client/friendly-media-error';
 
 export type EditorPhoto = {
   file: File | null;
@@ -35,8 +36,8 @@ export function useEditorPhoto(storedUrl: string | null, readyMessage: string): 
         setFile(prepared);
         setPreview(URL.createObjectURL(prepared));
         setMessage(readyMessage);
-      } catch {
-        setMessage('Não foi possível preparar esta foto. Escolha outra.');
+      } catch (error) {
+        setMessage(friendlyMediaError(error));
       }
     },
     markRemoved: () => {
@@ -93,7 +94,7 @@ export function EditorPhotoField({
             Sem foto
           </div>
         )}
-        <label className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-border bg-white px-4 text-sm font-bold text-ink">
+        <label className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-border bg-white px-4 text-sm font-bold text-ink focus-within:outline-hidden focus-within:ring-4 focus-within:ring-brand/30">
           <input
             accept="image/*"
             className="sr-only"
@@ -107,6 +108,9 @@ export function EditorPhotoField({
           Escolher foto
         </label>
       </div>
+      <p className="mt-2 text-xs text-muted">
+        Foto: JPG, PNG ou HEIC, até 15 MB. A foto nova só vai para o cardápio quando você salvar.
+      </p>
       {removal && photo.hasStoredPhoto ? (
         <div className="mt-2">
           <ConfirmDialog

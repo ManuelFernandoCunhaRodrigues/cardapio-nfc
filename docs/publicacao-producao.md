@@ -1,99 +1,114 @@
-# Roteiro de publicação em produção (Épico 6)
+# Publicação e demonstração
 
-Sequência para colocar o cardápio no ar pela primeira vez. Cada passo tem dono e critério de conferência. **Nada aqui roda sozinho**: produção só é tocada com autorização explícita do responsável.
+O Salgaê é um sistema de demonstração para clientes. A hospedagem é gratuita (Vercel Hobby e Supabase free), sem domínio próprio, e não há lançamento comercial. Este roteiro diz como os ambientes estão montados, como uma mudança chega à produção e o que conferir antes e depois de mostrar o sistema.
 
-Estado em 2026-10-10 (fim do dia):
+**Nada aqui roda sozinho na produção.** Promoção para a `main`, migration na produção e exclusões só acontecem com o "sim" do responsável.
 
-- **Banco:** `SALGAE-PRODUCTION` (`gqwtjrdfnkfitslolofg`) com as 5 migrations aplicadas, versões iguais às do repositório, e conferido contra a homologação por hash (colunas, 28 políticas, funções, restrições, permissões, buckets, índices, gatilhos e RLS idênticos). Advisors de segurança sem avisos. Sem dados além do registro padrão da loja.
-- **Código:** `main` recebeu a primeira promoção (PR #11).
-- **Vercel:** projeto `salgae-producao` conectado ao repositório, com as quatro variáveis de produção. Primeiro deploy de produção em 2026-10-10 (PR #13 + republicação após corrigir a chave publicável).
-- **No ar:** `https://salgae-producao.vercel.app`. Conferido após o deploy: todas as rotas públicas 200; `/admin` redireciona para o login; `robots.txt` com `Disallow: /admin` e home indexável; login `noindex`; os cinco cabeçalhos de segurança (HSTS sob HTTPS); cardápio lendo o banco de produção sem erros no log; QR Code em `docs/qr/salgae-producao-vercel-app.*` verificado.
-- **Pendente:** conteúdo real (o banco só tem o registro padrão da loja) e teste em celular real.
+## Estado em 2026-11-15
 
-Atualização em 2026-10-11:
+- **Supabase da produção:** restaurado em 2026-11-15, depois de ser pausado pelo plano gratuito.
+- **Código na produção:** a `main` está na promoção de 2026-11-04 (PR #83: API dentro do site, Next 16.4.3 e estrutura nova). O que entrou na `develop` depois disso (do #84 ao #100) ainda não foi promovido.
+- **Migration pendente na produção:** `20261115120000_product_sort_order_on_category_change` está aplicada só no stage. Ela precisa chegar à produção **antes** do merge da próxima promoção.
+- **Segredos do GitHub:** `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD_STAGE` e `SUPABASE_DB_PASSWORD_PRODUCAO` ainda não estão cadastrados. Sem eles, o workflow Migrations e a cópia semanal do banco falham de propósito e dizem o que falta.
+- **Ambientes no ar:** o workflow está na `develop`. O GitHub só roda agendamentos a partir da `main`, então o ping a cada 2 dias começa a valer depois da promoção.
+- **Projeto antigo da API:** o responsável excluiu o projeto Vercel `salgae-api-stage` em 2026-11-25, e os arquivos que só serviam a ele (`apps/api/src/index.ts`, `apps/api/vercel.json` e a entrada `index` do build da API) saíram do repositório.
+- **Conteúdo da produção:** na conferência de 2026-11-04 (nota 16 do vault) havia itens de teste, a categoria Bebidas escondida e a página Info sem contatos. Montar o conteúdo de exemplo é a onda 6 do plano (nota 27 do vault).
 
-- **Administrador:** a conta da lanchonete está ativa em produção desde 2026-10-10.
-- **Planos:** Vercel Hobby e Supabase gratuito, sem domínio próprio — o projeto é uma demonstração para clientes.
-- **Stage:** o responsável trocou a Production Branch do projeto `salgae-homologacao` para `develop`. A partir daqui, cada merge na `develop` publica `https://salgae-homologacao.vercel.app`.
+## Como os ambientes estão montados
 
-## 0. Pré-requisitos (decisões do responsável)
+| Ambiente | Branch | Projeto Vercel | Supabase | Endereço |
+| --- | --- | --- | --- | --- |
+| Stage | `develop` | `salgae-homologacao` | `SALGAE-STAGING` (`csirmtmerqpbhatruzaf`) | <https://salgae-homologacao.vercel.app> |
+| Produção | `main` | `salgae-producao` | `SALGAE-PRODUCTION` (`gqwtjrdfnkfitslolofg`) | <https://salgae-producao.vercel.app> |
 
-- [ ] Épico 5 mergeado na `develop` (H6 feito ou exceção registrada).
-- [ ] Plano da Vercel definido — o Hobby não permite uso comercial.
-- [ ] Endereço público definido (domínio próprio ou `*.vercel.app`). É o que vai gravado nas tags NFC e impresso nos QR Codes.
-- [ ] Plano do Supabase de produção definido (Free pausa após ~7 dias sem atividade).
-- [ ] E-mail(s) do administrador de produção.
-- [ ] Conteúdo real disponível: cardápio, preços, fotos e dados da loja.
+- **Um projeto Vercel por ambiente, com a API dentro do site.** O site chama a API no mesmo processo, e ela também responde em `/api`. Não existe projeto de API separado. A decisão está em `docs/planejamento/dois-projetos-por-ambiente.md`.
+- **Root Directory `apps/web`** nos dois projetos, com as funções em São Paulo (`"regions": ["gru1"]` em `apps/web/vercel.json`), perto do banco.
+- **Produção só gera build de produção.** O Ignored Build Step do `salgae-producao` é `[ "$VERCEL_ENV" != "production" ]`. As variáveis da produção existem só nesse ambiente; uma prévia de PR com elas usaria o banco de produção.
+- **Variáveis de cada projeto:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL` e `NEXT_PUBLIC_SITE_ENV` (`production` só na produção; sem ela, o site bloqueia buscadores). Nenhuma `service_role`. `API_URL` e `WEB_ORIGIN` não são usadas na Vercel.
+- **O build lê o banco.** As páginas públicas são geradas com os dados do Supabase. Se o banco estiver pausado, o deploy falha e o site continua na versão anterior.
+- **`/api/health`** consulta o banco e responde `{"status":"ok"}` com 200, ou 503 quando o banco não responde.
 
-## 1. Banco de produção
+## Workflows do GitHub e segredos
 
-> Desde 2026-10-13 existe o workflow **Migrations** do GitHub Actions, que aplica as migrations e reprova o PR para a `main` enquanto a produção não as tiver. Veja `docs/migrations-pelo-ci.md`. Os passos abaixo continuam valendo como conferência e como caminho manual.
+| Workflow | Quando roda | Segredos |
+| --- | --- | --- |
+| **CI** (`ci.yml`) | PR e push na `develop` e na `main` | Nenhum. Usa o Supabase local criado no próprio job. |
+| **Migrations** (`migrations.yml`) | Push na `develop` ou na `main` que mude migrations (aplica); PR para a `main` (só confere a produção); "Run workflow" com ambiente `stage` ou `producao` | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD_STAGE`, `SUPABASE_DB_PASSWORD_PRODUCAO`. Sem eles, falha. |
+| **Ambientes no ar** (`ambientes-no-ar.yml`) | A cada 2 dias, ping no `/api/health` do stage e da produção; aos domingos, cópia do banco da produção (artefato por 30 dias); também à mão | O ping não usa segredo. A cópia usa `SUPABASE_ACCESS_TOKEN` e `SUPABASE_DB_PASSWORD_PRODUCAO`. |
 
-1. Aplicar as migrations de `supabase/migrations/` **na ordem**, as mesmas já validadas em homologação:
-   - `20261008222757_initial_schema`
-   - `20261008225427_harden_rls`
-   - `20261008232020_store_settings`
-   - `20261009103822_product_badge`
-   - `20261009121148_media_storage`
-   - mais as que entrarem até a data da publicação.
-2. **Não** executar `supabase/seed.sql` em produção.
-3. Conferir: lista de migrations igual à de homologação; advisors de segurança sem erro; buckets `product-images`, `highlight-images` e `product-videos` criados.
-4. Rodar `supabase/tests/rls_regression.sql` (somente leitura/transação revertida) e comparar com o resultado de homologação.
+Os segredos ficam em Settings > Secrets and variables > Actions, e quem cadastra é o responsável. O passo a passo das migrations, inclusive o acerto único do histórico da produção, está em [Migrations pelo CI](migrations-pelo-ci.md).
 
-## 2. Primeiro administrador
+## Como uma mudança chega à produção
 
-Seguir "Promover o primeiro administrador" do `README.md`: criar o usuário em Authentication, criar o perfil inativo e só então promovê-lo. Não há promoção automática.
+1. PR para a `develop`, com o CI verde. O merge publica o stage.
+2. Conferir no stage o que mudou, no celular e no computador.
+3. **Se houver migration nova,** aplicá-la na produção antes do merge na `main`:
+   - com os segredos cadastrados: Actions > Migrations > Run workflow, branch `develop`, ambiente `producao`;
+   - sem os segredos: à mão, depois de uma cópia do banco.
 
-Em Authentication, conferir também: cadastro público desativado, Site URL e Redirect URLs apontando para o endereço de produção.
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref gqwtjrdfnkfitslolofg
+   npx supabase db dump -f copia-esquema.sql
+   npx supabase db dump --data-only -f copia-dados.sql
+   npx supabase db push
+   ```
 
-## 3. Projeto Vercel de produção
+   A migration precisa funcionar com o código que ainda está na produção, porque o banco muda antes.
+4. PR de promoção `develop` → `main`, com o "sim" do responsável. O merge publica a produção.
+5. Fazer a conferência de "Antes de uma demonstração" na produção.
 
-1. Criar o projeto ligado ao mesmo repositório, com **Production Branch = `main`**.
-2. Variáveis (somente as de produção):
-   - `NEXT_PUBLIC_SUPABASE_URL=https://gqwtjrdfnkfitslolofg.supabase.co`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY=<chave publicável de produção>`
-   - `NEXT_PUBLIC_SITE_ENV=production`
-   - `NEXT_PUBLIC_SITE_URL=<endereço público>`
-3. Nenhuma `service_role` em variável `NEXT_PUBLIC_`.
-4. No projeto de homologação: Production Branch = `develop` e `NEXT_PUBLIC_SITE_ENV=staging` (ou ausente).
+**Não** execute `supabase/seed.sql` na produção. O primeiro administrador é criado como está no `README.md` ("Primeiro administrador").
 
-## 4. Promoção do código
+## Antes de uma demonstração
 
-1. PR `develop` → `main`, com lint, typecheck, testes e build verdes no CI.
-2. Merge publica a produção.
-3. Se houver domínio próprio: adicionar na Vercel, configurar DNS e aguardar o certificado HTTPS.
+De preferência na véspera, porque reativar o banco leva alguns minutos.
 
-## 5. Conteúdo
+- [ ] **Supabase da produção ativo.** No painel do Supabase, se `SALGAE-PRODUCTION` estiver pausado, restaurar o projeto.
+- [ ] **`https://salgae-producao.vercel.app/api/health`** responde `{"status":"ok"}`.
+- [ ] **`/cardapio`** abre com fotos e preços, e nenhum item de teste aparece. Conferir também a Início, um produto com vídeo e a Info.
+- [ ] **Painel:** entrar em `/admin/login` com a conta de administrador da produção e abrir o Resumo, Produtos e Loja.
+- [ ] **Loja** em **Seguir os horários abaixo**, sem abertura ou fechamento manual esquecido.
+- [ ] **QR Code** (`docs/qr/salgae-producao-vercel-app.png`) abre o cardápio pela câmera do celular.
+- [ ] Abrir o cardápio num celular com rede móvel.
 
-Cadastrar pelo painel de produção: dados da loja e horários, categorias, produtos com foto, destaques. Conferir no celular que nenhum item de teste ficou visível.
+## Durante a demonstração
 
-## 6. NFC e QR Code
+Uma ordem que mostra o sistema inteiro:
 
-1. Gerar o QR de produção: `npm run qr:gerar -- <endereço público>` e conferir com `npm run qr:verificar`.
-2. Gravar as tags (NTAG213/215) com a URL de produção pelo app *NFC Tools* e **travar a gravação** só depois de testar.
-3. Testar cada tag e cada QR impresso com pelo menos dois celulares (Android e iPhone).
+1. **Cliente:** QR Code → Início (destaques e categorias) → Cardápio → produto com vídeo → Busca → Info.
+2. **Painel:** mudar o preço de um produto e ver no cardápio; marcar um item como **Em falta hoje**; esconder e mostrar uma categoria; fechar e abrir a loja pela pílula do topo.
 
-## 7. Checklist pós-publicação
+Anote cada alteração, para desfazer depois. No editor de produto, não use o botão Voltar do navegador: ele não pergunta antes de descartar o que não foi salvo (limite conhecido).
 
-Repetir em produção o checklist de `12-Seguranca-e-Qualidade` (vault):
+## Depois da demonstração
 
-- [ ] URL NFC e QR Code apontam para produção.
-- [ ] Produção usa somente credenciais de produção.
-- [ ] Administrador entra; visitante é redirecionado de `/admin` para o login.
-- [ ] Produto ativo aparece; inativo não.
-- [ ] Indisponível aparece esmaecido com selo.
-- [ ] Troca de foto não quebra o cardápio.
-- [ ] Vídeo só carrega no detalhe, sem som.
-- [ ] Cardápio abre bem no celular com rede móvel.
-- [ ] `robots.txt` de produção permite o cardápio e bloqueia `/admin`; o de homologação bloqueia tudo.
+- [ ] Desfazer o que foi alterado: preços, situações, categorias e destaques.
+- [ ] Apagar o que foi criado só para mostrar.
+- [ ] Voltar a Loja para **Seguir os horários abaixo**.
+- [ ] Conferir `/cardapio` de novo.
+- [ ] Sair do painel no aparelho usado.
 
-## 8. Rollback
+## O que não se aplica à demonstração
 
-- **Código:** na Vercel, promover o deploy anterior estável (Deployments → Promote to Production) e depois reverter o PR no Git.
-- **Backup:** no plano Free do Supabase não há backup diário automático; até mudar de plano, o backup é manual (`pg_dump`) e deve entrar na rotina técnica.
-- **Banco:** migrations não têm "desfazer" automático. Antes de qualquer migration em produção com dados reais, fazer backup (`pg_dump` ou backup do painel) e ter o SQL de reversão revisado.
-- Toda correção de urgência entra pelo Git e é sincronizada com a `develop`.
+Itens do roteiro antigo de lançamento que não valem para este propósito:
 
-## 9. Orientação da equipe
+- plano pago da Vercel ou do Supabase;
+- domínio próprio;
+- gravação e trava de tags NFC no estabelecimento;
+- orientação de uma equipe de loja real (o `docs/guia-da-equipe.md` serve como material para o cliente).
 
-Entregar e percorrer com a equipe o `docs/guia-da-equipe.md`, substituindo o endereço do painel pelo de produção.
+## Se algo der errado
+
+- **Código:** na Vercel, Deployments → promover o deploy anterior estável. Depois, reverter o PR no Git e sincronizar a `develop`.
+- **Banco:** o plano gratuito não tem backup diário. A cópia semanal do workflow Ambientes no ar só existe com os segredos cadastrados e o workflow na `main`; até lá, fazer a cópia à mão (comandos acima) antes de qualquer mudança no banco da produção. Migrations não têm "desfazer" automático.
+- **Fotos e vídeos** do Storage não entram na cópia do banco.
+
+## QR Code
+
+O QR da produção está em `docs/qr/salgae-producao-vercel-app.png` e `.svg`. Para gerar de novo:
+
+```bash
+npm run qr:gerar -- https://salgae-producao.vercel.app
+npm run qr:verificar -- https://salgae-producao.vercel.app
+```

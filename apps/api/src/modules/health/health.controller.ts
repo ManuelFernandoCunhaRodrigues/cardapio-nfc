@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 
+import { errorResponse } from '../../shared/http';
 import type { AppHonoEnv } from '../../shared/types';
 import type { HealthService } from './health.service';
 
@@ -8,6 +9,6 @@ export function createHealthController(service: HealthService) {
     const isHealthy = await service.isHealthy();
     return isHealthy
       ? context.json({ status: 'ok' as const })
-      : context.json({ status: 'error' as const, message: 'Serviço indisponível.' }, 503);
+      : errorResponse(context, 503, 'Serviço indisponível.');
   };
 }

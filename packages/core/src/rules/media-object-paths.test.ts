@@ -13,4 +13,8 @@ describe('mediaObjectPaths', () => {
   it('mantém um arquivo único quando o caminho já tem extensão', () => {
     expect(mediaObjectPaths('products/video.mp4')).toEqual(['products/video.mp4']);
   });
+
+  it('preserva o caminho de uma imagem legada', () => {
+    expect(mediaObjectPaths('products/id/legacy.jpg')).toEqual(['products/id/legacy.jpg']);
+  });
 });

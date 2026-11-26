@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { errorHandler } from '../../shared/http/error-handler';
 import type { AppHonoEnv } from '../../shared/types';
 import { adminRequest, fakeAdminClients } from '../../test-support/admin-clients';
+import { itRequiresAdmin } from '../../test-support/admin-only-routes';
 import { createHighlightsController } from './highlights.controller';
 import { createHighlightsRoutes } from './highlights.routes';
 import { HighlightsService, type HighlightRepository } from './highlights.service';
@@ -47,6 +48,16 @@ function testApp(repository = fakeRepository()) {
 }
 
 describe('rotas de destaques do painel', () => {
+  itRequiresAdmin(() => testApp(), [
+    ['POST', '/v1/admin/highlights'],
+    ['PUT', `/v1/admin/highlights/${highlightId}`],
+    ['PUT', `/v1/admin/highlights/${highlightId}/active`],
+    ['POST', `/v1/admin/highlights/${highlightId}/order`],
+    ['POST', `/v1/admin/highlights/${highlightId}/image`],
+    ['DELETE', `/v1/admin/highlights/${highlightId}/image`],
+    ['DELETE', `/v1/admin/highlights/${highlightId}`],
+  ] as const);
+
   it('exigem token de admin', async () => {
     const response = await testApp().request('/v1/admin/highlights', { method: 'POST' });
 
@@ -99,6 +110,19 @@ describe('rotas de destaques do painel', () => {
       highlightId,
       '44444444-4444-4444-8444-444444444444',
     );
+  });
+
+  it('POST /:id/order responde 404 para destaque apagado em outra aba', async () => {
+    const repository = fakeRepository();
+
+    const response = await testApp(repository).request(
+      '/v1/admin/highlights/55555555-5555-4555-8555-555555555555/order',
+      adminRequest('POST', { direction: 'up' }),
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ message: 'Destaque não encontrado.' });
+    expect(repository.swapSortOrders).not.toHaveBeenCalled();
   });
 
   it('corpo que não é JSON responde 400', async () => {

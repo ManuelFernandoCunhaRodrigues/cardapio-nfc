@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ValidationError } from '../../shared/errors/domain-errors';
+import { ConflictError, NotFoundError, ValidationError } from '../../shared/errors/domain-errors';
 import { UniqueViolationError } from '../../shared/errors/persistence-errors';
 import { ProductsService, type ProductRepository } from './products.service';
 
@@ -35,6 +35,38 @@ function fakeRepository(overrides: Partial<ProductRepository> = {}): ProductRepo
 }
 
 describe('ProductsService', () => {
+  it('mover produto que trocou de categoria em outra aba responde conflito, não 404', async () => {
+    const otherCategory = '33333333-3333-4333-8333-333333333333';
+    const findCategoryId = vi
+      .fn<ProductRepository['findCategoryId']>()
+      .mockResolvedValueOnce(categoryId)
+      .mockResolvedValue(otherCategory);
+    const repository = fakeRepository({
+      findCategoryId,
+      listSortOrders: async () => [{ id: 'outro', sort_order: 1 }],
+    });
+
+    const move = new ProductsService(repository).moveProduct(productId, { direction: 'up' });
+
+    await expect(move).rejects.toBeInstanceOf(ConflictError);
+    await expect(move).rejects.toThrow('mudou de categoria');
+  });
+
+  it('mover produto apagado em outra aba segue respondendo 404', async () => {
+    const findCategoryId = vi
+      .fn<ProductRepository['findCategoryId']>()
+      .mockResolvedValueOnce(categoryId)
+      .mockResolvedValue(null);
+    const repository = fakeRepository({
+      findCategoryId,
+      listSortOrders: async () => [{ id: 'outro', sort_order: 1 }],
+    });
+
+    await expect(
+      new ProductsService(repository).moveProduct(productId, { direction: 'up' }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
   it('traduz slug repetido em conflito com erro no campo slug', async () => {
     const repository = fakeRepository({
       create: async () => {
@@ -67,6 +99,20 @@ describe('ProductsService', () => {
     expect(error).toMatchObject({
       message: 'Informe um preço válido, como R$ 8,90.',
       fieldErrors: { price: ['Informe um preço válido, como R$ 8,90.'] },
+    });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('recusa preço acima do teto antes de chegar ao banco', async () => {
+    const create = vi.fn(async () => productId);
+
+    const error = await new ProductsService(fakeRepository({ create }))
+      .createProduct({ ...input, price: 'R$ 30.000.000,00' })
+      .catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(ValidationError);
+    expect(error).toMatchObject({
+      fieldErrors: { price: ['O preço máximo é R$ 99.999,99. Confira se não sobrou um zero.'] },
     });
     expect(create).not.toHaveBeenCalled();
   });

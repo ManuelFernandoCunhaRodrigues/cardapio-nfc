@@ -11,7 +11,7 @@ export const publicApiPaths = {
 } as const;
 
 export const menuCategorySchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   name: z.string(),
   slug: z.string(),
   image_path: z.string().nullable(),
@@ -19,7 +19,7 @@ export const menuCategorySchema = z.object({
 });
 
 export const menuHighlightSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   title: z.string(),
   description: z.string().nullable(),
   image_path: z.string().nullable(),

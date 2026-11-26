@@ -1,7 +1,6 @@
 'use client';
 
 import { useActionState, useCallback, useRef, useState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import * as m from 'motion/react-m';
 
@@ -13,6 +12,8 @@ import {
   toggleCategory,
   updateCategory,
 } from '@/features/categories/server/actions';
+import { useFocusFirstInvalid } from '@/features/admin/client/use-focus-first-invalid';
+import { fieldDefaults } from '@/features/admin/rules/submitted-values';
 import { usePhotoAfterSave } from '@/features/media/client/use-photo-after-save';
 import { EditorPhotoField, useEditorPhoto } from '@/features/media/components/editor-photo-field';
 import { MediaImage } from '@/features/media/components/media-image';
@@ -23,12 +24,23 @@ import { listReorder } from '@/components/motion/motion-primitives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { AdminCategory } from '@salgae/core/contracts/admin-api';
-import { slugifyPtBr } from '@salgae/core/rules/slug';
+import {
+  categoryFormMessage,
+  categoryNameError,
+  categorySlugFor,
+} from '@/features/categories/rules/category-form';
+import {
+  deleteCategoryBlockReason,
+  hideCategoryWarning,
+} from '@/features/categories/rules/category-impact';
 
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
-import { AdminSheet } from '@/features/admin/components/admin-sheet';
+import { EditorSubmitButton } from '@/features/admin/components/editor-submit-button';
+import { AdminSheet, useAdminSheetClose } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
+import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
+import { removeSearchParam } from '@/features/admin/client/remove-search-param';
 
 const INITIAL: CategoryActionState = { status: 'idle' };
 
@@ -39,111 +51,56 @@ function uploadPhoto(categoryId: string, image: File) {
   return uploadCategoryImage(initialMediaActionState, formData);
 }
 
-function SubmitButton({ editing }: Readonly<{ editing: boolean }>) {
-  const { pending } = useFormStatus();
-  return (
-    <Button className="w-full" disabled={pending} type="submit">
-      {pending ? 'Salvando…' : editing ? 'Salvar categoria' : 'Criar categoria'}
-    </Button>
-  );
-}
-
-function QuickAction({
-  action,
-  values,
-  label,
-  icon,
-  disabled = false,
-}: Readonly<{
-  action: (state: CategoryActionState, formData: FormData) => Promise<CategoryActionState>;
-  values: Record<string, string>;
-  label: string;
-  icon?: 'up' | 'down';
-  disabled?: boolean;
-}>) {
-  const [state, formAction] = useActionState(action, INITIAL);
-  return (
-    <form action={formAction}>
-      {Object.entries(values).map(([name, value]) => (
-        <input key={name} name={name} type="hidden" value={value} />
-      ))}
-      <button
-        aria-label={label}
-        className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-border bg-white px-3 text-xs font-bold text-ink disabled:opacity-40"
-        disabled={disabled}
-        type="submit"
-      >
-        {icon ? <AdminIcon name={icon} /> : label}
-      </button>
-      <span
-        aria-live="polite"
-        className="sr-only"
-        role={state.status === 'error' ? 'alert' : 'status'}
-      >
-        {state.message}
-      </span>
-      {state.status === 'error' ? (
-        <AdminNotice className="mt-2" kind="error" message={state.message} />
-      ) : null}
-    </form>
-  );
-}
-
 function CategoryEditor({
   category,
-  onClose,
   onSaved,
 }: Readonly<{
   category: AdminCategory | null;
-  onClose: () => void;
   onSaved: (message: string, kind: 'success' | 'error') => void;
 }>) {
+  const requestClose = useAdminSheetClose();
   const editing = Boolean(category);
   const [createState, createAction] = useActionState(createCategory, INITIAL);
   const [updateState, updateAction] = useActionState(updateCategory, INITIAL);
   const state = editing ? updateState : createState;
   const [name, setName] = useState(category?.name ?? '');
-  const [slug, setSlug] = useState(category?.slug ?? '');
-  const [addressEdited, setAddressEdited] = useState(Boolean(category));
   const photo = useEditorPhoto(
     getPublicImageVariantUrl('product-images', category?.image_path, 'card'),
     'Foto pronta para salvar junto com a categoria.',
   );
-  const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
-  usePhotoAfterSave({ saveState: state, file: photo.file, upload: uploadPhoto, onSaved });
+  const formRef = useRef<HTMLFormElement>(null);
+  const defaults = fieldDefaults(state.values);
+  useFocusFirstInvalid(formRef, state);
+  const { uploadingPhoto } = usePhotoAfterSave({
+    saveState: state,
+    file: photo.file,
+    upload: uploadPhoto,
+    onSaved,
+  });
   return (
-    <form action={editing ? updateAction : createAction} className="space-y-4" noValidate>
+    <form
+      action={editing ? updateAction : createAction}
+      className="space-y-4"
+      noValidate
+      ref={formRef}
+    >
       {category ? <input name="id" type="hidden" value={category.id} /> : null}
       <Input
-        error={errorFor('name')}
+        error={categoryNameError(state.fieldErrors)}
         label="Nome"
         name="name"
-        onChange={(event) => {
-          setName(event.target.value);
-          if (!addressEdited) setSlug(slugifyPtBr(event.target.value));
-        }}
+        onChange={(event) => setName(event.target.value)}
         required
         value={name}
       />
-      <Input
-        error={errorFor('slug')}
-        label="Endereço curto no cardápio"
-        name="slug"
-        onChange={(event) => {
-          setAddressEdited(true);
-          setSlug(slugifyPtBr(event.target.value));
-        }}
-        required
-        value={slug}
-      />
-      <p className="-mt-2 text-xs text-muted">Usado no link direto para esta categoria.</p>
+      <input name="slug" type="hidden" value={categorySlugFor(name, category?.slug ?? null)} />
       <div className="space-y-1.5">
         <label className="block text-sm font-bold text-ink" htmlFor="category-description">
           Descrição
         </label>
         <textarea
           className="min-h-24 w-full rounded-xl border border-border bg-surface-inner px-3.5 py-3 text-sm text-ink focus:outline-hidden focus:ring-4 focus:ring-brand/20"
-          defaultValue={category?.description ?? ''}
+          defaultValue={defaults.text('description', category?.description ?? '')}
           id="category-description"
           maxLength={500}
           name="description"
@@ -153,7 +110,7 @@ function CategoryEditor({
         Categoria visível
         <input
           className="size-5 accent-green"
-          defaultChecked={category?.is_active ?? true}
+          defaultChecked={defaults.checked('is_active', category?.is_active ?? true)}
           name="is_active"
           role="switch"
           type="checkbox"
@@ -178,10 +135,13 @@ function CategoryEditor({
         title="Foto da categoria"
       />
       {/* O sucesso fecha a gaveta e aparece no aviso da lista; aqui fica só o erro. */}
-      <AdminNotice kind="error" message={state.status === 'error' ? state.message : undefined} />
-      <SubmitButton editing={editing} />
+      <AdminNotice kind="error" message={categoryFormMessage(state)} />
+      <EditorSubmitButton
+        label={editing ? 'Salvar categoria' : 'Criar categoria'}
+        uploadingPhoto={uploadingPhoto}
+      />
       {editing ? (
-        <Button className="w-full" onClick={onClose} type="button" variant="neutral">
+        <Button className="w-full" onClick={requestClose} type="button" variant="neutral">
           Cancelar
         </Button>
       ) : null}
@@ -199,16 +159,23 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
     setSelected(category);
     setOpen(true);
   };
-  const onSaved = useCallback((message: string, kind: 'success' | 'error') => {
-    setNotice({
-      kind,
-      message:
-        kind === 'error' ? `Categoria salva, mas a foto não foi enviada. ${message}` : message,
-    });
+  const closeEditor = useCallback(() => {
     setOpen(false);
+    removeSearchParam('nova');
   }, []);
+  const onSaved = useCallback(
+    (message: string, kind: 'success' | 'error') => {
+      setNotice({
+        kind,
+        message:
+          kind === 'error' ? `Categoria salva, mas a foto não foi enviada. ${message}` : message,
+      });
+      closeEditor();
+    },
+    [closeEditor],
+  );
   return (
-    <>
+    <QuickActionGroup>
       <header className="mb-5 flex items-end justify-between gap-3">
         <div>
           <h1
@@ -226,79 +193,107 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
         </Button>
       </header>
       <AdminNotice className="mb-4" kind={notice?.kind ?? 'success'} message={notice?.message} />
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {categories.map((category, index) => (
-          <m.article
-            {...listReorder}
-            className="rounded-card bg-white p-4 shadow-card"
-            key={category.id}
-          >
-            <button
-              className="min-h-11 w-full text-left"
-              onClick={() => edit(category)}
-              type="button"
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {categories.map((category, index) => {
+          const hideWarning = category.is_active
+            ? hideCategoryWarning(category.product_count)
+            : null;
+          const deleteBlocked = deleteCategoryBlockReason(category.product_count);
+          const deleteHintId = `excluir-${category.id}`;
+          return (
+            <m.article
+              {...listReorder}
+              className="rounded-card bg-white p-4 shadow-card"
+              key={category.id}
             >
-              <span className="flex items-start justify-between gap-3">
-                <span className="flex min-w-0 items-center gap-3">
-                  {category.image_path ? (
-                    <MediaImage
-                      alt=""
-                      className="size-11 shrink-0 rounded-full"
-                      name={category.name}
-                      src={getPublicImageVariantUrl('product-images', category.image_path, 'card')}
-                    />
-                  ) : null}
-                  <span>
-                    <strong className="block font-[family-name:var(--font-poppins)] text-lg text-ink">
-                      {category.name}
-                    </strong>
-                    <span className="mt-1 block text-xs text-muted">
-                      {category.product_count}{' '}
-                      {category.product_count === 1 ? 'produto' : 'produtos'} · posição {index + 1}
+              <button
+                className="min-h-11 w-full text-left"
+                onClick={() => edit(category)}
+                type="button"
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="flex min-w-0 items-center gap-3">
+                    {category.image_path ? (
+                      <MediaImage
+                        alt=""
+                        className="size-11 shrink-0 rounded-full"
+                        name={category.name}
+                        src={getPublicImageVariantUrl(
+                          'product-images',
+                          category.image_path,
+                          'card',
+                        )}
+                      />
+                    ) : null}
+                    <span>
+                      <strong className="block font-[family-name:var(--font-poppins)] text-lg text-ink">
+                        {category.name}
+                      </strong>
+                      <span className="mt-1 block text-xs text-muted">
+                        {category.product_count}{' '}
+                        {category.product_count === 1 ? 'produto' : 'produtos'} · posição{' '}
+                        {index + 1}
+                      </span>
                     </span>
                   </span>
+                  <span
+                    className={`rounded-full px-2 py-1 text-[10px] font-bold ${category.is_active ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}
+                  >
+                    {category.is_active ? 'VISÍVEL' : 'ESCONDIDA'}
+                  </span>
                 </span>
-                <span
-                  className={`rounded-full px-2 py-1 text-[10px] font-bold ${category.is_active ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}
-                >
-                  {category.is_active ? 'VISÍVEL' : 'ESCONDIDA'}
-                </span>
-              </span>
-            </button>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button onClick={() => edit(category)} variant="neutral">
-                <AdminIcon className="mr-2" name="edit" />
-                Editar
-              </Button>
-              <QuickAction
-                action={toggleCategory}
-                label={category.is_active ? 'Esconder' : 'Mostrar'}
-                values={{ id: category.id, is_active: String(!category.is_active) }}
-              />
-              <QuickAction
-                action={reorderCategory}
-                disabled={index === 0}
-                icon="up"
-                label={`Subir ${category.name}`}
-                values={{ id: category.id, direction: 'up' }}
-              />
-              <QuickAction
-                action={reorderCategory}
-                disabled={index === categories.length - 1}
-                icon="down"
-                label={`Descer ${category.name}`}
-                values={{ id: category.id, direction: 'down' }}
-              />
-              <ConfirmDialog
-                action={deleteCategory}
-                description="Se houver produtos nesta categoria, mova-os antes ou apenas esconda a categoria."
-                entityId={category.id}
-                fallbackFocusRef={titleRef}
-                title={`Excluir ${category.name}?`}
-              />
-            </div>
-          </m.article>
-        ))}
+              </button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button onClick={() => edit(category)} variant="neutral">
+                  <AdminIcon className="mr-2" name="edit" />
+                  Editar
+                </Button>
+                <QuickAction
+                  action={toggleCategory}
+                  confirm={
+                    hideWarning
+                      ? {
+                          confirmLabel: 'Esconder',
+                          description: hideWarning,
+                          title: `Esconder ${category.name}?`,
+                        }
+                      : undefined
+                  }
+                  label={category.is_active ? 'Esconder' : 'Mostrar'}
+                  values={{ id: category.id, is_active: String(!category.is_active) }}
+                />
+                <QuickAction
+                  action={reorderCategory}
+                  disabled={index === 0}
+                  icon="up"
+                  label={`Subir ${category.name}`}
+                  values={{ id: category.id, direction: 'up' }}
+                />
+                <QuickAction
+                  action={reorderCategory}
+                  disabled={index === categories.length - 1}
+                  icon="down"
+                  label={`Descer ${category.name}`}
+                  values={{ id: category.id, direction: 'down' }}
+                />
+                <ConfirmDialog
+                  action={deleteCategory}
+                  description="A categoria sai do painel e do cardápio."
+                  disabled={Boolean(deleteBlocked)}
+                  entityId={category.id}
+                  fallbackFocusRef={titleRef}
+                  title={`Excluir ${category.name}?`}
+                  triggerDescribedBy={deleteBlocked ? deleteHintId : undefined}
+                />
+              </div>
+              {deleteBlocked ? (
+                <p className="mt-2 text-xs text-muted" id={deleteHintId}>
+                  {deleteBlocked}
+                </p>
+              ) : null}
+            </m.article>
+          );
+        })}
         {!categories.length ? (
           <AdminNotice
             kind="info"
@@ -307,17 +302,12 @@ export function CategoryManager({ categories }: Readonly<{ categories: AdminCate
         ) : null}
       </div>
       <AdminSheet
-        onClose={() => setOpen(false)}
+        onClose={closeEditor}
         open={open}
         title={selected ? 'Editar categoria' : 'Nova categoria'}
       >
-        <CategoryEditor
-          category={selected}
-          key={selected?.id ?? 'new'}
-          onClose={() => setOpen(false)}
-          onSaved={onSaved}
-        />
+        <CategoryEditor category={selected} key={selected?.id ?? 'new'} onSaved={onSaved} />
       </AdminSheet>
-    </>
+    </QuickActionGroup>
   );
 }

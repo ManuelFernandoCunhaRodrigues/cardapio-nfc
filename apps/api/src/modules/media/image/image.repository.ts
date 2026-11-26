@@ -1,5 +1,5 @@
 import type { AppSupabaseClient } from '../../../shared/supabase/supabase-client-factory';
-import type { ImageRepository, ImageTarget } from './image.service';
+import type { ImagePathChange, ImageRepository, ImageTarget } from './image.service';
 import type { CompressedImage } from './image-compressor';
 
 const targetBuckets: Record<ImageTarget, string> = {
@@ -8,6 +8,19 @@ const targetBuckets: Record<ImageTarget, string> = {
   // O círculo da categoria usa o mesmo bucket das fotos de produto, na subpasta `categories/`.
   category: 'product-images',
 };
+
+type ImagePathFilter<Query> = {
+  eq(column: 'image_path', value: string): Query;
+  is(column: 'image_path', value: null): Query;
+};
+
+/** Condição da troca otimista: `image_path` ainda é o que a requisição leu no começo. */
+function whereImagePathIs<Query extends ImagePathFilter<Query>>(
+  query: Query,
+  current: string | null,
+): Query {
+  return current === null ? query.is('image_path', null) : query.eq('image_path', current);
+}
 
 export class SupabaseImageRepository implements ImageRepository {
   constructor(private readonly supabase: AppSupabaseClient) {}
@@ -44,21 +57,30 @@ export class SupabaseImageRepository implements ImageRepository {
     }
   }
 
-  async setImagePath(target: ImageTarget, id: string, imagePath: string | null) {
-    const { data, error } = await this.updateImagePath(target, id, imagePath);
+  async replaceImagePath(target: ImageTarget, id: string, change: ImagePathChange) {
+    const { data, error } = await this.updateImagePathIfCurrent(target, id, change);
     if (error) throw error;
     return data.length > 0;
   }
 
-  private updateImagePath(target: ImageTarget, id: string, imagePath: string | null) {
-    const change = { image_path: imagePath };
+  private updateImagePathIfCurrent(target: ImageTarget, id: string, { from, to }: ImagePathChange) {
+    const change = { image_path: to };
     switch (target) {
       case 'product':
-        return this.supabase.from('products').update(change).eq('id', id).select('id');
+        return whereImagePathIs(
+          this.supabase.from('products').update(change).eq('id', id),
+          from,
+        ).select('id');
       case 'highlight':
-        return this.supabase.from('highlights').update(change).eq('id', id).select('id');
+        return whereImagePathIs(
+          this.supabase.from('highlights').update(change).eq('id', id),
+          from,
+        ).select('id');
       case 'category':
-        return this.supabase.from('categories').update(change).eq('id', id).select('id');
+        return whereImagePathIs(
+          this.supabase.from('categories').update(change).eq('id', id),
+          from,
+        ).select('id');
     }
   }
 

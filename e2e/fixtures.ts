@@ -1,11 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { expect as baseExpect, test as base } from '@playwright/test';
+import { expect as baseExpect, test as base, type Page } from '@playwright/test';
 
 import type { Database } from '@salgae/core/database/database.types';
 import { watchCspViolations } from './csp';
 import { requiredEnv } from './env';
 
-export type { APIRequestContext, Page } from '@playwright/test';
+export type { APIRequestContext, Page, Request } from '@playwright/test';
 
 type CleanupTable = 'products' | 'highlights' | 'categories';
 type StoreSettings = Database['public']['Tables']['store_settings']['Row'];
@@ -45,7 +45,42 @@ export async function withStoreSettingsRestored<T>(
   }
 }
 
+/** Conteúdo em streaming ainda escondido, à espera de o React trocá-lo pelo `loading.tsx`. */
+const PENDING_STREAMED_CONTENT = 'body > div[hidden][id^="S:"]';
+const STREAMING_REVEAL_TIMEOUT_MS = 5_000;
+
+/**
+ * Depois do evento `load`, o conteúdo das páginas com `loading.tsx` ainda pode estar numa cópia
+ * escondida (`<div hidden id="S:0">`), e o React mais novo do Next 16.4.6 adia a troca por alguns
+ * instantes. Nesse intervalo cada elemento existe duas vezes no DOM, e os localizadores estritos que
+ * não usam papel acessível acham dois. Esperar a troca aqui vale para todos os testes. Se a cópia
+ * não sumir no prazo (raro), o teste segue e os localizadores decidem.
+ */
+async function waitForStreamedContentReveal(page: Page) {
+  await page
+    .waitForFunction((selector) => !document.querySelector(selector), PENDING_STREAMED_CONTENT, {
+      timeout: STREAMING_REVEAL_TIMEOUT_MS,
+    })
+    .catch(() => undefined);
+}
+
 export const test = base.extend<Fixtures>({
+  page: async ({ page }, provideFixture) => {
+    const goto = page.goto.bind(page);
+    const reload = page.reload.bind(page);
+    page.goto = async (...args) => {
+      const response = await goto(...args);
+      await waitForStreamedContentReveal(page);
+      return response;
+    };
+    page.reload = async (...args) => {
+      const response = await reload(...args);
+      await waitForStreamedContentReveal(page);
+      return response;
+    };
+    await provideFixture(page);
+  },
+
   cspCheck: [
     async ({ page }, provideFixture) => {
       const violations = watchCspViolations(page);

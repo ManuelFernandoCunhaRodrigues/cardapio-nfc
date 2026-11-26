@@ -5,18 +5,32 @@ import { mediaObjectPaths } from '@salgae/core/rules/media-object-paths';
 import {
   ConflictError,
   NotFoundError,
+  PayloadTooLargeError,
+  UnsupportedMediaTypeError,
   ValidationError,
 } from '../../../shared/errors/domain-errors';
 import { reportServerError } from '../../../shared/observability';
-import { ImageTooSmallError, InvalidImageError, type CompressedImage } from './image-compressor';
+import {
+  ImageResolutionTooHighError,
+  ImageTooLargeError,
+  ImageTooSmallError,
+  InvalidImageError,
+  UnsupportedImageFormatError,
+  type CompressedImage,
+} from './image-compressor';
+import { removeMediaIfUnused } from '../remove-media-if-unused';
 
 export type ImageTarget = 'product' | 'highlight' | 'category';
 
 type MediaRecord = { imagePath: string | null; videoPath?: string | null };
 
+/** Troca condicional: só grava `to` se o registro ainda aponta para `from`. */
+export type ImagePathChange = { from: string | null; to: string | null };
+
 export interface ImageRepository {
   findRecord(target: ImageTarget, id: string): Promise<MediaRecord | null>;
-  setImagePath(target: ImageTarget, id: string, imagePath: string | null): Promise<boolean>;
+  /** Devolve `false` quando o registro sumiu ou a foto já foi trocada por outra requisição. */
+  replaceImagePath(target: ImageTarget, id: string, change: ImagePathChange): Promise<boolean>;
   uploadVariants(target: ImageTarget, basePath: string, image: CompressedImage): Promise<void>;
   removeFiles(target: ImageTarget, paths: string[]): Promise<void>;
   isImageInUse(imagePath: string): Promise<boolean>;
@@ -25,13 +39,19 @@ export interface ImageRepository {
 export type ImageCompressor = (input: Buffer) => Promise<CompressedImage>;
 
 const messages = {
-  missing: 'Escolha uma foto antes de enviar.',
   invalid: 'Este arquivo não é uma imagem válida. Escolha outra foto.',
   tooSmall: 'Escolha uma foto com pelo menos 400 px no menor lado.',
+  unsupportedFormat:
+    'Fotos HEIC/HEIF (padrão do iPhone) não são aceitas. Envie a foto em JPEG, PNG ou WebP.',
+  resolutionTooHigh: 'A foto tem pixels demais (máximo de 40 megapixels). Reduza e envie de novo.',
+  tooLarge:
+    'Não foi possível deixar esta foto com menos de 1 MB. Recorte a imagem ou escolha outra foto.',
   productHasVideo: 'Remova o vídeo antes de remover a foto de capa.',
-  linkFailed:
-    'A foto foi validada, mas não pôde ser vinculada ao item. A foto anterior foi mantida.',
+  changedElsewhere:
+    'A foto deste item foi alterada em outra aba ou aparelho. Recarregue a página e tente de novo.',
 };
+
+const NEVER_CANCELLED = new AbortController().signal;
 
 const targetSettings: Record<ImageTarget, { folder: string; notFound: string; noImage: string }> = {
   product: {
@@ -51,46 +71,124 @@ const targetSettings: Record<ImageTarget, { folder: string; notFound: string; no
   },
 };
 
+function translateCompressionError(error: unknown): unknown {
+  if (error instanceof ImageTooSmallError) return new ValidationError(messages.tooSmall);
+  if (error instanceof InvalidImageError) return new ValidationError(messages.invalid);
+  if (error instanceof UnsupportedImageFormatError) {
+    return new UnsupportedMediaTypeError(messages.unsupportedFormat);
+  }
+  if (error instanceof ImageResolutionTooHighError) {
+    return new PayloadTooLargeError(messages.resolutionTooHigh);
+  }
+  if (error instanceof ImageTooLargeError) return new PayloadTooLargeError(messages.tooLarge);
+  return error;
+}
+
 export class ImageService {
   constructor(
     private readonly repository: ImageRepository,
     private readonly compress: ImageCompressor,
   ) {}
 
-  async upload(target: ImageTarget, id: string, file: File): Promise<string> {
-    if (!file.size) throw new ValidationError(messages.missing);
+  /**
+   * Sobe a foto nova, vincula ao registro e só então apaga a antiga. Se a requisição for cancelada
+   * (timeout) antes do vínculo, desiste e apaga o que subiu; depois do vínculo, vai até o fim.
+   */
+  async upload(
+    target: ImageTarget,
+    id: string,
+    file: File,
+    signal: AbortSignal = NEVER_CANCELLED,
+  ): Promise<string> {
     const current = await this.requireRecord(target, id);
     const compressed = await this.compressFile(file);
+    signal.throwIfAborted();
     const basePath = `${targetSettings[target].folder}/${id}/${randomUUID()}`;
     await this.repository.uploadVariants(target, basePath, compressed);
-    try {
-      if (!(await this.repository.setImagePath(target, id, basePath)))
-        throw new Error('record_missing');
-    } catch {
-      await this.removeStaged(target, basePath);
-      throw new ConflictError(messages.linkFailed);
-    }
+    await this.linkStaged(target, id, { from: current.imagePath, to: basePath }, signal);
     await this.removeIfUnused(target, current.imagePath);
     return basePath;
   }
 
-  async remove(target: ImageTarget, id: string): Promise<void> {
+  async remove(
+    target: ImageTarget,
+    id: string,
+    signal: AbortSignal = NEVER_CANCELLED,
+  ): Promise<void> {
     const current = await this.requireRecord(target, id);
     if (target === 'product' && current.videoPath)
       throw new ConflictError(messages.productHasVideo);
     if (!current.imagePath) throw new ConflictError(targetSettings[target].noImage);
-    if (!(await this.repository.setImagePath(target, id, null)))
-      throw new NotFoundError(targetSettings[target].notFound);
+    signal.throwIfAborted();
+    const change = { from: current.imagePath, to: null };
+    if (!(await this.repository.replaceImagePath(target, id, change))) {
+      throw await this.lostReplaceError(target, id);
+    }
     await this.removeIfUnused(target, current.imagePath);
+  }
+
+  /**
+   * Qualquer falha antes ou durante o vínculo apaga os arquivos novos: nada fica órfão. A exceção
+   * é a resposta da troca que se perde depois de gravada: o registro já aponta para a foto nova,
+   * então ela fica e o envio segue. Sem como conferir, os arquivos ficam (órfão é melhor que foto
+   * quebrada) e a falha sobe.
+   */
+  private async linkStaged(
+    target: ImageTarget,
+    id: string,
+    change: ImagePathChange & { to: string },
+    signal: AbortSignal,
+  ): Promise<void> {
+    let linked: boolean;
+    try {
+      signal.throwIfAborted();
+    } catch (error) {
+      await this.removeStaged(target, change.to);
+      throw error;
+    }
+    try {
+      linked = await this.repository.replaceImagePath(target, id, change);
+    } catch (error) {
+      // O errorHandler registra e responde 500 (ou 504, se foi o cancelamento).
+      const state = await this.linkStateAfterFailure(target, id, change.to);
+      if (state === 'linked') return;
+      if (state === 'not-linked') await this.removeStaged(target, change.to);
+      throw error;
+    }
+    if (!linked) {
+      await this.removeStaged(target, change.to);
+      throw await this.lostReplaceError(target, id);
+    }
+  }
+
+  /** Relê o registro depois de uma troca que falhou, para saber se ela chegou a ser gravada. */
+  private async linkStateAfterFailure(
+    target: ImageTarget,
+    id: string,
+    path: string,
+  ): Promise<'linked' | 'not-linked' | 'unknown'> {
+    try {
+      const record = await this.repository.findRecord(target, id);
+      return record?.imagePath === path ? 'linked' : 'not-linked';
+    } catch (error) {
+      reportServerError({ event: 'image.link_check_failed', error });
+      return 'unknown';
+    }
+  }
+
+  /** A troca condicional não afetou linha: ou o registro sumiu, ou outra aba trocou a foto antes. */
+  private async lostReplaceError(target: ImageTarget, id: string): Promise<Error> {
+    const record = await this.repository.findRecord(target, id);
+    return record
+      ? new ConflictError(messages.changedElsewhere)
+      : new NotFoundError(targetSettings[target].notFound);
   }
 
   private async compressFile(file: File): Promise<CompressedImage> {
     try {
       return await this.compress(Buffer.from(await file.arrayBuffer()));
     } catch (error) {
-      if (error instanceof ImageTooSmallError) throw new ValidationError(messages.tooSmall);
-      if (error instanceof InvalidImageError) throw new ValidationError(messages.invalid);
-      throw error;
+      throw translateCompressionError(error);
     }
   }
 
@@ -109,12 +207,13 @@ export class ImageService {
   }
 
   private async removeIfUnused(target: ImageTarget, path: string | null): Promise<void> {
-    if (!path) return;
-    try {
-      if (await this.repository.isImageInUse(path)) return;
-      await this.repository.removeFiles(target, mediaObjectPaths(path));
-    } catch (error) {
-      reportServerError({ event: 'image.previous_cleanup_failed', error });
-    }
+    await removeMediaIfUnused(
+      path,
+      {
+        isInUse: (current) => this.repository.isImageInUse(current),
+        remove: (current) => this.repository.removeFiles(target, mediaObjectPaths(current)),
+      },
+      'image.previous_cleanup_failed',
+    );
   }
 }

@@ -13,9 +13,13 @@ async function saveStatusOverride(page: Page, value: 'auto' | 'open' | 'closed')
 
 async function expectPublicStatus(page: Page, label: 'Aberta' | 'Fechada', suffix: string) {
   await page.goto(`/cardapio?estado=${suffix}`);
-  await expect(page.getByRole('link', { name: label, exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: `Loja ${label.toLowerCase()}: ver horários`, exact: true }),
+  ).toBeVisible();
   await page.goto(`/info?estado=${suffix}`);
-  await expect(page.getByRole('heading', { level: 2, name: label, exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Status da loja' }).getByText(label, { exact: true }),
+  ).toBeVisible();
 }
 
 test.describe('estado da loja', () => {
@@ -57,3 +61,22 @@ test.describe('estado da loja', () => {
     });
   });
 });
+
+test(
+  'dia fechado mostra "Fechado" e desativa os horários',
+  { tag: '@leitura' },
+  async ({ page }) => {
+    await page.goto('/admin/loja');
+    const sundayClosed = page.getByRole('switch', { name: 'Domingo fechado' });
+    const opening = page.getByLabel('Abertura de Domingo');
+    const closing = page.getByLabel('Fechamento de Domingo');
+
+    await sundayClosed.setChecked(true);
+    await expect(opening).toBeDisabled();
+    await expect(closing).toBeDisabled();
+
+    await sundayClosed.setChecked(false);
+    await expect(opening).toBeEnabled();
+    await expect(closing).toBeEnabled();
+  },
+);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useRef, useState } from 'react';
+import { useActionState, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { initialStoreSettingsActionState } from '@/features/store/server/action-state';
@@ -8,8 +8,11 @@ import { updateStoreSettings } from '@/features/store/server/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { copyOpeningHourToEveryDay, type OpeningHourInput } from '@/features/admin/rules/panel';
+import { fieldDefaults } from '@/features/admin/rules/submitted-values';
 import type { StoreSettings } from '@salgae/core/schemas/store-settings';
 
+import { useFocusFirstInvalid } from '@/features/admin/client/use-focus-first-invalid';
+import { useLeaveGuard } from '@/features/admin/client/use-leave-guard';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
 
 const DAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -26,67 +29,74 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
   const formRef = useRef<HTMLFormElement>(null);
   const [hours, setHours] = useState<OpeningHourInput[]>(settings.opening_hours);
   const [copySource, setCopySource] = useState(1);
+  const [dirty, setDirty] = useState(false);
+  useLeaveGuard(dirty || state.status === 'error');
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
-  useEffect(() => {
-    if (state.status === 'error')
-      formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
-  }, [state]);
+  const defaults = fieldDefaults(state.values);
+  useFocusFirstInvalid(formRef, state);
   const updateHour = (day: number, values: Partial<OpeningHourInput>) =>
     setHours((current) =>
       current.map((hour) => (hour.day === day ? { ...hour, ...values } : hour)),
     );
 
   return (
-    <form action={formAction} className="space-y-4 pb-28 lg:pb-0" noValidate ref={formRef}>
+    <form
+      action={formAction}
+      className="space-y-4 pb-28 lg:pb-0"
+      noValidate
+      onChange={() => setDirty(true)}
+      onSubmit={() => setDirty(false)}
+      ref={formRef}
+    >
       <section className="rounded-card bg-white p-4 shadow-card lg:p-5">
         <h2 className="disp text-lg font-semibold text-ink">Informações da loja</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Input
-            defaultValue={settings.name}
+            defaultValue={defaults.text('name', settings.name)}
             error={errorFor('name')}
             label="Nome da loja"
             name="name"
             required
           />
           <Input
-            defaultValue={settings.tagline ?? ''}
+            defaultValue={defaults.text('tagline', settings.tagline ?? '')}
             error={errorFor('tagline')}
             label="Frase curta"
             name="tagline"
             placeholder="Salgados quentes"
           />
           <Input
-            className="sm:col-span-2"
-            defaultValue={settings.address ?? ''}
+            defaultValue={defaults.text('address', settings.address ?? '')}
             error={errorFor('address')}
             label="Endereço"
             name="address"
+            wrapperClassName="sm:col-span-2"
           />
           <Input
-            className="sm:col-span-2"
-            defaultValue={settings.maps_url ?? ''}
+            defaultValue={defaults.text('maps_url', settings.maps_url ?? '')}
             error={errorFor('maps_url')}
             label="Link do mapa"
             name="maps_url"
             placeholder="https://…"
             type="url"
+            wrapperClassName="sm:col-span-2"
           />
           <Input
-            defaultValue={settings.phone ?? ''}
+            defaultValue={defaults.text('phone', settings.phone ?? '')}
             error={errorFor('phone')}
             inputMode="tel"
             label="Telefone"
             name="phone"
           />
           <Input
-            defaultValue={settings.whatsapp ?? ''}
+            defaultValue={defaults.text('whatsapp', settings.whatsapp ?? '')}
             error={errorFor('whatsapp')}
             inputMode="tel"
             label="WhatsApp"
             name="whatsapp"
           />
           <Input
-            defaultValue={settings.instagram ?? ''}
+            defaultValue={defaults.text('instagram', settings.instagram ?? '')}
             error={errorFor('instagram')}
             label="Instagram (sem @)"
             name="instagram"
@@ -99,7 +109,7 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
               aria-describedby={errorFor('notice') ? 'notice-error' : undefined}
               aria-invalid={Boolean(errorFor('notice'))}
               className="min-h-24 w-full rounded-xl border border-border bg-surface-inner px-3.5 py-3 text-sm text-ink focus:outline-hidden focus:ring-4 focus:ring-brand/20"
-              defaultValue={settings.notice ?? ''}
+              defaultValue={defaults.text('notice', settings.notice ?? '')}
               id="notice"
               maxLength={140}
               name="notice"
@@ -119,13 +129,14 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
         <p className="mt-1 text-sm text-muted">Horários de Fortaleza e São Paulo.</p>
         <label className="mt-4 block text-sm font-bold text-ink" htmlFor="status_override">
           Funcionamento agora
-          {/* A key recria o select com o valor salvo: o React reinicia o formulário depois da action
-              e, sem ela, o select voltaria à opção antiga e a gravaria de novo no próximo envio. */}
+          {/* O <select> só aplica o defaultValue ao montar: a key o recria com o valor salvo, ou com o
+              enviado quando a action recusa. Sem ela, o reinício do formulário depois da action
+              voltaria à opção antiga e a gravaria de novo no próximo envio. */}
           <select
             className="mt-1.5 min-h-11 w-full rounded-xl border border-border bg-surface-inner px-3.5 text-sm font-normal text-ink sm:max-w-md"
-            defaultValue={settings.status_override}
+            defaultValue={defaults.text('status_override', settings.status_override)}
             id="status_override"
-            key={settings.status_override}
+            key={defaults.text('status_override', settings.status_override)}
             name="status_override"
           >
             <option value="auto">Seguir os horários abaixo</option>
@@ -152,13 +163,25 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
             </select>
           </label>
           <Button
-            onClick={() => setHours(copyOpeningHourToEveryDay(hours, copySource))}
+            onClick={() => {
+              setHours(copyOpeningHourToEveryDay(hours, copySource));
+              setDirty(true);
+            }}
             variant="neutral"
           >
             Copiar para todos os dias
           </Button>
         </div>
         <div className="mt-3 divide-y divide-border-inner rounded-xl border border-border bg-surface-inner px-2">
+          {/* Os campos já têm rótulo próprio; este título é só para quem enxerga a tabela. */}
+          <div
+            aria-hidden="true"
+            className="grid grid-cols-[minmax(56px,1fr)_96px_96px] gap-2 py-2 text-xs font-bold text-muted"
+          >
+            <span>Dia fechado?</span>
+            <span className="text-center">Abre</span>
+            <span className="text-center">Fecha</span>
+          </div>
           {hours.map((hour) => {
             const hourError = errorFor(`opening_hours.${hour.day}.close`);
             return (
@@ -166,27 +189,43 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
                 className="grid min-h-[62px] grid-cols-[minmax(56px,1fr)_96px_96px] items-center gap-2 py-2"
                 key={hour.day}
               >
-                <label className="flex min-h-11 min-w-0 items-center gap-2 text-xs font-bold text-ink">
-                  <input
-                    checked={hour.closed}
-                    className="size-5 shrink-0 accent-green"
-                    name={`closed-${hour.day}`}
-                    onChange={(event) => updateHour(hour.day, { closed: event.target.checked })}
-                    role="switch"
-                    type="checkbox"
-                  />
-                  <span className="truncate">{DAYS[hour.day]}</span>
-                  <span className="sr-only">Fechado</span>
-                </label>
+                <div className="min-w-0">
+                  <span className="block truncate text-xs font-bold text-ink">
+                    {DAYS[hour.day]}
+                  </span>
+                  <label className="flex min-h-11 items-center gap-2 text-xs text-muted">
+                    <input
+                      aria-label={`${DAYS[hour.day]} fechado`}
+                      checked={hour.closed}
+                      className="size-5 shrink-0 accent-danger"
+                      name={`closed-${hour.day}`}
+                      onChange={(event) => updateHour(hour.day, { closed: event.target.checked })}
+                      role="switch"
+                      type="checkbox"
+                    />
+                    <span className={hour.closed ? 'font-bold text-danger' : undefined}>
+                      Fechado
+                    </span>
+                  </label>
+                </div>
+                {/* Campo desativado não vai no envio: o horário guardado segue junto, para voltar
+                    igual quando o dia abrir de novo. */}
+                {hour.closed ? (
+                  <>
+                    <input name={`open-${hour.day}`} type="hidden" value={hour.open} />
+                    <input name={`close-${hour.day}`} type="hidden" value={hour.close} />
+                  </>
+                ) : null}
                 <label className="sr-only" htmlFor={`open-${hour.day}`}>
                   Abertura de {DAYS[hour.day]}
                 </label>
                 <input
                   className={`min-h-11 min-w-0 w-[96px] rounded-xl border border-border px-0 text-center text-sm ${hour.closed ? 'bg-surface-inner text-muted' : 'bg-white text-ink'}`}
+                  disabled={hour.closed}
                   id={`open-${hour.day}`}
-                  name={`open-${hour.day}`}
+                  name={hour.closed ? undefined : `open-${hour.day}`}
                   onChange={(event) => updateHour(hour.day, { open: event.target.value })}
-                  required
+                  required={!hour.closed}
                   type="time"
                   value={hour.open}
                 />
@@ -198,10 +237,11 @@ export function StoreSettingsForm({ settings }: Readonly<{ settings: StoreSettin
                     aria-describedby={hourError ? `close-${hour.day}-error` : undefined}
                     aria-invalid={Boolean(hourError)}
                     className={`min-h-11 min-w-0 w-[96px] rounded-xl border border-border px-0 text-center text-sm ${hour.closed ? 'bg-surface-inner text-muted' : 'bg-white text-ink'}`}
+                    disabled={hour.closed}
                     id={`close-${hour.day}`}
-                    name={`close-${hour.day}`}
+                    name={hour.closed ? undefined : `close-${hour.day}`}
                     onChange={(event) => updateHour(hour.day, { close: event.target.value })}
-                    required
+                    required={!hour.closed}
                     type="time"
                     value={hour.close}
                   />

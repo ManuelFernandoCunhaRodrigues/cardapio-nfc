@@ -86,6 +86,11 @@ input {
   outline-offset: 2px;
 }
 
+/* Em trilhas com rolagem lateral o contorno de fora seria cortado: fica por dentro. */
+.public-shell .focus-ring-inset:focus-visible {
+  outline-offset: -4px;
+}
+
 @media (hover: none) {
   .public-shell :where(a, button):active {
     filter: brightness(0.92);

@@ -1,0 +1,16 @@
+export {
+  ACCEPTED_VIDEO_MIME_TYPES,
+  VIDEO_DURATION_TOLERANCE_SECONDS,
+  VIDEO_RAW_MAX_BYTES,
+} from '@salgae/core/rules/video-limits';
+
+export const VIDEO_OUTPUT_MAX_BYTES = 4_194_304;
+export const VIDEO_ORPHAN_AGE_MS = 30 * 60 * 1_000;
+export const VIDEO_PROBE_TIMEOUT_MS = 10_000;
+export const VIDEO_PROCESSING_TIMEOUT_MS = 150_000;
+export const VIDEO_ROUTE_BUDGET_MS = 170_000;
+export const VIDEO_DOWNLOAD_TIMEOUT_MS = 60_000;
+export const VIDEO_UPLOAD_TIMEOUT_MS = 30_000;
+export const VIDEO_FINALIZATION_RESERVE_MS = 20_000;
+export const VIDEO_MAX_SIDE = 4_096;
+export const VIDEO_MAX_PIXELS = 8_847_360;

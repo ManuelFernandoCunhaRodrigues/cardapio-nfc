@@ -74,7 +74,7 @@ test.afterAll(async () => {
     await adminClient.from('categories').delete().eq('id', inactiveCategoryId);
 });
 
-test('GET /v1/menu returns seed content and only active items', async ({ request }) => {
+test('o cardápio traz o conteúdo do seed e só os itens ativos', async ({ request }) => {
   const response = await request.get(`${apiURL}/v1/menu`);
   const menu = (await response.json()) as {
     categories: Array<{ name: string }>;
@@ -93,7 +93,7 @@ test('GET /v1/menu returns seed content and only active items', async ({ request
   );
 });
 
-test('GET /v1/menu/products/:slug returns a seed product', async ({ request }) => {
+test('o produto do seed abre pelo endereço com o nome', async ({ request }) => {
   const response = await request.get(`${apiURL}/v1/menu/products/${seedProduct.slug}`);
 
   expect(response.status()).toBe(200);
@@ -102,7 +102,7 @@ test('GET /v1/menu/products/:slug returns a seed product', async ({ request }) =
   });
 });
 
-test('an absent product returns the error envelope and request id', async ({ request }) => {
+test('produto inexistente responde 404 com erro e request-id', async ({ request }) => {
   const response = await request.get(`${apiURL}/v1/menu/products/produto-ausente`);
 
   expect(response.status()).toBe(404);
@@ -110,21 +110,21 @@ test('an absent product returns the error envelope and request id', async ({ req
   await expect(response.json()).resolves.toMatchObject({ status: 'error' });
 });
 
-test('a legacy id returns the product', async ({ request }) => {
+test('o endereço antigo pelo id ainda encontra o produto', async ({ request }) => {
   const response = await request.get(`${apiURL}/v1/menu/products/${seedProduct.id}`);
 
   expect(response.status()).toBe(200);
   await expect(response.json()).resolves.toMatchObject({ product: { slug: seedProduct.slug } });
 });
 
-test('GET /v1/store returns public settings', async ({ request }) => {
+test('os dados da loja são públicos', async ({ request }) => {
   const response = await request.get(`${apiURL}/v1/store`);
 
   expect(response.status()).toBe(200);
   await expect(response.json()).resolves.toMatchObject({ id: true, name: expect.any(String) });
 });
 
-test('the sitemap excludes inactive products', async ({ request }) => {
+test('o sitemap deixa de fora os produtos inativos', async ({ request }) => {
   const response = await request.get(`${apiURL}/v1/menu/sitemap`);
   const items = (await response.json()) as Array<{ slug: string }>;
 

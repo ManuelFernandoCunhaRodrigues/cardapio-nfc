@@ -1,19 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiRequestError } from '@/lib/api/api-request-error';
+
 import { initialMediaActionState } from './action-state';
-import { createProductVideoUpload } from './actions';
 
 const mocks = vi.hoisted(() => ({
-  requireAdmin: vi.fn(),
-  createClient: vi.fn(),
-  revalidatePath: vi.fn(),
+  prepareVideo: vi.fn(),
+  write: vi.fn(),
+  invalidateMenuCache: vi.fn(),
+  refreshAdminPanel: vi.fn(),
   report: vi.fn(),
 }));
 
-vi.mock('@/features/auth/server/require-admin', () => ({ requireAdmin: mocks.requireAdmin }));
-vi.mock('@/lib/supabase/server', () => ({ createClient: mocks.createClient }));
-vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath, updateTag: vi.fn() }));
+vi.mock('@/lib/api/admin-api-client', () => ({
+  adminApi: () => ({ prepareVideo: mocks.prepareVideo, write: mocks.write }),
+}));
+vi.mock('@/lib/cache/invalidate-public-cache', () => ({
+  invalidateMenuCache: mocks.invalidateMenuCache,
+}));
+vi.mock('@/lib/cache/refresh-admin-panel', () => ({
+  refreshAdminPanel: mocks.refreshAdminPanel,
+}));
 vi.mock('@/lib/observability', () => ({ reportServerError: mocks.report }));
+
+import { createProductVideoUpload, removeProductVideo } from './actions';
 
 const productId = '11111111-1111-4111-8111-111111111111';
 
@@ -23,89 +33,71 @@ function form(values: Record<string, string>) {
   return result;
 }
 
-function clientWithCover(hasCover = true) {
-  const signed = vi.fn(async (path: string) => ({
-    data: { signedUrl: '/object/upload/sign/teste', token: 'token' },
-    error: null,
-    path,
-  }));
-  const client = {
-    storage: {
-      from: (bucket: string) => ({
-        list: async () => ({ data: [], error: null }),
-        remove: async () => ({ data: null, error: null }),
-        createSignedUploadUrl: bucket === 'product-video-uploads' ? signed : vi.fn(),
-      }),
-    },
-    from: () => ({
-      select: (columns: string) => ({
-        eq: () => ({
-          single: async () => ({
-            data:
-              columns === 'image_path'
-                ? { image_path: hasCover ? 'products/capa' : null }
-                : { video_path: null },
-            error: null,
-          }),
-          maybeSingle: async () => ({ data: { video_path: null }, error: null }),
-          limit: async () => ({ data: [], error: null }),
-        }),
-      }),
-    }),
-  };
-  return { client, signed };
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.requireAdmin.mockResolvedValue({ userId: 'admin', name: 'Admin' });
+  mocks.prepareVideo.mockResolvedValue({
+    path: `uploads/${productId}_22222222-2222-4222-8222-222222222222.mov`,
+    signedUrl: '/object/upload/sign/teste',
+    token: 'token',
+  });
 });
 
-describe('preparação do upload bruto de vídeo', () => {
-  it('aceita MOV de até 50 MiB e assina no bucket privado com caminho plano', async () => {
-    const fake = clientWithCover();
-    mocks.createClient.mockResolvedValue(fake.client);
+describe('actions de vídeo', () => {
+  it('repassa a preparação do upload para a API', async () => {
     const result = await createProductVideoUpload(
       initialMediaActionState,
-      form({
-        product_id: productId,
-        mime_type: 'video/quicktime',
-        size: '52428800',
-      }),
+      form({ product_id: productId, mime_type: 'video/quicktime', size: '52428800' }),
+    );
+
+    expect(mocks.prepareVideo).toHaveBeenCalledWith(
+      `/v1/admin/products/${productId}/video/upload`,
+      { mimeType: 'video/quicktime', size: 52_428_800 },
     );
     expect(result).toMatchObject({
       status: 'success',
       signedUrl: '/object/upload/sign/teste',
       token: 'token',
     });
-    expect(result.path).toMatch(new RegExp(`^uploads/${productId}_[0-9a-f-]{36}\\.mov$`));
-    expect(fake.signed).toHaveBeenCalledWith(result.path);
   });
 
-  it.each(['0', '52428801'])(
-    'recusa tamanho declarado %s antes de autorização/Storage',
-    async (size) => {
-      const result = await createProductVideoUpload(
-        initialMediaActionState,
-        form({ product_id: productId, mime_type: 'video/mp4', size }),
-      );
-      expect(result.status).toBe('error');
-      expect(mocks.requireAdmin).not.toHaveBeenCalled();
-      expect(mocks.createClient).not.toHaveBeenCalled();
-    },
-  );
+  it('mostra a mensagem de validação devolvida pela API', async () => {
+    mocks.prepareVideo.mockRejectedValue(
+      new ApiRequestError(413, 'O vídeo deve ter no máximo 50 MB.'),
+    );
 
-  it('exige foto de capa antes de assinar', async () => {
-    const fake = clientWithCover(false);
-    mocks.createClient.mockResolvedValue(fake.client);
     const result = await createProductVideoUpload(
       initialMediaActionState,
-      form({ product_id: productId, mime_type: 'video/webm', size: '1024' }),
+      form({ product_id: productId, mime_type: 'video/mp4', size: '52428801' }),
     );
-    expect(result).toMatchObject({
+
+    expect(result).toEqual({ status: 'error', message: 'O vídeo deve ter no máximo 50 MB.' });
+  });
+
+  it('remove pela API e invalida o catálogo', async () => {
+    const result = await removeProductVideo(
+      initialMediaActionState,
+      form({ product_id: productId }),
+    );
+
+    expect(mocks.write).toHaveBeenCalledWith('DELETE', `/v1/admin/products/${productId}/video`);
+    expect(mocks.invalidateMenuCache).toHaveBeenCalledWith(productId);
+    expect(mocks.refreshAdminPanel).toHaveBeenCalled();
+    expect(result).toEqual({ status: 'success', message: 'Vídeo removido.' });
+  });
+
+  it('invalida o catálogo mesmo quando a API falha depois de desvincular', async () => {
+    mocks.write.mockRejectedValue(new ApiRequestError(500, 'Falha depois do vínculo.'));
+
+    const result = await removeProductVideo(
+      initialMediaActionState,
+      form({ product_id: productId }),
+    );
+
+    expect(mocks.invalidateMenuCache).toHaveBeenCalledWith(productId);
+    expect(mocks.refreshAdminPanel).toHaveBeenCalled();
+    expect(result).toEqual({
       status: 'error',
-      message: expect.stringContaining('foto de capa'),
+      message: 'Não foi possível remover o vídeo agora.',
     });
-    expect(fake.signed).not.toHaveBeenCalled();
   });
 });

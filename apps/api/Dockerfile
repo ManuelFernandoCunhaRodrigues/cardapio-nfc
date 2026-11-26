@@ -23,5 +23,7 @@ WORKDIR /app
 COPY --from=production-dependencies /workspace/node_modules ./node_modules
 COPY --from=build /workspace/apps/api/dist ./dist
 COPY apps/api/package.json ./package.json
+# A imagem oficial já traz o usuário "node"; o processo não precisa de root.
+USER node
 EXPOSE 4000
 CMD ["node", "dist/server.js"]

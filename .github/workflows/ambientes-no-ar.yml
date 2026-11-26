@@ -1,0 +1,90 @@
+name: Ambientes no ar
+
+# O Supabase gratuito pausa o banco depois de cerca de 7 dias sem uso, e a
+# demonstração para de carregar sem ninguém perceber.
+#
+# - A cada 2 dias: chama o /api/health do stage e da produção. A rota consulta o
+#   banco, então a chamada também conta como uso. Se algum ambiente não responder
+#   200, o job falha e o GitHub avisa por e-mail.
+# - Aos domingos: guarda uma cópia do banco da produção (esquema e dados) como
+#   artefato do workflow, por 30 dias. Precisa dos segredos SUPABASE_ACCESS_TOKEN
+#   e SUPABASE_DB_PASSWORD_PRODUCAO; sem eles o passo falha e diz o que falta.
+#   As fotos e os vídeos do Storage não entram nesta cópia.
+
+on:
+  schedule:
+    - cron: '17 9 */2 * *'
+    - cron: '43 6 * * 0'
+  workflow_dispatch:
+    inputs:
+      copia:
+        description: Fazer também a cópia do banco da produção
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ambientes-no-ar
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    name: ambientes respondem
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        ambiente:
+          - nome: stage
+            url: https://salgae-homologacao.vercel.app/api/health
+          - nome: producao
+            url: https://salgae-producao.vercel.app/api/health
+    steps:
+      - name: /api/health do ${{ matrix.ambiente.nome }}
+        env:
+          URL: ${{ matrix.ambiente.url }}
+          AMBIENTE: ${{ matrix.ambiente.nome }}
+        run: |
+          status=$(curl -sS -o resposta.json -w '%{http_code}' --retry 3 --retry-delay 20 --retry-all-errors --max-time 30 "$URL" || true)
+          echo "HTTP $status"
+          cat resposta.json || true
+          if [ "$status" != 200 ]; then
+            echo "::error::O $AMBIENTE não respondeu 200 em $URL. Se o banco estiver pausado, restaure o projeto no painel do Supabase."
+            exit 1
+          fi
+
+  copia-producao:
+    name: cópia do banco da produção
+    if: github.event.schedule == '43 6 * * 0' || inputs.copia
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PRODUCAO }}
+    steps:
+      - name: Segredos presentes
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "::error::Faltam os segredos SUPABASE_ACCESS_TOKEN e/ou SUPABASE_DB_PASSWORD_PRODUCAO em Settings > Secrets and variables > Actions. Sem eles não há cópia do banco."
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.120.0
+      - name: Liga ao projeto da produção
+        run: supabase link --project-ref gqwtjrdfnkfitslolofg
+      - name: Copia esquema e dados
+        run: |
+          mkdir -p copia
+          supabase db dump --linked -f copia/esquema.sql
+          supabase db dump --linked --data-only -f copia/dados.sql
+          ls -l copia
+      - uses: actions/upload-artifact@v7
+        with:
+          name: copia-producao-${{ github.run_id }}
+          path: copia/
+          retention-days: 30

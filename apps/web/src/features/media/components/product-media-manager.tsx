@@ -1,12 +1,14 @@
 /* eslint-disable @next/next/no-img-element -- prévias locais usam URLs blob */
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { removeProductVideo } from '@/features/media/server/actions';
 import { removeProductImage, uploadProductImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { resizeImageForUpload } from '@/features/media/client/client-resize';
+import { friendlyMediaError, MediaUserError } from '@/features/media/client/friendly-media-error';
+import { validateVideoForUpload } from '@/features/media/client/client-video';
 import { getPublicImageVariantUrl, getPublicMediaUrl } from '@/features/media/rules/media-urls';
 import {
   friendlyVideoError,
@@ -26,6 +28,8 @@ type Props = {
   onVideoPrepared?: (file: File | null, preview: string | null) => void;
   preparedPreview?: string | null;
   preparedVideoPreview?: string | null;
+  /** Avisa quando uma foto ou vídeo começa ou termina de ser preparado ou enviado. */
+  onBusyChange?: (busy: boolean) => void;
 };
 
 function Progress({ value, label }: Readonly<{ value: number; label: string }>) {
@@ -54,6 +58,7 @@ export function ProductMediaManager({
   onVideoPrepared,
   preparedPreview,
   preparedVideoPreview,
+  onBusyChange,
 }: Readonly<Props>) {
   const [preview, setPreview] = useState<string | null>(
     preparedPreview ?? getPublicImageVariantUrl('product-images', imagePath, 'card'),
@@ -71,6 +76,9 @@ export function ProductMediaManager({
   // desmontaria a confirmação antes de ela fechar e devolver o foco.
   const [hasStoredImage, setHasStoredImage] = useState(Boolean(imagePath));
   const titleRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
 
   async function selectImage(file: File | undefined) {
     if (!file) return;
@@ -91,7 +99,7 @@ export function ProductMediaManager({
         setProgress(55);
         setMessage('Enviando a foto…');
         const result = await uploadProductImage(initialMediaActionState, formData);
-        if (result.status === 'error') throw new Error(result.message);
+        if (result.status === 'error') throw new MediaUserError(result.message ?? '');
         setHasStoredImage(true);
         setMessage(result.message);
       } else setMessage('Foto pronta para ser enviada ao criar o produto.');
@@ -99,28 +107,38 @@ export function ProductMediaManager({
     } catch (caught) {
       setError(true);
       setProgress(undefined);
-      setMessage(
-        caught instanceof Error && caught.message === 'image_too_large'
-          ? 'A foto deve ter no máximo 15 MB.'
-          : caught instanceof Error && caught.message
-            ? caught.message
-            : 'Não foi possível preparar esta foto. Escolha outra.',
-      );
+      setMessage(friendlyMediaError(caught));
     } finally {
       setBusy(false);
     }
   }
 
-  async function selectVideo(file: File | undefined) {
-    if (!file || !hasImage) return;
-    setError(false);
-    const localPreview = URL.createObjectURL(file);
-    setVideoPreview(localPreview);
-    onVideoPrepared?.(file, localPreview);
-    if (!productId) {
+  function showVideoError(caught: unknown) {
+    setError(true);
+    setProgress(undefined);
+    setMessage(friendlyVideoError(caught));
+  }
+
+  // No produto novo o vídeo só sobe depois de criar o produto: sem conferir agora, um vídeo longo
+  // criaria o produto e só então falharia.
+  async function prepareVideoForCreation(file: File) {
+    setBusy(true);
+    setMessage('Validando vídeo…');
+    try {
+      await validateVideoForUpload(file);
+      const localPreview = URL.createObjectURL(file);
+      setVideoPreview(localPreview);
+      onVideoPrepared?.(file, localPreview);
       setMessage('Vídeo pronto para ser enviado ao criar o produto.');
-      return;
+    } catch (caught) {
+      showVideoError(caught);
+    } finally {
+      setBusy(false);
     }
+  }
+
+  async function uploadVideo(file: File) {
+    setVideoPreview(URL.createObjectURL(file));
     setBusy(true);
     try {
       const path = await uploadProductVideoFile(productId, file, {
@@ -129,12 +147,17 @@ export function ProductMediaManager({
       });
       setHasVideo(Boolean(path));
     } catch (caught) {
-      setError(true);
-      setProgress(undefined);
-      setMessage(friendlyVideoError(caught));
+      showVideoError(caught);
     } finally {
       setBusy(false);
     }
+  }
+
+  async function selectVideo(file: File | undefined) {
+    if (!file || !hasImage) return;
+    setError(false);
+    if (productId) await uploadVideo(file);
+    else await prepareVideoForCreation(file);
   }
 
   return (
@@ -142,8 +165,16 @@ export function ProductMediaManager({
       <h2 className="disp text-lg font-semibold text-ink" ref={titleRef} tabIndex={-1}>
         Foto e vídeo
       </h2>
-      <p className="mt-1 text-xs leading-5 text-muted">
-        Foto pela câmera ou galeria. Vídeo opcional, até 15 segundos.
+      <ul className="mt-1 text-xs leading-5 text-muted">
+        <li>Foto: JPG, PNG ou HEIC, até 15 MB.</li>
+        <li>
+          Vídeo (opcional): MP4, MOV ou WebM, até 50 MB e 15 segundos. Grave em Full HD, não em 4K.
+        </li>
+      </ul>
+      <p className="mt-2 rounded-xl bg-surface-inner px-3 py-2 text-xs leading-5 text-ink">
+        {productId
+          ? 'A foto e o vídeo vão para o cardápio assim que você escolhe, sem precisar salvar.'
+          : 'A foto e o vídeo serão enviados quando você tocar em Criar produto.'}
       </p>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div>
@@ -157,7 +188,7 @@ export function ProductMediaManager({
               </div>
             )}
           </div>
-          <label className="mt-2 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-b-xl bg-white px-2 text-center text-xs font-bold text-ink">
+          <label className="mt-2 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-b-xl bg-white px-2 text-center text-xs font-bold text-ink focus-within:outline-hidden focus-within:ring-4 focus-within:ring-brand/30">
             <input
               accept="image/*"
               className="sr-only"
@@ -176,7 +207,7 @@ export function ProductMediaManager({
             <ConfirmDialog
               action={removeProductImage}
               description="A foto deixará de aparecer no cardápio. Remova o vídeo antes, se existir."
-              disabled={busy}
+              disabled={busy || hasVideo}
               entityId={productId}
               fallbackFocusRef={titleRef}
               fieldName="product_id"
@@ -187,8 +218,14 @@ export function ProductMediaManager({
                 setMessage('Foto removida.');
               }}
               title="Remover foto deste produto?"
+              triggerDescribedBy={hasVideo ? 'remove-photo-video-hint' : undefined}
               triggerLabel="Remover foto"
             />
+          ) : null}
+          {hasVideo ? (
+            <p className="mt-2 text-xs text-muted" id="remove-photo-video-hint">
+              Remova o vídeo antes de remover a foto.
+            </p>
           ) : null}
         </div>
         <div>
@@ -209,7 +246,7 @@ export function ProductMediaManager({
             )}
           </div>
           <label
-            className={`mt-2 flex min-h-11 items-center justify-center gap-2 rounded-b-xl px-2 text-center text-xs font-bold ${hasImage ? 'cursor-pointer bg-white text-ink' : 'cursor-not-allowed bg-surface-inner text-muted'}`}
+            className={`mt-2 flex min-h-11 items-center justify-center gap-2 rounded-b-xl px-2 text-center text-xs font-bold focus-within:outline-hidden focus-within:ring-4 focus-within:ring-brand/30 ${hasImage ? 'cursor-pointer bg-white text-ink' : 'cursor-not-allowed bg-surface-inner text-muted'}`}
           >
             <input
               accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm"

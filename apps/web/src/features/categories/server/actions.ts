@@ -5,7 +5,7 @@ import { adminApiPaths } from '@salgae/core/contracts/admin-api';
 import { readFormText, runAdminAction } from '@/features/admin/server/run-admin-action';
 import { adminApi } from '@/lib/api/admin-api-client';
 import { invalidateMenuCache } from '@/lib/cache/invalidate-public-cache';
-import { refreshAdminPanel } from '@/lib/cache/refresh-admin-panel';
+import { refreshAdminList, refreshAdminPanel } from '@/lib/cache/refresh-admin-panel';
 
 import type { CategoryActionState } from './action-state';
 
@@ -36,6 +36,7 @@ export async function createCategory(
     {
       event: 'category_create_failed',
       failureMessage: 'Não foi possível criar a categoria agora. Tente novamente.',
+      submitted: formData,
     },
   );
 }
@@ -53,6 +54,7 @@ export async function updateCategory(
     {
       event: 'category_update_failed',
       failureMessage: 'Não foi possível salvar a categoria agora. Tente novamente.',
+      submitted: formData,
     },
   );
 }
@@ -66,7 +68,7 @@ export async function toggleCategory(
   return runAdminAction(
     async () => {
       await adminApi().write('PUT', adminApiPaths.categoryActivation(id), { is_active: isActive });
-      return refreshAfterCategoryChange(isActive ? 'Categoria ativada.' : 'Categoria desativada.');
+      return refreshAfterCategoryChange(isActive ? 'Categoria visível.' : 'Categoria escondida.');
     },
     {
       event: 'category_toggle_failed',
@@ -84,7 +86,10 @@ export async function reorderCategory(
   return runAdminAction(
     async () => {
       await adminApi().write('POST', adminApiPaths.categoryOrder(id), { direction });
-      return refreshAfterCategoryChange('Ordem da categoria atualizada.');
+      // A ordem só aparece na lista; o resto do painel não precisa ser marcado.
+      invalidateMenuCache();
+      refreshAdminList('categories');
+      return { status: 'success', message: 'Ordem da categoria atualizada.' };
     },
     {
       event: 'category_reorder_failed',

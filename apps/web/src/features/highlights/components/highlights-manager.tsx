@@ -1,7 +1,6 @@
 'use client';
 
 import { useActionState, useCallback, useRef, useState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import * as m from 'motion/react-m';
 import {
@@ -11,15 +10,14 @@ import {
   toggleHighlight,
   updateHighlight,
 } from '@/features/highlights/server/actions';
-import {
-  initialHighlightActionState,
-  type HighlightActionState,
-} from '@/features/highlights/server/action-state';
+import { initialHighlightActionState } from '@/features/highlights/server/action-state';
 import { removeHighlightImage, uploadHighlightImage } from '@/features/media/server/image-actions';
 import { initialMediaActionState } from '@/features/media/server/action-state';
 import { EditorPhotoField, useEditorPhoto } from '@/features/media/components/editor-photo-field';
 import { MediaImage } from '@/features/media/components/media-image';
 import { usePhotoAfterSave } from '@/features/media/client/use-photo-after-save';
+import { useFocusFirstInvalid } from '@/features/admin/client/use-focus-first-invalid';
+import { fieldDefaults } from '@/features/admin/rules/submitted-values';
 import { listReorder } from '@/components/motion/motion-primitives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,60 +30,44 @@ import {
 } from '@/features/admin/rules/panel';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import { highlightSummary } from '@/features/menu/rules/highlight-carousel';
+import {
+  describeHighlightTarget,
+  findTargetProduct,
+  highlightTargetOptions,
+} from '@/features/highlights/rules/highlight-target';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { AdminNotice } from '@/features/admin/components/admin-notice';
-import { AdminSheet } from '@/features/admin/components/admin-sheet';
+import { EditorSubmitButton } from '@/features/admin/components/editor-submit-button';
+import { AdminSheet, useAdminSheetClose } from '@/features/admin/components/admin-sheet';
 import { ConfirmDialog } from '@/features/admin/components/confirm-dialog';
+import { QuickAction, QuickActionGroup } from '@/features/admin/components/quick-action';
+import { removeSearchParam } from '@/features/admin/client/remove-search-param';
 
-function SaveButton({ editing }: Readonly<{ editing: boolean }>) {
-  const { pending } = useFormStatus();
-  return (
-    <Button className="w-full" disabled={pending} type="submit">
-      {pending ? 'Salvando…' : editing ? 'Salvar destaque' : 'Criar destaque'}
-    </Button>
-  );
-}
-function QuickAction({
-  action,
-  values,
-  label,
-  icon,
-}: Readonly<{
-  action: (state: HighlightActionState, formData: FormData) => Promise<HighlightActionState>;
-  values: Record<string, string>;
-  label: string;
-  icon?: 'up' | 'down';
-}>) {
-  const [state, formAction] = useActionState(action, initialHighlightActionState);
-  return (
-    <form action={formAction}>
-      {Object.entries(values).map(([name, value]) => (
-        <input key={name} name={name} type="hidden" value={value} />
-      ))}
-      <button
-        aria-label={label}
-        className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-border bg-white px-3 text-xs font-bold text-ink"
-        type="submit"
-      >
-        {icon ? <AdminIcon name={icon} /> : label}
-      </button>
-      <span
-        aria-live="polite"
-        className="sr-only"
-        role={state.status === 'error' ? 'alert' : 'status'}
-      >
-        {state.message}
-      </span>
-      {state.status === 'error' ? (
-        <AdminNotice className="mt-2" kind="error" message={state.message} />
-      ) : null}
-    </form>
-  );
-}
-function currentTargetValue(target: string | null, kind: HighlightTargetKind) {
+const TARGET_KINDS = [
+  ['menu', 'Cardápio inteiro'],
+  ['category', 'Uma categoria'],
+  ['product', 'Um produto'],
+  ['custom', 'Outro endereço'],
+] as const;
+
+const TARGET_PROBLEM = {
+  hidden: 'Este destino está escondido do cardápio: quem tocar no banner não vai encontrá-lo.',
+  missing: 'O destino deste banner não existe mais. Edite o destaque e escolha outro.',
+} as const;
+
+// Destaques antigos guardam o produto pelo id: ao editar, a escolha passa a ser pelo slug.
+function currentTargetValue(
+  target: string | null,
+  kind: HighlightTargetKind,
+  products: AdminProduct[],
+) {
   if (!target) return '';
   if (kind === 'category') return target.slice('/cardapio#'.length);
-  if (kind === 'product') return target.slice('/produto/'.length);
+  if (kind === 'product') {
+    const value = target.slice('/produto/'.length);
+    return findTargetProduct(products, value)?.slug ?? value;
+  }
   return kind === 'custom' ? target : '';
 }
 
@@ -100,15 +82,14 @@ function HighlightEditor({
   highlight,
   categories,
   products,
-  onClose,
   onSaved,
 }: Readonly<{
   highlight: AdminHighlight | null;
   categories: AdminCategory[];
   products: AdminProduct[];
-  onClose: () => void;
   onSaved: (message: string, kind: 'success' | 'error') => void;
 }>) {
+  const requestClose = useAdminSheetClose();
   const editing = Boolean(highlight);
   const [createState, createAction] = useActionState(createHighlight, initialHighlightActionState);
   const [updateState, updateAction] = useActionState(updateHighlight, initialHighlightActionState);
@@ -116,20 +97,40 @@ function HighlightEditor({
   const initialKind = highlightTargetKind(highlight?.target ?? null);
   const [targetKind, setTargetKind] = useState<HighlightTargetKind>(initialKind);
   const [targetValue, setTargetValue] = useState(
-    currentTargetValue(highlight?.target ?? null, initialKind),
+    currentTargetValue(highlight?.target ?? null, initialKind, products),
   );
   const photo = useEditorPhoto(
     getPublicImageVariantUrl('highlight-images', highlight?.image_path, 'card'),
     'Foto pronta para salvar junto com o destaque.',
   );
+  const formRef = useRef<HTMLFormElement>(null);
   const errorFor = (field: string) => state.fieldErrors?.[field]?.[0];
-  usePhotoAfterSave({ saveState: state, file: photo.file, upload: uploadPhoto, onSaved });
+  const defaults = fieldDefaults(state.values);
+  useFocusFirstInvalid(formRef, state);
+  const { uploadingPhoto } = usePhotoAfterSave({
+    saveState: state,
+    file: photo.file,
+    upload: uploadPhoto,
+    onSaved,
+  });
   const target = buildHighlightTarget(targetKind, targetValue) ?? '';
+  const options = highlightTargetOptions(categories, products);
+  const chosen = describeHighlightTarget(target || null, categories, products);
+  // Um destino que saiu do cardápio continua na lista para a pessoa ver o que está escolhido.
+  const staleOption =
+    targetValue && chosen.status !== 'ok' ? (
+      <option value={targetValue}>{chosen.label} (fora do cardápio)</option>
+    ) : null;
   return (
-    <form action={editing ? updateAction : createAction} className="space-y-4" noValidate>
+    <form
+      action={editing ? updateAction : createAction}
+      className="space-y-4"
+      noValidate
+      ref={formRef}
+    >
       {highlight ? <input name="id" type="hidden" value={highlight.id} /> : null}
       <Input
-        defaultValue={highlight?.title ?? ''}
+        defaultValue={defaults.text('title', highlight?.title ?? '')}
         error={errorFor('title')}
         label="Título"
         maxLength={120}
@@ -142,38 +143,21 @@ function HighlightEditor({
         </label>
         <textarea
           className="min-h-24 w-full rounded-xl border border-border bg-surface-inner px-3.5 py-3 text-sm text-ink focus:outline-hidden focus:ring-4 focus:ring-brand/20"
-          defaultValue={highlight?.description ?? ''}
+          defaultValue={defaults.text('description', highlight?.description ?? '')}
           id="highlight-description"
           maxLength={600}
           name="description"
         />
       </div>
-      <fieldset>
-        <legend className="text-sm font-bold text-ink">Para onde o banner leva?</legend>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {(
-            [
-              ['menu', 'Cardápio inteiro'],
-              ['category', 'Uma categoria'],
-              ['product', 'Um produto'],
-              ['custom', 'Outro endereço'],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              aria-pressed={targetKind === value}
-              className={`min-h-11 rounded-xl border px-3 text-sm font-bold ${targetKind === value ? 'border-ink bg-ink text-white' : 'border-border bg-white text-ink'}`}
-              key={value}
-              onClick={() => {
-                setTargetKind(value);
-                setTargetValue('');
-              }}
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      <ChoiceChips
+        legend="Para onde o banner leva?"
+        onChange={(value) => {
+          setTargetKind(value);
+          setTargetValue('');
+        }}
+        options={TARGET_KINDS}
+        value={targetKind}
+      />
       {targetKind === 'category' ? (
         <label className="block text-sm font-bold text-ink">
           Escolha a categoria
@@ -183,7 +167,8 @@ function HighlightEditor({
             value={targetValue}
           >
             <option value="">Selecione</option>
-            {categories.map((category) => (
+            {staleOption}
+            {options.categories.map((category) => (
               <option key={category.id} value={category.slug}>
                 {category.name}
               </option>
@@ -200,8 +185,9 @@ function HighlightEditor({
             value={targetValue}
           >
             <option value="">Selecione</option>
-            {products.map((product) => (
-              <option key={product.id} value={product.id}>
+            {staleOption}
+            {options.products.map((product) => (
+              <option key={product.id} value={product.slug}>
                 {product.name}
               </option>
             ))}
@@ -217,13 +203,16 @@ function HighlightEditor({
           value={targetValue}
         />
       ) : null}
+      {chosen.status !== 'ok' ? (
+        <AdminNotice kind="error" message={TARGET_PROBLEM[chosen.status]} />
+      ) : null}
       <input name="target" type="hidden" value={target} />
       {errorFor('target') ? <AdminNotice kind="error" message={errorFor('target')} /> : null}
       <label className="flex min-h-11 items-center justify-between rounded-xl border border-border bg-white px-3 text-sm font-bold text-ink">
         Destaque visível
         <input
           className="size-5 accent-green"
-          defaultChecked={highlight?.is_active ?? true}
+          defaultChecked={defaults.checked('is_active', highlight?.is_active ?? true)}
           name="is_active"
           role="switch"
           type="checkbox"
@@ -248,9 +237,12 @@ function HighlightEditor({
       />
       {/* O sucesso fecha a gaveta e aparece no aviso da lista; aqui fica só o erro. */}
       <AdminNotice kind="error" message={state.status === 'error' ? state.message : undefined} />
-      <SaveButton editing={editing} />
+      <EditorSubmitButton
+        label={editing ? 'Salvar destaque' : 'Criar destaque'}
+        uploadingPhoto={uploadingPhoto}
+      />
       {editing ? (
-        <Button className="w-full" onClick={onClose} variant="neutral">
+        <Button className="w-full" onClick={requestClose} type="button" variant="neutral">
           Cancelar
         </Button>
       ) : null}
@@ -277,12 +269,19 @@ export function HighlightsManager({
     setSelected(highlight);
     setOpen(true);
   };
-  const onSaved = useCallback((message: string, kind: 'success' | 'error' = 'success') => {
-    setNotice({ message, kind });
+  const closeEditor = useCallback(() => {
     setOpen(false);
+    removeSearchParam('novo');
   }, []);
+  const onSaved = useCallback(
+    (message: string, kind: 'success' | 'error' = 'success') => {
+      setNotice({ message, kind });
+      closeEditor();
+    },
+    [closeEditor],
+  );
   return (
-    <>
+    <QuickActionGroup>
       <header className="mb-5 flex items-end justify-between gap-3">
         <div>
           <h1
@@ -309,78 +308,91 @@ export function HighlightsManager({
           message="Há mais de 8 destaques ativos. Os últimos podem receber pouca atenção."
         />
       ) : null}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {highlights.map((highlight, index) => (
-          <m.article
-            {...listReorder}
-            className="rounded-card bg-white p-4 shadow-card"
-            key={highlight.id}
-          >
-            <button
-              className="flex min-h-16 w-full gap-3 text-left"
-              onClick={() => edit(highlight)}
-              type="button"
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {highlights.map((highlight, index) => {
+          const destination = describeHighlightTarget(highlight.target, categories, products);
+          return (
+            <m.article
+              {...listReorder}
+              className="rounded-card bg-white p-4 shadow-card"
+              key={highlight.id}
             >
-              <MediaImage
-                alt=""
-                className="size-16 shrink-0 rounded-xl"
-                name={highlight.title}
-                src={getPublicImageVariantUrl('highlight-images', highlight.image_path, 'card')}
-              />
-              <span className="min-w-0 flex-1">
-                <span className="sr-only">Editar </span>
-                <strong className="block truncate font-[family-name:var(--font-poppins)] text-base text-ink">
-                  {highlight.title}
-                </strong>
-                <span className="mt-1 line-clamp-2 text-xs text-muted">
-                  {highlight.description || 'Sem descrição'}
+              <button
+                className="flex min-h-16 w-full gap-3 text-left"
+                onClick={() => edit(highlight)}
+                type="button"
+              >
+                <MediaImage
+                  alt=""
+                  className="size-16 shrink-0 rounded-xl"
+                  name={highlight.title}
+                  src={getPublicImageVariantUrl('highlight-images', highlight.image_path, 'card')}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="sr-only">Editar </span>
+                  <strong className="block truncate font-[family-name:var(--font-poppins)] text-base text-ink">
+                    {highlight.title}
+                  </strong>
+                  <span className="mt-1 line-clamp-2 text-xs text-muted">
+                    {highlight.description || 'Sem descrição'}
+                  </span>
+                  <span className="mt-1 block truncate text-xs font-bold text-body">
+                    Leva para: {destination.label}
+                  </span>
+                  <span
+                    className={`mt-2 inline-block rounded-full px-2 py-1 text-[10px] font-bold ${highlight.is_active ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}
+                  >
+                    {highlight.is_active ? 'VISÍVEL' : 'ESCONDIDO'}
+                  </span>
                 </span>
-                <span
-                  className={`mt-2 inline-block rounded-full px-2 py-1 text-[10px] font-bold ${highlight.is_active ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}
-                >
-                  {highlight.is_active ? 'VISÍVEL' : 'ESCONDIDO'}
-                </span>
-              </span>
-            </button>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button onClick={() => edit(highlight)} variant="neutral">
-                <AdminIcon className="mr-2" name="edit" />
-                Editar
-              </Button>
-              <QuickAction
-                action={toggleHighlight}
-                label={highlight.is_active ? 'Esconder' : 'Mostrar'}
-                values={{ id: highlight.id, is_active: String(!highlight.is_active) }}
-              />
-              <QuickAction
-                action={reorderHighlight}
-                icon="up"
-                label={`Subir ${highlight.title}`}
-                values={{ id: highlight.id, direction: 'up' }}
-              />
-              <QuickAction
-                action={reorderHighlight}
-                icon="down"
-                label={`Descer ${highlight.title}`}
-                values={{ id: highlight.id, direction: 'down' }}
-              />
-              <ConfirmDialog
-                action={deleteHighlight}
-                description="O destaque e a foto que só ele usa serão excluídos."
-                entityId={highlight.id}
-                fallbackFocusRef={titleRef}
-                title={`Excluir ${highlight.title}?`}
-              />
-            </div>
-            <p className="mt-3 text-xs text-muted">Posição {index + 1}</p>
-          </m.article>
-        ))}
+              </button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button onClick={() => edit(highlight)} variant="neutral">
+                  <AdminIcon className="mr-2" name="edit" />
+                  Editar
+                </Button>
+                <QuickAction
+                  action={toggleHighlight}
+                  label={highlight.is_active ? 'Esconder' : 'Mostrar'}
+                  values={{ id: highlight.id, is_active: String(!highlight.is_active) }}
+                />
+                <QuickAction
+                  action={reorderHighlight}
+                  disabled={index === 0}
+                  icon="up"
+                  label={`Subir ${highlight.title}`}
+                  values={{ id: highlight.id, direction: 'up' }}
+                />
+                <QuickAction
+                  action={reorderHighlight}
+                  disabled={index === highlights.length - 1}
+                  icon="down"
+                  label={`Descer ${highlight.title}`}
+                  values={{ id: highlight.id, direction: 'down' }}
+                />
+                <ConfirmDialog
+                  action={deleteHighlight}
+                  description="O destaque e a foto que só ele usa serão excluídos."
+                  entityId={highlight.id}
+                  fallbackFocusRef={titleRef}
+                  title={`Excluir ${highlight.title}?`}
+                />
+              </div>
+              {destination.status !== 'ok' ? (
+                <p className="mt-3 rounded-xl bg-danger-soft px-3 py-2 text-xs font-bold text-danger">
+                  {TARGET_PROBLEM[destination.status]}
+                </p>
+              ) : null}
+              <p className="mt-3 text-xs text-muted">Posição {index + 1}</p>
+            </m.article>
+          );
+        })}
         {!highlights.length ? (
           <AdminNotice kind="info" message="Crie um destaque para a tela inicial do cardápio." />
         ) : null}
       </div>
       <AdminSheet
-        onClose={() => setOpen(false)}
+        onClose={closeEditor}
         open={open}
         title={selected ? 'Editar destaque' : 'Novo destaque'}
       >
@@ -388,11 +400,10 @@ export function HighlightsManager({
           categories={categories}
           highlight={selected}
           key={selected?.id ?? 'new'}
-          onClose={() => setOpen(false)}
           onSaved={onSaved}
           products={products}
         />
       </AdminSheet>
-    </>
+    </QuickActionGroup>
   );
 }

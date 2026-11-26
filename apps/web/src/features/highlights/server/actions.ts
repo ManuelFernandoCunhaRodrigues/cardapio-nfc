@@ -5,7 +5,7 @@ import { adminApiPaths } from '@salgae/core/contracts/admin-api';
 import { readFormText, runAdminAction } from '@/features/admin/server/run-admin-action';
 import { adminApi } from '@/lib/api/admin-api-client';
 import { invalidateMenuCache } from '@/lib/cache/invalidate-public-cache';
-import { refreshAdminPanel } from '@/lib/cache/refresh-admin-panel';
+import { refreshAdminList, refreshAdminPanel } from '@/lib/cache/refresh-admin-panel';
 
 import type { HighlightActionState } from './action-state';
 
@@ -36,6 +36,7 @@ export async function createHighlight(
     {
       event: 'highlight_create_failed',
       failureMessage: 'Não foi possível criar o destaque agora.',
+      submitted: formData,
     },
   );
 }
@@ -53,6 +54,7 @@ export async function updateHighlight(
     {
       event: 'highlight_update_failed',
       failureMessage: 'Não foi possível salvar o destaque agora.',
+      submitted: formData,
     },
   );
 }
@@ -68,7 +70,7 @@ export async function toggleHighlight(
       await adminApi().write('PUT', adminApiPaths.highlightActivation(id), {
         is_active: isActive,
       });
-      return refreshAfterHighlightChange(isActive ? 'Destaque ativado.' : 'Destaque desativado.');
+      return refreshAfterHighlightChange(isActive ? 'Destaque visível.' : 'Destaque escondido.');
     },
     {
       event: 'highlight_toggle_failed',
@@ -86,7 +88,10 @@ export async function reorderHighlight(
   return runAdminAction(
     async () => {
       await adminApi().write('POST', adminApiPaths.highlightOrder(id), { direction });
-      return refreshAfterHighlightChange('Ordem atualizada.');
+      // A ordem só aparece na lista; o resto do painel não precisa ser marcado.
+      invalidateMenuCache();
+      refreshAdminList('highlights');
+      return { status: 'success', message: 'Ordem atualizada.' };
     },
     {
       event: 'highlight_reorder_failed',

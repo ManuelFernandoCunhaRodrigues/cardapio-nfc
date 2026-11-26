@@ -1,3 +1,4 @@
+import type { AdminCategory } from '@salgae/core/contracts/admin-api';
 import type { AdminProduct } from '@/features/admin/server/catalog';
 
 export type ProductFilter = 'all' | 'unavailable' | 'without-image' | 'hidden';
@@ -22,6 +23,19 @@ export function productsNeedingAttention<
   });
 }
 
+/** Produto ativo em categoria escondida não aparece para o cliente: a contagem precisa saber disso. */
+export function productsOnMenu<T extends Pick<AdminProduct, 'is_active' | 'category_id'>>(
+  products: T[],
+  categories: Pick<AdminCategory, 'id' | 'is_active'>[],
+): T[] {
+  const hiddenCategories = new Set(
+    categories.filter((category) => !category.is_active).map((category) => category.id),
+  );
+  return products.filter(
+    (product) => product.is_active && !hiddenCategories.has(product.category_id),
+  );
+}
+
 function normalize(value: string): string {
   return value
     .normalize('NFD')
@@ -44,6 +58,33 @@ export function filterAdminProducts<T extends AdminProduct>(
     if (options.filter === 'hidden' && product.is_active) return false;
     return true;
   });
+}
+
+export type ReorderBounds = { isFirst: boolean; isLast: boolean };
+
+/**
+ * Primeiro e último produto de cada categoria. Recebe a lista completa, na ordem do servidor: a
+ * API troca o produto com o vizinho da categoria inteira, não com o vizinho visível no filtro.
+ */
+export function reorderBoundsByProduct(
+  products: ReadonlyArray<Pick<AdminProduct, 'id' | 'category_id'>>,
+): Map<string, ReorderBounds> {
+  const firstByCategory = new Map<string, string>();
+  const lastByCategory = new Map<string, string>();
+  for (const product of products) {
+    if (!firstByCategory.has(product.category_id))
+      firstByCategory.set(product.category_id, product.id);
+    lastByCategory.set(product.category_id, product.id);
+  }
+  return new Map(
+    products.map((product) => [
+      product.id,
+      {
+        isFirst: firstByCategory.get(product.category_id) === product.id,
+        isLast: lastByCategory.get(product.category_id) === product.id,
+      },
+    ]),
+  );
 }
 
 export function buildHighlightTarget(kind: HighlightTargetKind, value = ''): string | null {

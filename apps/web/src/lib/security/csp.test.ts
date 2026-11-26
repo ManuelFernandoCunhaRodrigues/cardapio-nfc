@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { buildContentSecurityPolicy } from './csp';
+import { buildContentSecurityPolicy, isServedOverHttps } from './csp';
 
 function directive(policy: string, name: string): string[] {
   const entry = policy.split('; ').find((part) => part.startsWith(`${name} `));
@@ -45,5 +45,30 @@ describe('buildContentSecurityPolicy', () => {
   test('banco local em http vira ws para o tempo real', () => {
     const local = buildContentSecurityPolicy({ supabaseUrl: 'http://127.0.0.1:54321' });
     expect(directive(local, 'connect-src')).toContain('ws://127.0.0.1:54321');
+  });
+});
+
+describe('upgrade-insecure-requests', () => {
+  test('entra só quando o site é servido por https', () => {
+    expect(buildContentSecurityPolicy({ upgradeInsecureRequests: true })).toContain(
+      'upgrade-insecure-requests',
+    );
+    expect(buildContentSecurityPolicy()).not.toContain('upgrade-insecure-requests');
+  });
+});
+
+describe('isServedOverHttps', () => {
+  test('endereço público em https liga a diretiva', () => {
+    expect(isServedOverHttps({ NEXT_PUBLIC_SITE_URL: 'https://salgae.vercel.app' })).toBe(true);
+  });
+
+  test('build na Vercel liga mesmo sem endereço público (stage hoje)', () => {
+    expect(isServedOverHttps({ VERCEL: '1' })).toBe(true);
+  });
+
+  test('CI e máquina local em http ficam de fora', () => {
+    expect(isServedOverHttps({})).toBe(false);
+    expect(isServedOverHttps({ NEXT_PUBLIC_SITE_URL: 'http://127.0.0.1:3100' })).toBe(false);
+    expect(isServedOverHttps({ VERCEL: '0', NEXT_PUBLIC_SITE_URL: '' })).toBe(false);
   });
 });

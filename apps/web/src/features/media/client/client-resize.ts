@@ -2,7 +2,7 @@
 
 const CLIENT_IMAGE_MAX_SIDE = 2048;
 export const CLIENT_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
-export const CLIENT_IMAGE_UPLOAD_MAX_BYTES = 3_750_000;
+const CLIENT_IMAGE_UPLOAD_MAX_BYTES = 3_750_000;
 
 export type ImageDimensions = { width: number; height: number };
 
@@ -40,7 +40,12 @@ function canvasBlob(canvas: HTMLCanvasElement): Promise<Blob> {
  */
 export async function resizeImageForUpload(file: File): Promise<File> {
   if (file.size > CLIENT_IMAGE_MAX_BYTES) throw new Error('image_too_large');
-  const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch {
+    throw new Error('image_decode_failed');
+  }
   try {
     const dimensions = fitImageWithin({ width: bitmap.width, height: bitmap.height });
     const canvas = document.createElement('canvas');
@@ -51,7 +56,7 @@ export async function resizeImageForUpload(file: File): Promise<File> {
     context.drawImage(bitmap, 0, 0, dimensions.width, dimensions.height);
     const blob = await canvasBlob(canvas);
     if (blob.size > CLIENT_IMAGE_UPLOAD_MAX_BYTES) {
-      throw new Error('A foto reduzida ainda ficou grande demais. Escolha outra foto.');
+      throw new Error('image_upload_too_large');
     }
     return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'imagem'}.jpg`, {
       type: 'image/jpeg',

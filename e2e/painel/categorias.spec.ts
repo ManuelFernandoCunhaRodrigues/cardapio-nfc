@@ -39,6 +39,20 @@ async function publicCategoryOrder(page: Page) {
     .allTextContents();
 }
 
+/** Segura a resposta da ordem no caminho até o servidor e conta quantos pedidos saíram. */
+async function holdCategoryMoves(page: Page) {
+  let requests = 0;
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route('**/admin/categorias', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    requests += 1;
+    await held;
+    return route.continue();
+  });
+  return { requests: () => requests, release: () => release() };
+}
+
 async function chooseAndSavePhoto(page: Page, saveButton: string) {
   await page.getByRole('dialog').getByLabel('Escolher foto').setInputFiles(PHOTO_FILE);
   await expect(page.getByText('Foto pronta para salvar junto com a categoria.')).toBeVisible();
@@ -143,6 +157,81 @@ test.describe('categorias do painel', () => {
     await page.getByRole('button', { name: `Descer ${secondName}` }).click();
     await expect(page.getByText('Ordem da categoria atualizada.')).toBeVisible();
     expect((await publicCategoryOrder(page)).slice(-2)).toEqual([firstName, secondName]);
+  });
+
+  test('rajada de cliques na lista mostra o andamento e move uma posição só', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    const firstName = uniqueName('categoria-clique-a');
+    const secondName = uniqueName('categoria-clique-b');
+    const firstId = await createCategory(page, adminDb, firstName);
+    const secondId = await createCategory(page, adminDb, secondName);
+    const secondIsAbove = async () => {
+      const { data, error } = await adminDb.client
+        .from('categories')
+        .select('id, sort_order')
+        .in('id', [firstId, secondId]);
+      expect(error).toBeNull();
+      const order = new Map(data!.map((item) => [item.id, item.sort_order]));
+      return order.get(secondId)! < order.get(firstId)!;
+    };
+
+    await page.goto('/admin/categorias');
+    const moves = await holdCategoryMoves(page);
+    const moveUp = page.getByRole('button', { name: `Subir ${secondName}` });
+    const otherItem = page.getByRole('button', { name: `Subir ${firstName}` });
+    await moveUp.focus();
+    // Cliques no mesmo instante, antes de a tela mostrar o andamento. Pelo DOM porque o clique do
+    // Playwright espera o botão sair de aria-disabled, que é justamente o que se quer provar.
+    await moveUp.evaluate((button: HTMLElement) => {
+      button.click();
+      button.click();
+      button.click();
+    });
+    await expect(moveUp).toHaveAttribute('aria-busy', 'true');
+    await expect(moveUp.getByTestId('quick-action-spinner')).toBeVisible();
+    await expect(moveUp).toBeFocused();
+    await expect(otherItem).toHaveAttribute('aria-disabled', 'true');
+    await expect.poll(moves.requests).toBe(1);
+
+    await otherItem.evaluate((button: HTMLElement) => button.click());
+    await moveUp.press('Enter');
+    moves.release();
+    await expect(page.getByText('Ordem da categoria atualizada.')).toBeVisible();
+    await expect(moveUp).toHaveAttribute('aria-busy', 'false');
+    await expect(otherItem).toHaveAttribute('aria-disabled', 'false');
+    await expect(moveUp).toBeFocused();
+    await expect.poll(secondIsAbove).toBe(true);
+
+    // As Server Actions saem uma por vez. Um clique que tivesse entrado na fila sairia antes desta
+    // ação de controle; quando o efeito dela aparece no banco, a fila já esvaziou.
+    await otherItem.click();
+    await expect.poll(secondIsAbove).toBe(false);
+    expect(moves.requests()).toBe(2);
+  });
+
+  test('com menos animação, o botão em andamento não gira', async ({
+    page,
+    adminDb,
+    uniqueName,
+  }) => {
+    const firstName = uniqueName('categoria-calma-a');
+    const secondName = uniqueName('categoria-calma-b');
+    await createCategory(page, adminDb, firstName);
+    await createCategory(page, adminDb, secondName);
+
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/admin/categorias');
+    const moves = await holdCategoryMoves(page);
+    const moveUp = page.getByRole('button', { name: `Subir ${secondName}` });
+    await moveUp.click();
+    await expect(moveUp).toHaveAttribute('aria-busy', 'true');
+    await expect(moveUp.getByTestId('quick-action-spinner')).toBeHidden();
+    await expect(moveUp.locator('svg')).toBeVisible();
+    moves.release();
+    await expect(page.getByText('Ordem da categoria atualizada.')).toBeVisible();
   });
 
   test('envia, troca e remove a foto, que aparece no círculo da tela inicial', async ({
@@ -266,7 +355,7 @@ test.describe('categorias do painel', () => {
     await expect(page.getByRole('article').filter({ hasText: name })).toHaveCount(0);
   });
 
-  test('recusa apagar uma categoria com produto vinculado', async ({
+  test('não deixa excluir categoria com produto e avisa antes de esconder', async ({
     page,
     adminDb,
     uniqueName,
@@ -283,15 +372,26 @@ test.describe('categorias do painel', () => {
     expect(product).not.toBeNull();
     adminDb.track('products', product!.id);
 
+    await page.reload();
     const card = page.getByRole('article').filter({ hasText: categoryName });
-    await card.getByRole('button', { name: 'Excluir', exact: true }).click();
-    const dialog = page.getByRole('dialog', { name: `Excluir ${categoryName}?` });
-    await dialog.getByRole('button', { name: 'Excluir de vez' }).click();
+    await expect(card.getByRole('button', { name: 'Excluir', exact: true })).toBeDisabled();
     await expect(
-      dialog.getByText(
-        'Esta categoria possui produtos vinculados. Mova os produtos para outra categoria ou desative-a.',
+      card.getByText(
+        'Para excluir, mova o produto para outra categoria ou apenas esconda a categoria.',
       ),
     ).toBeVisible();
-    await expect(page.getByRole('article').filter({ hasText: categoryName })).toBeVisible();
+
+    // Esconder diz quantos produtos somem do cardápio e não muda nada se a pessoa desistir.
+    await card.getByRole('button', { name: 'Esconder', exact: true }).click();
+    const question = page.getByRole('alertdialog', { name: `Esconder ${categoryName}?` });
+    await expect(
+      question.getByText(
+        '1 produto deixará de aparecer no cardápio até você mostrar a categoria de novo.',
+      ),
+    ).toBeVisible();
+    await question.getByRole('button', { name: 'Voltar' }).click();
+    await expect(question).toHaveCount(0);
+    await expect(card.getByRole('button', { name: 'Esconder', exact: true })).toBeFocused();
+    await expect(card.getByText('VISÍVEL', { exact: true })).toBeVisible();
   });
 });

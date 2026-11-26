@@ -121,7 +121,7 @@ test.describe('destaques do painel', () => {
     await page.goto('/admin/destaques');
     let card = page.getByRole('article').filter({ hasText: title });
     await card.getByRole('button', { name: 'Esconder', exact: true }).click();
-    await expect(page.getByText('Destaque desativado.')).toBeVisible();
+    await expect(page.getByText('Destaque escondido.')).toBeVisible();
     await page.goto(`/?estado=inativo-${encodeURIComponent(title)}`);
     await expect(
       page
@@ -132,7 +132,7 @@ test.describe('destaques do painel', () => {
     await page.goto('/admin/destaques');
     card = page.getByRole('article').filter({ hasText: title });
     await card.getByRole('button', { name: 'Mostrar', exact: true }).click();
-    await expect(page.getByText('Destaque ativado.')).toBeVisible();
+    await expect(page.getByText('Destaque visível.')).toBeVisible();
     await page.goto(`/?estado=reativo-${encodeURIComponent(title)}`);
     await expect(
       page

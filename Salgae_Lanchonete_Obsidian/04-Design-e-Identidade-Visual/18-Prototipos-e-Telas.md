@@ -5,11 +5,27 @@ tags:
   - design
   - ui
   - produto
-atualizado: 2026-10-08
+atualizado: 2026-10-16
 ---
 # Protótipos e telas
 
 Voltar: [[_Indice-04-Design-e-Identidade-Visual]] · Relacionado: [[16-Identidade-Visual]] · [[17-Design-System-UI]] · [[04-Experiencia-do-Cliente]]
+
+## Protótipo atual no Claude Design (2026-10-16)
+
+As telas **como estão em produção** foram passadas para o Claude Design, num canvas chamado **"Salgaê · Protótipo"**: https://claude.ai/artifact/QM2oHfmGUxoBdeMU1f5f6p (privado; só abre para outra pessoa depois de compartilhado pelo menu Share do próprio canvas).
+
+O canvas tem três páginas, com dez telas navegáveis (botão Play):
+
+| Página | Telas | O que dá para clicar |
+| --- | --- | --- |
+| Cardápio · celular (390 × 844) | Início, Cardápio, Produto, Info da loja | Barra de abas, cartões abrem o produto, chips de categoria, pontos do carrossel; a Info tem um ajuste "aberta/fechada" no painel Tweaks. |
+| Painel · desktop (1440 de largura) | Resumo, Produtos, Editar produto | Menu lateral, busca por nome e filtros de atenção na tabela, troca de situação na linha; na edição, nome e preço mudam a prévia do cartão ao vivo. |
+| Painel · celular (390 × 844) | Resumo, Produtos, Editar produto | Abas do rodapé, folha "Estado da loja", filtros por categoria e de atenção, escolha de categoria, selo e situação. |
+
+Cores, fontes (Poppins + Nunito), ícones, textos e medidas foram copiados do código. Produtos, preços e selos são os da produção em 2026-10-16. Fotos vêm de `public/imagens-catalogo-final`.
+
+Ficaram de fora nesta rodada: a tela de Busca do cardápio e as telas Categorias, Destaques e Dados da loja do painel. O protótipo antigo descrito abaixo continua valendo só como histórico.
 
 ## O que existe no pacote
 

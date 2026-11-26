@@ -4,7 +4,7 @@ import { AdminIcon } from '@/features/admin/components/admin-icon';
 import { MediaImage } from '@/features/media/components/media-image';
 import { Card } from '@/components/ui/card';
 import { getAdminCategories, getAdminProducts } from '@/features/admin/server/catalog';
-import { productsNeedingAttention } from '@/features/admin/rules/panel';
+import { productsNeedingAttention, productsOnMenu } from '@/features/admin/rules/panel';
 import { getPublicImageVariantUrl } from '@/features/media/rules/media-urls';
 import { getSaoPauloWeekday } from '@/features/menu/rules/presentation';
 import { getAdminStoreSettings } from '@/features/store/server/get-store-settings';
@@ -14,7 +14,8 @@ import { formatPriceBRL } from '@salgae/core/rules/price';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const reasonLabel = { unavailable: 'INDISPONÍVEL', 'without-image': 'SEM FOTO' } as const;
+// Mesmos nomes da Situação do produto: "Em falta hoje" e "Escondido".
+const reasonLabel = { unavailable: 'EM FALTA HOJE', 'without-image': 'SEM FOTO' } as const;
 
 export default async function AdminDashboardPage() {
   const [products, categories, store] = await Promise.all([
@@ -22,25 +23,28 @@ export default async function AdminDashboardPage() {
     getAdminCategories(),
     getAdminStoreSettings(),
   ]);
-  const active = products.filter((product) => product.is_active).length;
-  const unavailable = products.filter(
-    (product) => product.is_active && !product.is_available,
-  ).length;
+  const onMenu = productsOnMenu(products, categories);
+  const unavailable = onMenu.filter((product) => !product.is_available).length;
+  const hiddenCategories = categories.filter((category) => !category.is_active);
   const withoutImage = products.filter((product) => !product.image_path).length;
-  const attention = productsNeedingAttention(products);
+  const hiddenProducts = products.filter((product) => !product.is_active).length;
+  // Só o que o cliente vê: produto de categoria escondida não precisa de atenção agora.
+  const attention = productsNeedingAttention(onMenu);
   const now = new Date();
   const settings = store.status === 'loaded' ? store.settings : undefined;
   const status = settings ? getStoreStatus(settings, now) : null;
   const today = settings?.opening_hours.find((hour) => hour.day === getSaoPauloWeekday(now));
   const cards = [
     {
-      label: 'Produtos ativos',
-      value: active,
-      detail: 'Aparecem no cardápio',
+      label: 'No cardápio',
+      value: onMenu.length,
+      detail: hiddenProducts
+        ? `Produtos que o cliente vê · ${hiddenProducts} ${hiddenProducts === 1 ? 'escondido' : 'escondidos'}`
+        : 'Produtos que o cliente vê',
       href: '/admin/produtos',
     },
     {
-      label: 'Indisponíveis',
+      label: 'Em falta hoje',
       value: unavailable,
       detail: 'Seguem visíveis com aviso',
       href: '/admin/produtos?filtro=indisponiveis',
@@ -56,8 +60,11 @@ export default async function AdminDashboardPage() {
     {
       label: 'Categorias',
       value: categories.length,
-      detail: 'Organizam o cardápio',
+      detail: hiddenCategories.length
+        ? `${hiddenCategories.length} ${hiddenCategories.length === 1 ? 'escondida' : 'escondidas'}`
+        : 'Organizam o cardápio',
       href: '/admin/categorias',
+      attention: hiddenCategories.length > 0,
     },
   ];
   const formattedDate = new Intl.DateTimeFormat('pt-BR', {
@@ -138,9 +145,9 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="mt-4 grid grid-cols-2 gap-3 lg:hidden">
-        {quickLinks.map((item, index) => (
+        {quickLinks.map((item) => (
           <Link
-            className={`flex min-h-[72px] items-center gap-3 rounded-xl border border-border bg-white p-3 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20 ${index === 2 ? 'col-span-2' : ''}`}
+            className="flex min-h-[72px] items-center gap-3 rounded-xl border border-border bg-white p-3 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
             href={item.href}
             key={item.href}
           >
@@ -154,9 +161,22 @@ export default async function AdminDashboardPage() {
             </span>
           </Link>
         ))}
+        {/* No celular, ver o resultado da alteração é o atalho que mais falta. */}
+        <Link
+          className="flex min-h-[72px] items-center gap-3 rounded-xl border border-border bg-white p-3 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
+          href="/cardapio"
+          target="_blank"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-peach text-brand-strong">
+            <AdminIcon name="eye" />
+          </span>
+          <strong className="block font-[family-name:var(--font-poppins)] text-sm text-ink">
+            Ver cardápio
+          </strong>
+        </Link>
       </section>
 
-      <section className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]">
+      <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]">
         <Card className="border-0 bg-white p-4 lg:p-5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="disp text-lg font-semibold text-ink">Precisam de atenção</h2>
@@ -169,8 +189,35 @@ export default async function AdminDashboardPage() {
               </Link>
             ) : null}
           </div>
-          {attention.length ? (
+          {attention.length || hiddenCategories.length ? (
             <ul className="mt-2 divide-y divide-border-inner">
+              {hiddenCategories.map((category) => (
+                <li key={category.id}>
+                  <Link
+                    className="flex min-h-[62px] items-center gap-3 py-2 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-brand/20"
+                    href="/admin/categorias"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <strong className="block truncate font-[family-name:var(--font-poppins)] text-sm text-ink">
+                        {category.name}
+                      </strong>
+                      <span className="text-xs text-muted">
+                        {category.product_count}{' '}
+                        {category.product_count === 1 ? 'produto fora' : 'produtos fora'} do
+                        cardápio
+                      </span>
+                    </span>
+                    <span className="rounded-full bg-danger-soft px-2 py-1 font-[family-name:var(--font-poppins)] text-[9px] font-semibold text-danger">
+                      CATEGORIA ESCONDIDA
+                    </span>
+                    <AdminIcon
+                      className="shrink-0 text-muted"
+                      name="down"
+                      style={{ transform: 'rotate(-90deg)' }}
+                    />
+                  </Link>
+                </li>
+              ))}
               {attention.slice(0, 8).map(({ product, reasons }) => (
                 <li key={product.id}>
                   <Link
@@ -217,14 +264,14 @@ export default async function AdminDashboardPage() {
             </p>
           )}
         </Card>
-        <Card className="hidden border-0 bg-white lg:block">
+        <Card className="border-0 bg-white">
           <div className="flex items-center justify-between gap-3">
             <h2 className="disp text-lg font-semibold text-ink">Loja hoje</h2>
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${status?.isOpen ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${status === null ? 'bg-surface-inner text-muted' : status.isOpen ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}
             >
               <span className="size-1.5 rounded-full bg-current" />
-              {status?.isOpen ? 'Aberta' : 'Fechada'}
+              {status === null ? 'Sem informação' : status.isOpen ? 'Aberta' : 'Fechada'}
             </span>
           </div>
           <dl className="mt-4 space-y-4 text-sm">

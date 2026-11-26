@@ -5,10 +5,13 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  PayloadTooLargeError,
   UnauthorizedError,
+  UnsupportedMediaTypeError,
   ValidationError,
 } from './domain-errors';
 import { mapErrorToHttp } from './http-error-mapper';
+import { RequestCancelledError } from './request-cancelled-error';
 
 describe('mapErrorToHttp', () => {
   it.each([
@@ -17,6 +20,8 @@ describe('mapErrorToHttp', () => {
     ['autorização', new ForbiddenError('forbidden'), 403],
     ['recurso ausente', new NotFoundError('not found'), 404],
     ['conflito', new ConflictError('conflict'), 409],
+    ['conteúdo grande demais', new PayloadTooLargeError('too large'), 413],
+    ['formato não suportado', new UnsupportedMediaTypeError('unsupported'), 415],
   ])('mapeia o erro de %s para o status correto', (_label, error, status) => {
     expect(mapErrorToHttp(error)).toEqual({ status, message: error.message, report: false });
   });
@@ -39,6 +44,14 @@ describe('mapErrorToHttp', () => {
       status: 504,
       message: 'A solicitação demorou mais que o esperado.',
       report: true,
+    });
+  });
+
+  it('não registra de novo o handler que parou depois do timeout', () => {
+    expect(mapErrorToHttp(new RequestCancelledError())).toEqual({
+      status: 504,
+      message: 'A solicitação demorou mais que o esperado.',
+      report: false,
     });
   });
 

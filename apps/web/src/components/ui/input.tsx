@@ -1,11 +1,23 @@
-import type { InputHTMLAttributes } from 'react';
+import { useId, type InputHTMLAttributes } from 'react';
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string };
+type InputProps = InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  error?: string;
+  wrapperClassName?: string;
+};
 
-export function Input({ id, label, error, className = '', ...props }: InputProps) {
-  const inputId = id ?? props.name;
+export function Input({
+  id,
+  label,
+  error,
+  className = '',
+  wrapperClassName = '',
+  ...props
+}: InputProps) {
+  const generatedId = useId();
+  const inputId = id ?? props.name ?? generatedId;
   return (
-    <div className="space-y-1.5">
+    <div className={`space-y-1.5 ${wrapperClassName}`}>
       <label className="block text-sm font-bold text-ink" htmlFor={inputId}>
         {label}
       </label>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import * as m from 'motion/react-m';
 
 import {
@@ -11,7 +11,7 @@ import {
 } from '@/features/menu/rules/highlight-carousel';
 import type { MenuHighlight } from '@/features/menu/types';
 import { useHighlightDrag } from '@/features/menu/hooks/use-highlight-drag';
-import { useHydrated } from '@/hooks/use-client-snapshot';
+import { useHydrated, useMediaQuery } from '@/hooks/use-client-snapshot';
 
 import { HighlightSlide } from './highlight-slide';
 import { Icon } from './icons';
@@ -30,13 +30,16 @@ const fallback: MenuHighlight = {
 
 export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighlight[] }>) {
   const items = highlights.length ? highlights : [fallback];
-  const interactive = highlights.length > 1;
+  const itemCount = items.length;
+  const interactive = itemCount > 1;
   const [active, setActive] = useState(0);
   const enhanced = useHydrated();
   const [announcement, setAnnouncement] = useState('');
+  // Pausa pedida pelo botão: só volta quando a pessoa toca de novo (WCAG 2.2.2).
+  const [pausedByUser, setPausedByUser] = useState(false);
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const trackRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<HighlightCarouselController | null>(null);
-  const reducedMotionRef = useRef(false);
   const programmedScrollRef = useRef<{ index: number; offset: number } | null>(null);
   const drag = useHighlightDrag({
     activeIndex: active,
@@ -58,39 +61,46 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
     programmedScrollRef.current =
       Math.abs(track.scrollLeft - offset) > 1 ? { index, offset } : null;
     setActive(index);
-    track.scrollTo({ left: offset, behavior: reducedMotionRef.current ? 'auto' : 'smooth' });
+    track.scrollTo({ left: offset, behavior: reducedMotion ? 'auto' : 'smooth' });
     if (source === 'manual') setAnnouncement(`Destaque ${index + 1} de ${items.length}`);
   }
 
+  // Sempre com o `scrollTo` e as preferências do render atual, sem recriar o controlador.
+  const advanceTo = useEffectEvent((index: number) => scrollTo(index));
+  const applyPreferences = useEffectEvent((controller: HighlightCarouselController) => {
+    controller.setPause('explicit', pausedByUser);
+    controller.setPause('reducedMotion', reducedMotion);
+  });
+
   useEffect(() => {
-    if (!interactive) return;
-    const controller = new HighlightCarouselController(items.length, (index) => scrollTo(index));
+    const section = trackRef.current?.closest('section');
+    if (!interactive || !section) return;
+    const controller = new HighlightCarouselController(itemCount, (index) => advanceTo(index));
     controllerRef.current = controller;
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const updateReducedMotion = () => {
-      reducedMotionRef.current = media.matches;
-      controller.setPause('reducedMotion', media.matches);
-    };
+    applyPreferences(controller);
     const updateVisibility = () => controller.setPause('hidden', document.hidden);
     const observer = new IntersectionObserver(
       ([entry]) => controller.setPause('offscreen', !entry?.isIntersecting),
       { threshold: 0.1 },
     );
-    updateReducedMotion();
     updateVisibility();
-    observer.observe(trackRef.current!.closest('section')!);
-    media.addEventListener('change', updateReducedMotion);
+    observer.observe(section);
     document.addEventListener('visibilitychange', updateVisibility);
     return () => {
       controller.destroy();
       controllerRef.current = null;
       observer.disconnect();
-      media.removeEventListener('change', updateReducedMotion);
       document.removeEventListener('visibilitychange', updateVisibility);
     };
-    // The item count is stable for the mounted server-rendered banner.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interactive, items.length]);
+  }, [interactive, itemCount]);
+
+  useEffect(() => {
+    controllerRef.current?.setPause('explicit', pausedByUser);
+  }, [pausedByUser]);
+
+  useEffect(() => {
+    controllerRef.current?.setPause('reducedMotion', reducedMotion);
+  }, [reducedMotion]);
 
   function syncFromScroll() {
     const track = trackRef.current;
@@ -146,6 +156,7 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
     >
       <m.div
         className="flex snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        data-testid="highlight-track"
         drag={enhanced && interactive ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
         dragControls={drag.dragControls}
@@ -173,7 +184,7 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
       {interactive && enhanced ? (
         <>
           {items.length <= MAX_DOTS ? (
-            <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center">
+            <div className="absolute inset-x-12 bottom-0 z-20 flex justify-center">
               {items.map((item, index) => (
                 <button
                   aria-current={index === active ? 'true' : undefined}
@@ -192,7 +203,7 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
           ) : (
             <p
               aria-hidden="true"
-              className="absolute inset-x-0 bottom-2 z-20 mx-auto flex h-5 w-fit items-center rounded-full bg-black/40 px-2.5 text-[11px] font-bold text-white backdrop-blur-sm"
+              className="absolute inset-x-12 bottom-3 z-20 mx-auto flex h-5 w-fit items-center rounded-full bg-black/40 px-2.5 text-[11px] font-bold text-white backdrop-blur-sm"
             >
               {active + 1} de {items.length}
             </p>
@@ -213,6 +224,19 @@ export function HighlightBanner({ highlights }: Readonly<{ highlights: MenuHighl
           >
             <Icon name="arrow-simple" />
           </button>
+          {/* Com movimento reduzido nada troca sozinho, e o botão não teria o que pausar. */}
+          {reducedMotion ? null : (
+            <button
+              aria-label={pausedByUser ? 'Continuar destaques' : 'Pausar destaques'}
+              className="absolute bottom-0 right-1 z-20 grid size-11 place-items-center rounded-full text-white"
+              onClick={() => setPausedByUser((paused) => !paused)}
+              type="button"
+            >
+              <span className="grid size-8 place-items-center rounded-full bg-black/45 backdrop-blur-sm">
+                <Icon height={16} name={pausedByUser ? 'play' : 'pause'} width={16} />
+              </span>
+            </button>
+          )}
           <p aria-atomic="true" aria-live="polite" className="sr-only">
             {announcement}
           </p>

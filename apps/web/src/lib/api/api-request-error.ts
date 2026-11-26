@@ -1,6 +1,8 @@
 import type { FieldErrors } from '@salgae/core/contracts/admin-api';
 
-export const SESSION_EXPIRED_MESSAGE = 'Sua sessão expirou. Entre novamente.';
+// Textos únicos da sessão no painel: 401 é sessão vencida (volta ao login); 403 é conta sem acesso.
+export const SESSION_EXPIRED_MESSAGE = 'Sua sessão expirou. Entre de novo para continuar.';
+export const ADMIN_FORBIDDEN_MESSAGE = 'Esta conta não tem permissão para mudar o painel.';
 
 /** Resposta de erro da API: a mensagem já é o texto que a tela mostra. */
 export class ApiRequestError extends Error {
@@ -10,6 +12,8 @@ export class ApiRequestError extends Error {
     readonly status: number,
     message: string,
     readonly fieldErrors?: FieldErrors,
+    /** Código do pedido na API (`x-request-id`): liga o log do site ao log da API. */
+    readonly requestId?: string,
   ) {
     super(message);
   }

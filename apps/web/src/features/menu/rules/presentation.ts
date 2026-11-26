@@ -14,18 +14,39 @@ export function getProductCardWidth(viewportWidth: number, margin = 16, gap = 12
   return (viewportWidth - margin - 2 * gap) / 2.5;
 }
 
-export function formatStoreStatusTime(date: Date, includeWeekday = false): string {
-  const time = new Intl.DateTimeFormat('pt-BR', {
+export function formatStoreStatusTime(date: Date): string {
+  return new Intl.DateTimeFormat('pt-BR', {
     timeZone: STORE_TIME_ZONE,
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
   }).format(date);
-  if (!includeWeekday) return time;
+}
+
+/** "hoje às 08:00", "amanhã às 08:00" ou "segunda às 08:00", pelo calendário de São Paulo. */
+export function formatNextOpening(opensAt: Date, now: Date): string {
+  const time = formatStoreStatusTime(opensAt);
+  const daysAhead = getSaoPauloDayNumber(opensAt) - getSaoPauloDayNumber(now);
+  if (daysAhead === 0) return `hoje às ${time}`;
+  if (daysAhead === 1) return `amanhã às ${time}`;
   const weekday = new Intl.DateTimeFormat('pt-BR', { timeZone: STORE_TIME_ZONE, weekday: 'long' })
-    .format(date)
+    .format(opensAt)
     .replace('-feira', '');
   return `${weekday} às ${time}`;
+}
+
+// Dias desde 1970 pela data do calendário de São Paulo (não pelas 24 horas corridas).
+function getSaoPauloDayNumber(date: Date): number {
+  const [year, month, day] = new Intl.DateTimeFormat('en-CA', {
+    timeZone: STORE_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .format(date)
+    .split('-')
+    .map(Number);
+  return Math.round(Date.UTC(year, month - 1, day) / 86_400_000);
 }
 
 export function getSaoPauloWeekday(date: Date): number {

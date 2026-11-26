@@ -6,11 +6,18 @@ import {
   type DomainError,
   ForbiddenError,
   NotFoundError,
+  PayloadTooLargeError,
+  ServiceError,
   UnauthorizedError,
+  UnsupportedMediaTypeError,
+  TimeoutError,
   ValidationError,
 } from './domain-errors';
+import { RequestCancelledError } from './request-cancelled-error';
 
-type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 500 | 504;
+type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 500 | 504;
+
+const TIMEOUT_MESSAGE = 'A solicitação demorou mais que o esperado.';
 
 type HttpError = {
   status: ErrorStatus;
@@ -22,12 +29,17 @@ type HttpError = {
 const domainErrorMappings: Array<{
   type: abstract new (...args: never[]) => DomainError;
   status: ErrorStatus;
+  report?: boolean;
 }> = [
   { type: ValidationError, status: 400 },
   { type: UnauthorizedError, status: 401 },
   { type: ForbiddenError, status: 403 },
   { type: NotFoundError, status: 404 },
   { type: ConflictError, status: 409 },
+  { type: PayloadTooLargeError, status: 413 },
+  { type: UnsupportedMediaTypeError, status: 415 },
+  { type: TimeoutError, status: 504 },
+  { type: ServiceError, status: 500, report: true },
 ];
 
 function findDomainMapping(error: Error) {
@@ -42,12 +54,17 @@ export function mapErrorToHttp(error: Error): HttpError {
       status: domainMapping.status,
       message: error.message,
       ...(fieldErrors ? { fieldErrors } : {}),
-      report: false,
+      report: domainMapping.report ?? false,
     };
   }
 
+  // O 504 já foi respondido e registrado pelo middleware de timeout; aqui só o handler parando.
+  if (error instanceof RequestCancelledError) {
+    return { status: 504, message: TIMEOUT_MESSAGE, report: false };
+  }
+
   if (error instanceof HTTPException && error.status === 504) {
-    return { status: 504, message: 'A solicitação demorou mais que o esperado.', report: true };
+    return { status: 504, message: TIMEOUT_MESSAGE, report: true };
   }
 
   return {

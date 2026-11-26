@@ -1,15 +1,16 @@
 import type { FieldErrors } from '@salgae/core/contracts/admin-api';
+import { unstable_rethrow } from 'next/navigation';
 
-import { ApiRequestError } from '@/lib/api/api-request-error';
+import { readSubmittedValues, type SubmittedValues } from '@/features/admin/rules/submitted-values';
+import { redirectIfSessionExpiredForRequest } from '@/features/admin/server/session-redirect';
+import { ADMIN_FORBIDDEN_MESSAGE, ApiRequestError } from '@/lib/api/api-request-error';
 import { reportServerError } from '@/lib/observability';
-
-const SESSION_REJECTED_MESSAGE = 'Sua sessão não permite esta alteração. Entre novamente.';
-const SESSION_REJECTED_STATUSES = new Set([401, 403]);
 
 export type AdminActionError = {
   status: 'error';
   message: string;
   fieldErrors?: FieldErrors;
+  values?: SubmittedValues;
 };
 
 type AdminActionOptions = {
@@ -17,6 +18,8 @@ type AdminActionOptions = {
   event: string;
   /** Texto mostrado ao admin nesse caso. */
   failureMessage: string;
+  /** Formulário enviado: em qualquer erro, os textos voltam no estado para não se perderem. */
+  submitted?: FormData;
 };
 
 /** Lê um campo de texto do formulário; ausente vira texto vazio, que o schema da API recusa. */
@@ -25,9 +28,12 @@ export function readFormText(formData: FormData, name: string): string {
   return typeof value === 'string' ? value : '';
 }
 
-function toAdminActionError(error: unknown, options: AdminActionOptions): AdminActionError {
-  if (error instanceof ApiRequestError && SESSION_REJECTED_STATUSES.has(error.status)) {
-    return { status: 'error', message: SESSION_REJECTED_MESSAGE };
+function describeAdminActionError(
+  error: unknown,
+  options: AdminActionOptions,
+): Omit<AdminActionError, 'values'> {
+  if (error instanceof ApiRequestError && error.status === 403) {
+    return { status: 'error', message: ADMIN_FORBIDDEN_MESSAGE };
   }
   if (error instanceof ApiRequestError && error.isExpected) {
     return {
@@ -51,6 +57,13 @@ export async function runAdminAction<TSuccess>(
   try {
     return await perform();
   } catch (error) {
-    return toAdminActionError(error, options);
+    // `redirect` e afins do Next lançam um erro próprio, que não é falha da ação.
+    unstable_rethrow(error);
+    // Sessão vencida segue o mesmo caminho das leituras: login com o motivo e volta para a tela.
+    await redirectIfSessionExpiredForRequest(error);
+    const failure = describeAdminActionError(error, options);
+    return options.submitted
+      ? { ...failure, values: readSubmittedValues(options.submitted) }
+      : failure;
   }
 }

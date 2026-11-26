@@ -29,3 +29,21 @@ export class NotFoundError extends DomainError {
 export class ConflictError extends DomainError {
   override readonly name = 'ConflictError';
 }
+
+/** O conteúdo enviado passa do que o servidor consegue guardar (a foto, por exemplo). */
+export class PayloadTooLargeError extends DomainError {
+  override readonly name = 'PayloadTooLargeError';
+}
+
+/** O formato do arquivo é reconhecido, mas o servidor não sabe processá-lo. */
+export class UnsupportedMediaTypeError extends DomainError {
+  override readonly name = 'UnsupportedMediaTypeError';
+}
+
+export class TimeoutError extends DomainError {
+  override readonly name = 'TimeoutError';
+}
+
+export class ServiceError extends DomainError {
+  override readonly name = 'ServiceError';
+}

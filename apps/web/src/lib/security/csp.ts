@@ -3,7 +3,20 @@ type CspOptions = {
   supabaseUrl?: string;
   /** Em `next dev` o React precisa de `eval` para as ferramentas de depuração. */
   development?: boolean;
+  /** Site servido por https (stage e produção): pedidos http da página sobem para https. */
+  upgradeInsecureRequests?: boolean;
 };
+
+type HttpsEnv = Readonly<Record<string, string | undefined>>;
+
+/**
+ * O site é servido só por https? Vale quando o endereço público é https ou quando a build roda
+ * na Vercel, que serve todo projeto (stage, produção e prévias) por https, mesmo sem
+ * `NEXT_PUBLIC_SITE_URL`. No CI o site roda em http://127.0.0.1 e fica de fora.
+ */
+export function isServedOverHttps(env: HttpsEnv): boolean {
+  return env.VERCEL === '1' || Boolean(env.NEXT_PUBLIC_SITE_URL?.startsWith('https://'));
+}
 
 function originOf(url: string | undefined): string[] {
   if (!url) return [];
@@ -26,6 +39,7 @@ function originOf(url: string | undefined): string[] {
 export function buildContentSecurityPolicy({
   supabaseUrl,
   development = false,
+  upgradeInsecureRequests = false,
 }: CspOptions = {}): string {
   const supabase = originOf(supabaseUrl);
   const supabaseRealtime = supabase.map((origin) => origin.replace(/^http/, 'ws'));
@@ -46,7 +60,9 @@ export function buildContentSecurityPolicy({
     'manifest-src': ["'self'"],
   };
 
-  return Object.entries(directives)
-    .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
-    .join('; ');
+  const policy = Object.entries(directives).map(
+    ([directive, sources]) => `${directive} ${sources.join(' ')}`,
+  );
+  if (upgradeInsecureRequests) policy.push('upgrade-insecure-requests');
+  return policy.join('; ');
 }
