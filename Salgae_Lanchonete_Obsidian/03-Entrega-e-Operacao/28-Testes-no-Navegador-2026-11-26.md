@@ -63,21 +63,31 @@ O responsável disse "sim, promover".
   - As migrations 20261115120000 e 20261116120000 foram aplicadas à mão, com as mesmas versões dos arquivos em `schema_migrations`.
   - Os quatro destaques já apontavam para `/cardapio#combos`, então nenhum destino mudou.
   - O check `migrations` do PR continua falhando, porque faltam os segredos do Supabase no GitHub. A decisão sobre esse workflow segue com o responsável.
-- **Item 1:** feito.
-  - O #128 foi mesclado na `main` (db65a3b), e a Vercel publicou a produção.
-  - Rotas conferidas:
-    - `/api/health`, Início, Cardápio, Busca, Info, páginas de produto e `/admin/login` respondem 200.
-    - `/admin` sem sessão redireciona (307).
-    - `/api/v1/admin/*` sem sessão responde 401.
-    - Um endereço inexistente responde 404.
+- **Item 1: NÃO concluído. O código novo não chegou ao público.**
+  - O #128 entrou na `main` (db65a3b), e o #133 depois (4fe8a4c). Os dois deploys de produção na Vercel foram **cancelados**.
+    - A Vercel marca esses deploys como `success`, com a descrição "Canceled by Ignored Build Step". O Claude leu só o estado e registrou a publicação como feita.
+    - O responsável viu o cancelamento no painel da Vercel.
+  - O domínio `salgae-producao.vercel.app` continua no deploy de 2026-11-04 (dfce7ef). A página de produto ainda mostra "Disponível agora", texto do código antigo.
+  - As rotas conferidas (200, 307, 401, 404) respondem do mesmo jeito no código antigo, então não provavam a publicação.
+  - **O que vale na produção:** o banco foi atualizado (backup, as duas migrations e o conteúdo do item 2) e aparece com o código antigo.
+    - As migrations foram feitas para funcionar com o código que está no ar.
+  - **Causa, lida nas configurações da Vercel (sem mudar nada):**
+    - Só o projeto `salgae-producao` tem o Ignored Build Step `[ "$VERCEL_ENV" != "production" ]`. O `salgae-homologacao` não tem nenhum.
+    - Desde que essa configuração existe, todo deploy pelo Git é cancelado no mesmo instante em que é criado, sem log de build, inclusive os de produção da `main`.
+    - O último deploy pelo Git que chegou ao ar foi o de 2026-10-15. O de 2026-11-04 entrou por um "Redeploy" manual.
+  - **Para publicar:**
+    - Agora: um novo "Redeploy" manual do deploy cancelado da `main`, como em 2026-11-04.
+    - Para não se repetir: trocar ou tirar o Ignored Build Step do `salgae-producao`.
+    - As duas coisas mexem na produção e dependem do "sim" do responsável.
+  - **Enquanto isso,** apresentar as mudanças pela homologação (<https://salgae-homologacao.vercel.app>).
 - **Item 2, na produção:** feito, nada apagado.
   - "Coixinha" foi escondido, porque a foto dele é a vitrine da loja, não uma coxinha.
   - "Chilveski" virou "Pastel de Frango com Milho" (`pastel-de-frango-com-milho`) e passou para Pastéis, porque a foto e a descrição são de pastel. O gatilho novo o levou para o fim da categoria.
   - "Pastel" virou "Pastel de Carne com Queijo" (`pastel-de-carne-com-queijo`), ganhou descrição e voltou a ficar disponível.
   - A Info ganhou o endereço fictício "Rua das Flores, 120 · Centro", sem contato.
-- **Item 4:** medido de novo.
-  - A primeira visita a cada produto levou de 0,44 a 1,6 s, e as seguintes cerca de 0,25 s (cache `HIT`/`STALE`).
-  - O caso mais lento coincide com o servidor acordando a frio, o esperado no plano Hobby. Não pede ação.
+- **Item 4: ainda aberto.**
+  - A medição feita depois do merge (primeira visita de 0,44 a 1,6 s, seguintes cerca de 0,25 s) foi no **código antigo**, porque o deploy foi cancelado.
+  - Medir de novo quando o código novo estiver no ar.
 - **Observação nova (baixa), conferida depois: não precisa de correção.**
   - Logo depois da troca de nome, os endereços antigos (`/produto/chilveski`, `/produto/coixinha`) mostraram "Produto não encontrado" com HTTP 200.
   - Pouco depois, os dois já respondiam 404, e continuaram assim em todas as consultas seguintes.
@@ -85,7 +95,7 @@ O responsável disse "sim, promover".
     - Num produto com página gerada no build, o endereço antigo deu 200 com o conteúdo antigo por no máximo um ciclo de cache (60 s), o normal da revalidação.
     - Logo em seguida, deu 404 com `noindex`.
   - A rota de produto não tem `loading.tsx` nem `Suspense` acima da página. Então o `notFound()` sai antes de qualquer byte, e o 404 é o esperado. Os E2E `e2e/publico/cardapio.spec.ts` e `e2e/painel/situacoes-e-rajadas.spec.ts` já cobrem o 404 de slug inexistente e de produto escondido.
-  - O 200 visto na produção foi uma vez só, logo depois do deploy, provavelmente na primeira revalidação com a função ainda fria. Fica só o registro.
+  - O 200 visto na produção foi uma vez só, no código antigo de 2026-11-04, porque o deploy novo foi cancelado (ver o item 1). Fica só o registro.
 
 ## Ordem sugerida
 
