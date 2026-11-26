@@ -87,7 +87,18 @@ O responsável disse "sim, promover".
       - A API da Vercel mostra a produção apontando para esse deploy, de 4fe8a4c.
       - O texto "Compartilhar cardápio", que só existe no código novo, aparece na Início.
     - Rotas depois do redeploy: públicas e `/admin/login` com 200, `/admin` com 307, `/api/v1/admin/session` com 401, slug antigo e endereço inexistente com 404. A Info mostra o endereço novo.
-  - **Ainda pendente:** o Ignored Build Step do `salgae-producao` continua igual. A próxima promoção pela `main` vai ser cancelada de novo, a não ser que ele seja trocado ou removido. A decisão é do responsável.
+  - **Ignored Build Step ajustado em 2026-11-26, com o "Sim, ajustar" do responsável.**
+    - **Prova do problema, na lista de deploys da Vercel:**
+      - Todas as prévias do `salgae-producao` montaram o ambiente de build, rodaram a regra e foram canceladas, como devem.
+      - Os deploys de produção pelo Git (db65a3b, 4fe8a4c) foram cancelados antes de qualquer build.
+      - No redeploy, a mesma regra rodou dentro do build e deixou publicar.
+    - **Troca:** `[ "$VERCEL_ENV" != "production" ]`, igual ao modelo "Only build production" da Vercel, virou `echo "Ignored Build Step: VERCEL_ENV=$VERCEL_ENV"; test "$VERCEL_ENV" != "production"`. A conta é a mesma, mas roda dentro do build e deixa o valor no log.
+    - **Ainda não provado:** a conta atingiu o limite de 100 deploys por dia do plano Hobby, e os novos deploys esperam até 24 horas. A primeira promoção depois disso mostra se a `main` publica sozinha. Se não publicar, basta um redeploy, como agora.
+    - **Uso da cota nas últimas 24 horas:**
+      - `salgae-api-stage`: 34 deploys. O projeto ainda existe na Vercel, apesar de a nota 27 registrar que foi excluído.
+      - `salgae-producao`: 32 cancelados.
+      - `salgae-homologacao`: 33.
+    - Excluir o `salgae-api-stage` corta cerca de um terço do consumo. A decisão é do responsável.
 - **Item 2, na produção:** feito, nada apagado.
   - "Coixinha" foi escondido, porque a foto dele é a vitrine da loja, não uma coxinha.
   - "Chilveski" virou "Pastel de Frango com Milho" (`pastel-de-frango-com-milho`) e passou para Pastéis, porque a foto e a descrição são de pastel. O gatilho novo o levou para o fim da categoria.

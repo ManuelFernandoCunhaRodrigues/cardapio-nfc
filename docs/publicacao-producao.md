@@ -23,7 +23,13 @@ O Salgaê é um sistema de demonstração para clientes. A hospedagem é gratuit
 
 - **Um projeto Vercel por ambiente, com a API dentro do site.** O site chama a API no mesmo processo, e ela também responde em `/api`. Não existe projeto de API separado. A decisão está em `docs/planejamento/dois-projetos-por-ambiente.md`.
 - **Root Directory `apps/web`** nos dois projetos, com as funções em São Paulo (`"regions": ["gru1"]` em `apps/web/vercel.json`), perto do banco.
-- **Produção só gera build de produção.** O Ignored Build Step do `salgae-producao` é `[ "$VERCEL_ENV" != "production" ]`. As variáveis da produção existem só nesse ambiente; uma prévia de PR com elas usaria o banco de produção.
+- **Produção só gera build de produção.** As variáveis da produção existem só nesse ambiente; uma prévia de PR com elas usaria o banco de produção.
+  - O Ignored Build Step do `salgae-producao` é `echo "Ignored Build Step: VERCEL_ENV=$VERCEL_ENV"; test "$VERCEL_ENV" != "production"`. Trocado em 2026-11-26.
+  - O comando anterior, `[ "$VERCEL_ENV" != "production" ]`, é igual ao modelo "Only build production" da Vercel. Com ele, as prévias rodavam a regra dentro do build e eram canceladas, como deve ser. Os deploys de produção pelo Git, porém, eram cancelados antes de qualquer build. Por isso a `main` não chegava ao ar desde 2026-10-15, e as publicações de 2026-11-04 e 2026-11-26 precisaram de redeploy manual.
+  - O comando novo faz a mesma conta, mas roda dentro do build e deixa no log o valor de `VERCEL_ENV`. A primeira promoção depois da troca confirma se a `main` passa a publicar sozinha.
+  - **Cancelado também conta.** No plano Hobby, cada deploy cancelado entra na cota de 100 deploys por dia da conta. Cada push numa branch com PR gera um deploy em cada projeto da Vercel.
+- **Conferir a publicação na Vercel, não só no GitHub.** O status "Vercel – salgae-producao" do GitHub aparece como `success` mesmo quando a descrição diz "Canceled by Ignored Build Step". Depois do merge na `main`, confirmar no painel da Vercel (ou com `vercel ls salgae-producao`) que o deploy de produção ficou **Ready**. Confirmar também que o site mostra algo que só existe no código novo.
+- **Se o deploy de produção for cancelado:** fazer um redeploy dele pelo painel da Vercel, ou rodar `vercel redeploy <id do deploy> --target production`. O redeploy roda a regra dentro do build e publica.
 - **Variáveis de cada projeto:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL` e `NEXT_PUBLIC_SITE_ENV` (`production` só na produção; sem ela, o site bloqueia buscadores). Nenhuma `service_role`. `API_URL` e `WEB_ORIGIN` não são usadas na Vercel.
 - **O build lê o banco.** As páginas públicas são geradas com os dados do Supabase. Se o banco estiver pausado, o deploy falha e o site continua na versão anterior.
 - **`/api/health`** consulta o banco e responde `{"status":"ok"}` com 200, ou 503 quando o banco não responde.
