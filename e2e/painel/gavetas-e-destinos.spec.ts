@@ -96,7 +96,10 @@ test(
     const menuLink = page.getByRole('link', { name: 'Ver cardápio' }).filter({ visible: true });
     await expect(menuLink.first()).toHaveAttribute('href', '/cardapio');
     await expect(page.getByRole('heading', { level: 2, name: 'Loja hoje' })).toBeVisible();
-    await expect(page.getByText('Em falta hoje', { exact: true })).toBeVisible();
+    // No CI a página às vezes tem uma segunda cópia escondida do Resumo; só a visível conta.
+    await expect(
+      page.getByText('Em falta hoje', { exact: true }).filter({ visible: true }),
+    ).toBeVisible();
   },
 );
 
