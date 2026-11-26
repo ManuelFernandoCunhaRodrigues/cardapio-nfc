@@ -101,7 +101,7 @@ Tudo abaixo está na `develop` (e no stage). A produção continua na promoção
 
 | Onda | Status | PRs |
 | --- | --- | --- |
-| 0 — destravar | **Quase toda feita.** Faltam decidir o #62, excluir `salgae-api-stage` e subir o `next` para 16.4.6 (está em 16.4.5). | #85, #86 |
+| 0 — destravar | **Feita.** #62 mesclado, `salgae-api-stage` excluído e arquivos removidos, `next` em 16.4.6. | #85, #86, #62, #111, #122 |
 | 1 — o que aparece na demonstração | **Feita.** | #89, #90, #91 |
 | 2 — backend firme | **Quase toda feita.** Faltam o destaque gravando o slug (WEB-07) e a sessão vencida levando ao login (WEB-11, UXA-10). | #92, #94 |
 | 3 — segurança e operação | **Em parte.** Feitos: ping, cópia semanal, migrations sem verde falso, `npm audit` no CI e Docker sem root. Faltam: segredos (responsável), aprovação de ambiente no workflow, auditoria de `profiles`, cabeçalhos e a decisão sobre MFA. | #88 |
@@ -117,8 +117,8 @@ Tudo abaixo está na `develop` (e no stage). A produção continua na promoção
 | --- | --- | --- | --- |
 | Restaurar `SALGAE-PRODUCTION` e conferir `/api/health` e `/cardapio` | Claude | "sim" do responsável | **Feito** em 2026-11-15 |
 | Revisão final do Codex no #85, conferência do painel no stage e merge na `develop` | Codex revisa, Claude junta | crédito do Codex; login do responsável para o painel | **Feito**: #85 na `develop` em 2026-11-15 |
-| Merge do #86 (hono, next) e subida do `next` para 16.4.6 | Claude | CI verde | **Em parte**: #86 na `develop`; o `next` está em 16.4.5 |
-| Fechar #72 e #73; decidir #62; apagar branches resolvidas | Claude | "ok" para o #62 | **Em parte**: #72 e #73 fechados e a maior parte das branches antigas apagada; o #62 segue aberto |
+| Merge do #86 (hono, next) e subida do `next` para 16.4.6 | Claude | CI verde | **Feito**: #86 na `develop`; o `next` subiu para 16.4.6 no #111 |
+| Fechar #72 e #73; decidir #62; apagar branches resolvidas | Claude | "ok" para o #62 | **Feito**: #72 e #73 fechados, a maior parte das branches antigas apagada e o #62 mesclado (562256d) |
 | Excluir `salgae-api-stage` na Vercel; depois o PR que tira os arquivos legados | Responsável, depois Claude | exclusão feita por ele | **Feito** em 2026-11-25: projeto excluído por ele e arquivos removidos |
 
 ### Onda 1: o que aparece na demonstração (P1) — feita (#89, #90, #91)
