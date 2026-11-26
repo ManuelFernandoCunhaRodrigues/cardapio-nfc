@@ -26,10 +26,15 @@ async function createProduct(page: Page, adminDb: AdminDb, name: string) {
   return { id: id!, slug: data!.slug };
 }
 
+/**
+ * Exclui pela tela, para a API apagar também os arquivos do Storage. Todo teste chama depois de criar
+ * o produto, então a linha precisa aparecer. Contar as linhas logo após o `goto` lia a lista antes de
+ * ela ser revelada (o painel tem `loading.tsx`), pulava a exclusão e deixava os arquivos no Storage:
+ * foram as falhas do CI desde 2026-11-25.
+ */
 async function deleteProduct(page: Page, name: string) {
   await page.goto('/admin/produtos');
   const row = page.getByRole('row').filter({ hasText: name });
-  if ((await row.count()) === 0) return;
   // "Mais ações" é um <summary>, não um botão no Chromium.
   await row.getByLabel(`Mais ações para ${name}`).click();
   await row.getByRole('button', { name: 'Excluir', exact: true }).click();
