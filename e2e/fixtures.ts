@@ -19,6 +19,7 @@ type Fixtures = {
   adminDb: AdminDb;
   uniqueName: (prefixo: string) => string;
   cspCheck: void;
+  streamingOrphanProbe: void;
 };
 
 export async function withStoreSettingsRestored<T>(
@@ -54,6 +55,35 @@ export const test = base.extend<Fixtures>({
       } finally {
         baseExpect(violations, 'recursos bloqueados pela CSP').toEqual([]);
       }
+    },
+    { auto: true },
+  ],
+
+  // DIAGNÓSTICO TEMPORÁRIO (não mesclar): conta as cópias escondidas do streaming que sobram.
+  streamingOrphanProbe: [
+    async ({ page }, provideFixture, testInfo) => {
+      const checks: Promise<void>[] = [];
+      page.on('load', () => {
+        checks.push(
+          (async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            try {
+              const orphans = await page.evaluate(() =>
+                Array.from(document.querySelectorAll('body > div[hidden][id^="S:"]')).map(
+                  (element) => element.id,
+                ),
+              );
+              if (orphans.length)
+                console.log(`S0-ORFAO ${testInfo.project.name} ${page.url()} ${orphans.join(',')}`);
+              else console.log(`S0-LIMPO ${testInfo.project.name} ${page.url()}`);
+            } catch {
+              // A página navegou ou fechou: sem leitura.
+            }
+          })(),
+        );
+      });
+      await provideFixture();
+      await Promise.all(checks);
     },
     { auto: true },
   ],
