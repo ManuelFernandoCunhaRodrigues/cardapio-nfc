@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { expect, test, type AdminDb, type Page } from '../fixtures';
+import { expect, expectPhotoSaved, test, type AdminDb, type Page } from '../fixtures';
 
 const PHOTO_FILE = path.join(__dirname, '../arquivos/foto-teste.jpg');
 const VIDEO_FILE = path.join(__dirname, '../arquivos/video-teste.mp4');
@@ -90,9 +90,7 @@ test.describe('mídia dos produtos', () => {
         mimeType: 'image/png',
         buffer: await createDetailedPhoto(page),
       });
-      await expect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible({
-        timeout: 30_000,
-      });
+      await expectPhotoSaved(page);
 
       const { data, error } = await adminDb.client
         .from('products')
@@ -122,7 +120,7 @@ test.describe('mídia dos produtos', () => {
 
     try {
       await page.getByLabel('Escolher foto', { exact: true }).setInputFiles(PHOTO_FILE);
-      await expect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible();
+      await expectPhotoSaved(page);
 
       const { data, error } = await adminDb.client
         .from('products')
@@ -161,7 +159,7 @@ test.describe('mídia dos produtos', () => {
 
     try {
       await page.getByLabel('Escolher foto', { exact: true }).setInputFiles(PHOTO_FILE);
-      await expect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible();
+      await expectPhotoSaved(page);
       await page.reload();
 
       await page.getByRole('button', { name: 'Remover foto' }).click();
@@ -192,7 +190,7 @@ test.describe('mídia dos produtos', () => {
 
     try {
       await page.getByLabel('Escolher foto', { exact: true }).setInputFiles(PHOTO_FILE);
-      await expect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible();
+      await expectPhotoSaved(page);
       const imageResult = await adminDb.client
         .from('products')
         .select('image_path')
