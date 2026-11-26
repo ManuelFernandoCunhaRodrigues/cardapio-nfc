@@ -17,5 +17,6 @@ atualizado: 2026-11-15
 - [[15-Operacao-e-Manutencao]] — rotina pós-lançamento.
 - [[16-Achados-dos-Testes-no-Navegador]]
 - [[27-Revisao-Geral-e-Plano-de-Acao]] — revisão de UX e código de 2026-11-15 e plano de ação em ondas.
+- [[28-Testes-no-Navegador-2026-11-26]] — cliques no cardápio da produção e do stage, achados e plano.
 
 Voltar: [[Home]]
