@@ -80,6 +80,14 @@ O responsável disse "sim, promover".
     - Para não se repetir: trocar ou tirar o Ignored Build Step do `salgae-producao`.
     - As duas coisas mexem na produção e dependem do "sim" do responsável.
   - **Enquanto isso,** apresentar as mudanças pela homologação (<https://salgae-homologacao.vercel.app>).
+  - **Publicado em 2026-11-26, com o "sim" do responsável ("Sim, redeploy").**
+    - O Claude rodou `vercel redeploy` do deploy cancelado da `main` (4fe8a4c) para a produção.
+    - O novo deploy (`dpl_FEXZvZy71ETwVePHcy6feeaG1AW9`) ficou READY em cerca de 1 minuto e assumiu `salgae-producao.vercel.app`.
+    - **Conferido no código, não só no status:**
+      - A API da Vercel mostra a produção apontando para esse deploy, de 4fe8a4c.
+      - O texto "Compartilhar cardápio", que só existe no código novo, aparece na Início.
+    - Rotas depois do redeploy: públicas e `/admin/login` com 200, `/admin` com 307, `/api/v1/admin/session` com 401, slug antigo e endereço inexistente com 404. A Info mostra o endereço novo.
+  - **Ainda pendente:** o Ignored Build Step do `salgae-producao` continua igual. A próxima promoção pela `main` vai ser cancelada de novo, a não ser que ele seja trocado ou removido. A decisão é do responsável.
 - **Item 2, na produção:** feito, nada apagado.
   - "Coixinha" foi escondido, porque a foto dele é a vitrine da loja, não uma coxinha.
   - "Chilveski" virou "Pastel de Frango com Milho" (`pastel-de-frango-com-milho`) e passou para Pastéis, porque a foto e a descrição são de pastel. O gatilho novo o levou para o fim da categoria.
@@ -88,6 +96,9 @@ O responsável disse "sim, promover".
 - **Item 4: ainda aberto.**
   - A medição feita depois do merge (primeira visita de 0,44 a 1,6 s, seguintes cerca de 0,25 s) foi no **código antigo**, porque o deploy foi cancelado.
   - Medir de novo quando o código novo estiver no ar.
+  - **Medido no código novo, logo depois do redeploy:**
+    - A primeira visita a cada produto levou de 0,28 a 0,65 s (cache `PRERENDER`), e as seguintes cerca de 0,25 s (`HIT`).
+    - O caso original, a primeira visita depois de uma alteração feita pelo painel, ainda não foi medido. Precisa de uma sessão no painel.
 - **Observação nova (baixa), conferida depois: não precisa de correção.**
   - Logo depois da troca de nome, os endereços antigos (`/produto/chilveski`, `/produto/coixinha`) mostraram "Produto não encontrado" com HTTP 200.
   - Pouco depois, os dois já respondiam 404, e continuaram assim em todas as consultas seguintes.
