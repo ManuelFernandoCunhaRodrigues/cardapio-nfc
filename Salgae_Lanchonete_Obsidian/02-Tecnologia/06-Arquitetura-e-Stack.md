@@ -62,6 +62,7 @@ A base é **Next.js com TypeScript**, estilização com **Tailwind CSS** e valid
 - Tratar operações de imagem, vídeo e exclusão como ações com verificação.
 - Usar tipagem e regras de domínio para preço, ordenação e disponibilidade.
 - Preferir componentes acessíveis e responsivos desde a primeira tela.
+- Cache das leituras públicas: as páginas do site chamam a API embutida dentro do próprio servidor e são renovadas na hora em que o painel salva (`updateTag`). Já quem chama `/api/health`, `/api/v1/menu` e `/api/v1/store` por HTTP recebe `Cache-Control: public, s-maxage=60, stale-while-revalidate` (`apps/api/src/shared/http/public-cache.ts`): a CDN da Vercel pode entregar dado com até 60 s de atraso (mais um tempo curto de revalidação). Isso é esperado; não usar essas rotas para conferir uma mudança recém-salva.
 
 ## Integrações futuras possíveis
 
