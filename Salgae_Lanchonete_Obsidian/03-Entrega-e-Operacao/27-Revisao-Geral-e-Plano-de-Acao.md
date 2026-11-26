@@ -196,7 +196,7 @@ Seguem adiados: os da lista acima, o registro do cache de 60 s da `/api` públic
 ## Decisões que dependem do responsável
 
 1. ~~"Sim" para restaurar a produção agora.~~ Feito: produção restaurada em 2026-11-15.
-2. Excluir `salgae-api-stage` na Vercel. Em 2026-11-25 o responsável disse que vai excluir; depois o Claude tira os arquivos legados.
+2. ~~Excluir `salgae-api-stage` na Vercel.~~ Feito em 2026-11-25: ele excluiu o projeto e o #122 tirou os arquivos legados.
 3. ~~Fotos para o conteúdo de exemplo: dele ou de banco de imagens.~~ Decidido em 2026-11-25: as fotos serão geradas com o Codex.
 4. ~~Contato do cliente na demonstração: WhatsApp, "chamar atendente" ou nada.~~ Decidido em 2026-11-25: nenhum contato por enquanto.
 5. ~~MFA para o admin: sim ou não.~~ Decidido em 2026-11-25: sem MFA.
