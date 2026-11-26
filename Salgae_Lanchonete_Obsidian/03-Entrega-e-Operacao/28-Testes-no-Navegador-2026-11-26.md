@@ -44,6 +44,13 @@ Só leitura e navegação, sem gravar nada.
 | 5 | Baixa | Stage | A pessoa chega ao Cardápio por um atalho da Início, e o endereço fica `/cardapio#combos`. Se ela rolar, abrir um produto e voltar, a página pula para a seção da categoria (1022 px) em vez de voltar ao ponto onde estava (1475 px). Sem o `#`, a rolagem volta certinho. Na produção, depois de tocar num chip dentro do próprio Cardápio, também voltou certo, mas é outro caminho e não foi repetido no stage. | Reproduzir os dois caminhos no stage, corrigir a restauração da rolagem com âncora e cobrir com teste de ponta a ponta. | Claude com o Codex |
 | 6 | Baixa | Stage | O stage tem dados de teste ("QA Teste Excluir", "Coixinha de Carne"), e só 3 dos 12 produtos têm foto. Não afeta a produção, mas atrapalha quem testar o stage. | Limpar os dados de teste do stage junto com o conteúdo de exemplo (item 2). | Claude |
 
+## Andamento (2026-11-26, manhã)
+
+- **Item 3, no stage:** feito. A migration 20261116120000 foi aplicada à mão, com a mesma versão em `schema_migrations`, e o destaque passou a abrir `/produto/pastel-de-carne`. Na produção, entra junto com a promoção.
+- **Item 5:** feito no #129 (251f405), com a revisão do Codex e o CI verde. Causa: o navegador reativava o `#categoria` da entrada do histórico ao voltar. O link do produto passou a tirar o fragmento antes de navegar, e um E2E novo cobre os dois caminhos.
+- **Itens 2 e 6, no stage:** em parte. "Coixinha de Carne" virou "Coxinha de Carne" (com o endereço `coxinha-de-carne`), "QA Teste Excluir" foi escondido (nada apagado), e a Info ganhou o endereço fictício "Rua das Flores, 120 · Centro", sem contato. Tudo conferido no site do stage. Falta foto em 9 dos 12 produtos do stage: não há chave de serviço no CI e o Claude não entra no painel, então o envio fica com o responsável. Isso não afeta a produção, que já tem foto em todos os produtos.
+- **Itens 1 e 2, na produção:** prontos para executar. O PR de promoção #128 está em rascunho, com o CI verde, e espera o "sim" do responsável. Ao receber o "sim": copiar as tabelas da produção para um esquema de backup dentro do próprio banco, aplicar as duas migrations, mesclar o #128, conferir as rotas e corrigir os nomes "Coixinha", "Chilveski" e "Pastel", além da Info.
+
 ## Ordem sugerida
 
 1. Item 2 no stage (conteúdo de exemplo) e item 6 (limpeza do stage).
