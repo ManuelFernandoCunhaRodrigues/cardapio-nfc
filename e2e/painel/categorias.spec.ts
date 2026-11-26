@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { expect, test, type AdminDb, type Page } from '../fixtures';
+import { expect, expectPhotoSaved, test, type AdminDb, type Page } from '../fixtures';
 
 const PHOTO_FILE = path.join(__dirname, '../arquivos/foto-teste.jpg');
 // Imagem válida de 1 px: passa pelo navegador e a API recusa por ser menor que 400 px.
@@ -57,7 +57,7 @@ async function chooseAndSavePhoto(page: Page, saveButton: string) {
   await page.getByRole('dialog').getByLabel('Escolher foto').setInputFiles(PHOTO_FILE);
   await expect(page.getByText('Foto pronta para salvar junto com a categoria.')).toBeVisible();
   await page.getByRole('button', { name: saveButton }).click();
-  await expect(page.getByText('Foto otimizada e salva com sucesso.')).toBeVisible();
+  await expectPhotoSaved(page);
 }
 
 async function storedImagePath(adminDb: AdminDb, categoryId: string) {
