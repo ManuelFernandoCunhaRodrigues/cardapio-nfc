@@ -81,7 +81,20 @@ export function ProductCard({ product, compact = false, preview = false }: Produ
   const card = preview ? (
     <div className={cardClassName}>{content}</div>
   ) : (
-    <Link className={cardClassName} href={href} onClick={() => rememberProductOrigin(href)}>
+    <Link
+      className={cardClassName}
+      href={href}
+      onClick={() => rememberProductOrigin(href)}
+      onNavigate={() => {
+        if (window.location.pathname !== '/cardapio' || !window.location.hash) return;
+        // Ao voltar do produto, o fragmento antigo levaria a rolagem de volta à categoria.
+        window.history.replaceState(
+          window.history.state,
+          '',
+          window.location.pathname + window.location.search,
+        );
+      }}
+    >
       {content}
     </Link>
   );
