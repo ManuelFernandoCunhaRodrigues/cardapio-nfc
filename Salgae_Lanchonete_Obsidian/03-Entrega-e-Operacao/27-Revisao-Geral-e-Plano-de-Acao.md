@@ -204,6 +204,6 @@ Seguem adiados: os da lista acima, o registro do cache de 60 s da `/api` públic
 7. Cadastrar os segredos do workflow de migrations, ou desligar o workflow por enquanto. Em 2026-11-25 o responsável disse que decide depois.
 8. Promoção para a `main` no fim da onda 6.
 
-Também em 2026-11-25: "ok" do responsável para o conteúdo de exemplo na produção (backup antes, nomes corrigidos, Info sem contato, ordem das categorias). O teste em celular real ele ainda vai fazer.
+Também em 2026-11-25: "ok" do responsável para o conteúdo de exemplo na produção (backup antes, nomes corrigidos, Info sem contato, ordem das categorias). O teste em celular real ele ainda vai fazer. Ainda em 2026-11-25: Info com endereço e horário fictícios (sem contato), fotos geradas pelo Codex no estilo da identidade visual atual, e o cardápio de exemplo mantém os produtos e categorias de hoje (só corrige nomes de teste).
 
 Voltar: [[_Indice-03-Entrega-e-Operacao]] · [[Home]]
