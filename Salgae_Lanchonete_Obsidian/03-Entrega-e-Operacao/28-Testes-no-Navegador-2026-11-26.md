@@ -98,7 +98,11 @@ O responsável disse "sim, promover".
       - `salgae-api-stage`: 34 deploys. O projeto ainda existe na Vercel, apesar de a nota 27 registrar que foi excluído.
       - `salgae-producao`: 32 cancelados.
       - `salgae-homologacao`: 33.
-    - Excluir o `salgae-api-stage` corta cerca de um terço do consumo. A decisão é do responsável.
+    - **`salgae-api-stage` excluído em 2026-11-26**, com a confirmação do responsável ("Confirmo, excluir").
+      - Nada no código usava o projeto.
+      - O endereço `salgae-api-stage.vercel.app` passou a responder 404.
+      - O `/api/health` da homologação e o da produção seguem com 200.
+      - Agora a Vercel só tem `salgae-producao` e `salgae-homologacao`.
 - **Item 2, na produção:** feito, nada apagado.
   - "Coixinha" foi escondido, porque a foto dele é a vitrine da loja, não uma coxinha.
   - "Chilveski" virou "Pastel de Frango com Milho" (`pastel-de-frango-com-milho`) e passou para Pastéis, porque a foto e a descrição são de pastel. O gatilho novo o levou para o fim da categoria.

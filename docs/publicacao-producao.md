@@ -11,7 +11,7 @@ O Salgaê é um sistema de demonstração para clientes. A hospedagem é gratuit
 - **Migration pendente na produção:** `20261115120000_product_sort_order_on_category_change` está aplicada só no stage. Ela precisa chegar à produção **antes** do merge da próxima promoção.
 - **Segredos do GitHub:** `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD_STAGE` e `SUPABASE_DB_PASSWORD_PRODUCAO` ainda não estão cadastrados. Sem eles, o workflow Migrations e a cópia semanal do banco falham de propósito e dizem o que falta.
 - **Ambientes no ar:** o workflow está na `develop`. O GitHub só roda agendamentos a partir da `main`, então o ping a cada 2 dias começa a valer depois da promoção.
-- **Projeto antigo da API:** o responsável excluiu o projeto Vercel `salgae-api-stage` em 2026-11-25, e os arquivos que só serviam a ele (`apps/api/src/index.ts`, `apps/api/vercel.json` e a entrada `index` do build da API) saíram do repositório.
+- **Projeto antigo da API:** o projeto Vercel `salgae-api-stage` foi excluído em 2026-11-26, com a confirmação do responsável. O registro anterior, de 2026-11-25, dava a exclusão como feita, mas o projeto continuava gerando deploys. Os arquivos que só serviam a ele (`apps/api/src/index.ts`, `apps/api/vercel.json` e a entrada `index` do build da API) já tinham saído do repositório.
 - **Conteúdo da produção:** na conferência de 2026-11-04 (nota 16 do vault) havia itens de teste, a categoria Bebidas escondida e a página Info sem contatos. Montar o conteúdo de exemplo é a onda 6 do plano (nota 27 do vault).
 
 ## Como os ambientes estão montados
