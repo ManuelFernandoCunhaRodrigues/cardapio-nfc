@@ -78,10 +78,14 @@ O responsável disse "sim, promover".
 - **Item 4:** medido de novo.
   - A primeira visita a cada produto levou de 0,44 a 1,6 s, e as seguintes cerca de 0,25 s (cache `HIT`/`STALE`).
   - O caso mais lento coincide com o servidor acordando a frio, o esperado no plano Hobby. Não pede ação.
-- **Observação nova (baixa):**
-  - Os endereços antigos (`/produto/chilveski`, `/produto/coixinha`) mostram "Produto não encontrado", mas com HTTP 200, não 404.
-  - Causa provável, não confirmada: o streaming com `loading.tsx`. O `notFound()` chegaria depois de o status já ter sido enviado.
-  - Para quem visita, a página aparece certa. Só os buscadores veriam um 200.
+- **Observação nova (baixa), conferida depois: não precisa de correção.**
+  - Logo depois da troca de nome, os endereços antigos (`/produto/chilveski`, `/produto/coixinha`) mostraram "Produto não encontrado" com HTTP 200.
+  - Pouco depois, os dois já respondiam 404, e continuaram assim em todas as consultas seguintes.
+  - O 200 não se repetiu no stage em três tentativas, trocando o slug de produtos de lá e depois desfazendo:
+    - Num produto com página gerada no build, o endereço antigo deu 200 com o conteúdo antigo por no máximo um ciclo de cache (60 s), o normal da revalidação.
+    - Logo em seguida, deu 404 com `noindex`.
+  - A rota de produto não tem `loading.tsx` nem `Suspense` acima da página. Então o `notFound()` sai antes de qualquer byte, e o 404 é o esperado. Os E2E `e2e/publico/cardapio.spec.ts` e `e2e/painel/situacoes-e-rajadas.spec.ts` já cobrem o 404 de slug inexistente e de produto escondido.
+  - O 200 visto na produção foi uma vez só, logo depois do deploy, provavelmente na primeira revalidação com a função ainda fria. Fica só o registro.
 
 ## Ordem sugerida
 
