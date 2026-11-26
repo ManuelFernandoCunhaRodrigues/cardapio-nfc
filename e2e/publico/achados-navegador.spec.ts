@@ -1,13 +1,20 @@
 import { expect, test, type AdminDb, type Page } from '../fixtures';
 
+/**
+ * Os ajudantes filtram o visível: no CI a cópia escondida do HTML em streaming
+ * (`<div hidden id="S:0">`) às vezes segue no DOM depois que o React já desenhou a página.
+ */
 async function expectInsideHorizontalViewport(page: Page, selector: string) {
   await expect
     .poll(() =>
-      page.locator(selector).evaluate((element) => {
-        const chip = element.getBoundingClientRect();
-        const row = element.parentElement!.getBoundingClientRect();
-        return chip.left >= row.left && chip.right <= row.right;
-      }),
+      page
+        .locator(selector)
+        .filter({ visible: true })
+        .evaluate((element) => {
+          const chip = element.getBoundingClientRect();
+          const row = element.parentElement!.getBoundingClientRect();
+          return chip.left >= row.left && chip.right <= row.right;
+        }),
     )
     .toBe(true);
 }
@@ -44,8 +51,8 @@ async function openNewProductWithVideo(page: Page, adminDb: AdminDb, name: strin
 async function expectAboveProductSheet(page: Page, selector: string) {
   await expect
     .poll(async () => {
-      const element = await page.locator(selector).boundingBox();
-      const sheet = await page.locator('main > section').boundingBox();
+      const element = await page.locator(selector).filter({ visible: true }).boundingBox();
+      const sheet = await page.locator('main > section').filter({ visible: true }).boundingBox();
       if (!element || !sheet) return false;
       return element.y + element.height <= sheet.y + 1;
     })
@@ -102,7 +109,9 @@ test.describe('achados dos testes no navegador', () => {
     uniqueName,
   }) => {
     const play = await openNewProductWithVideo(page, adminDb, uniqueName('produto-video'));
-    const badge = page.getByText('VÍDEO CURTO · SEM SOM', { exact: true });
+    const badge = page
+      .getByText('VÍDEO CURTO · SEM SOM', { exact: true })
+      .filter({ visible: true });
     await expect(badge).toBeVisible();
     await expectAboveProductSheet(page, '.lbl:has-text("VÍDEO CURTO · SEM SOM")');
 
