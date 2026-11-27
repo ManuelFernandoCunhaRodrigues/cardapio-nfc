@@ -108,6 +108,11 @@ O responsável disse "sim, promover".
       - O limite é uma janela móvel de 24 horas.
       - Em 2026-11-27 10h UTC havia 36 deploys nas últimas 24 horas, somando todos os projetos da conta. Cota livre.
       - A promoção seguinte prova se a `main` publica sozinha, com a linha `Ignored Build Step: VERCEL_ENV=production` no log.
+    - **Provado em 2026-11-27: a `main` publica sozinha.** A promoção #138 (847ce71) criou o deploy `dpl_AtjK1Mo2P8Gz9fmnrvUXkG4YQiwY`, que ficou Ready sem redeploy e é o deploy de produção da Vercel.
+      - O log do build mostrou `Ignored Build Step: VERCEL_ENV=production`.
+      - O site mostra "Compartilhar cardápio" na Início.
+      - Rotas: 200 em `/`, `/cardapio`, `/busca`, `/info` e `/api/health`; 307 em `/admin`; 401 em `/api/v1/admin/*`; 404 no endereço inexistente.
+      - O check `migrations` segue falhando sem os segredos, como antes.
 - **Item 2, na produção:** feito, nada apagado.
   - "Coixinha" foi escondido, porque a foto dele é a vitrine da loja, não uma coxinha.
   - "Chilveski" virou "Pastel de Frango com Milho" (`pastel-de-frango-com-milho`) e passou para Pastéis, porque a foto e a descrição são de pastel. O gatilho novo o levou para o fim da categoria.
