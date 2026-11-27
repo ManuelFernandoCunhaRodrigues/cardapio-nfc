@@ -103,6 +103,11 @@ O responsável disse "sim, promover".
       - O endereço `salgae-api-stage.vercel.app` passou a responder 404.
       - O `/api/health` da homologação e o da produção seguem com 200.
       - Agora a Vercel só tem `salgae-producao` e `salgae-homologacao`.
+    - **Regra nova provada nas prévias (2026-11-26):** o log mostra `Ignored Build Step: VERCEL_ENV=preview` e o cancelamento com saída 0, já dentro do build.
+    - **Promoção #136 (252abd5, 2026-11-26 15h UTC) sem deploy:** só testes e docs, mas a cota tinha acabado de novo e o deploy da `main` foi recusado por limite ("rate limited"), sem criar deploy. A produção seguiu em 4fe8a4c, com o mesmo código do app.
+      - O limite é uma janela móvel de 24 horas.
+      - Em 2026-11-27 10h UTC havia 36 deploys nas últimas 24 horas, somando todos os projetos da conta. Cota livre.
+      - A promoção seguinte prova se a `main` publica sozinha, com a linha `Ignored Build Step: VERCEL_ENV=production` no log.
 - **Item 2, na produção:** feito, nada apagado.
   - "Coixinha" foi escondido, porque a foto dele é a vitrine da loja, não uma coxinha.
   - "Chilveski" virou "Pastel de Frango com Milho" (`pastel-de-frango-com-milho`) e passou para Pastéis, porque a foto e a descrição são de pastel. O gatilho novo o levou para o fim da categoria.
